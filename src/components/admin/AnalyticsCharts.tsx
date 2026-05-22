@@ -3,8 +3,6 @@
 import {
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   LineChart,
   Line,
   PieChart,

@@ -9,10 +9,14 @@ export function ThemeToggle() {
 
   useEffect(() => {
     const saved = localStorage.getItem("janmitra-theme");
-    if (saved === "dark" || (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
-      setDark(true);
+    const isDark = saved === "dark" || (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    if (isDark) {
       document.documentElement.classList.add("dark");
     }
+    const timer = setTimeout(() => {
+      setDark(isDark);
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   function toggle() {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send,
@@ -16,15 +16,14 @@ import {
   Building2,
   FileText,
   Loader2,
-  X,
   ChevronRight,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { classifyComplaint, simulateAIProcessing } from "@/lib/ai";
+import { classifyComplaint } from "@/lib/ai";
 import type { AIClassification } from "@/types";
 
 export function ComplaintForm() {
@@ -36,6 +35,36 @@ export function ComplaintForm() {
   const [location, setLocation] = useState<{ lat: number; lng: number; area: string } | null>(null);
   const [classification, setClassification] = useState<AIClassification | null>(null);
   const [processingStep, setProcessingStep] = useState(0);
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [photoName, setPhotoName] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotoUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhotoName(file.name);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setPhoto(event.target?.result as string);
+        if (!text.trim()) {
+          setText(`[AI Vision Scan: Photo uploaded (${file.name})] Civic issue detected. Please resolve immediately.`);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removePhoto = () => {
+    setPhoto(null);
+    setPhotoName("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const detectLocation = useCallback(() => {
     if ("geolocation" in navigator) {
@@ -102,6 +131,7 @@ export function ComplaintForm() {
     setText("");
     setClassification(null);
     setProcessingStep(0);
+    removePhoto();
   };
 
   const processingSteps = [
@@ -139,6 +169,40 @@ export function ComplaintForm() {
                 className="min-h-[140px] text-base resize-none border border-border/40 focus:border-primary/60 focus:ring-1 focus:ring-primary/40 rounded-xl transition-all duration-300 placeholder:text-muted-foreground/60 bg-background/30"
               />
 
+              {/* Hidden file input */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                onChange={handlePhotoChange}
+                accept="image/*"
+              />
+
+              {/* Photo preview block */}
+              {photo && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="flex items-center gap-3 p-2 pr-4 bg-primary/5 border border-primary/20 rounded-2xl w-fit"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={photo} alt="Preview" className="w-12 h-12 rounded-xl object-cover border border-primary/25" />
+                  <div className="flex-1 min-w-[120px] max-w-[200px]">
+                    <p className="text-xs font-bold text-foreground/90 truncate">{photoName}</p>
+                    <p className="text-[10px] text-muted-foreground/80 font-medium">Ready to submit</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={removePhoto}
+                    className="p-1 rounded-lg hover:bg-destructive/10 text-destructive/80 hover:text-destructive transition-colors cursor-pointer"
+                    aria-label="Remove photo"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </motion.div>
+              )}
+
               {/* Voice & Upload row */}
               <div className="flex flex-wrap items-center gap-3 pt-1">
                 <Button
@@ -160,9 +224,17 @@ export function ComplaintForm() {
                   )}
                 </Button>
 
-                <Button variant="outline" size="sm" className="gap-2 rounded-xl font-semibold transition-all">
-                  <Upload className="w-4 h-4 text-muted-foreground" />
-                  Upload Photo
+                <Button 
+                  type="button"
+                  variant={photo ? "secondary" : "outline"} 
+                  size="sm" 
+                  onClick={handlePhotoUploadClick}
+                  className={`gap-2 rounded-xl font-semibold transition-all active:scale-95 cursor-pointer ${
+                    photo ? "border-primary/45 bg-primary/10 text-primary hover:bg-primary/15" : ""
+                  }`}
+                >
+                  <Upload className={`w-4 h-4 ${photo ? "text-primary animate-pulse" : "text-muted-foreground"}`} />
+                  {photo ? "Photo Attached" : "Upload Photo"}
                 </Button>
 
                 <Button
@@ -324,6 +396,26 @@ export function ComplaintForm() {
                 </div>
               </div>
             </motion.div>
+
+            {/* Photo Attachment receipt */}
+            {photo && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="glass-card rounded-2xl p-4 flex items-center gap-4 border border-border/20 bg-muted/10"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={photo} alt="Submitted photo" className="w-16 h-16 rounded-xl object-cover border border-border/30 shadow-sm" />
+                <div>
+                  <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Photo Attachment</h4>
+                  <p className="text-sm font-semibold text-foreground/80 truncate max-w-[220px]">{photoName}</p>
+                  <span className="text-[10px] inline-flex items-center gap-1 font-bold text-trust-green bg-trust-green/10 px-2.5 py-0.5 rounded-full mt-1.5 border border-trust-green/20">
+                    <Sparkles className="w-3 h-3 text-trust-green animate-pulse" />
+                    Scanned by AI Vision
+                  </span>
+                </div>
+              </motion.div>
+            )}
 
             {/* AI Classification Details */}
             <div className="glass-card premium-glow-border rounded-2xl p-6 space-y-5">

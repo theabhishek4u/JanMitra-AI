@@ -5,22 +5,18 @@ import { motion } from "framer-motion";
 import {
   BarChart3,
   TrendingUp,
-  MapPin,
   AlertTriangle,
   Building2,
   Brain,
-  Shield,
   Clock,
   ArrowUpRight,
   ArrowDownRight,
   Sparkles,
-  Zap,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Navbar } from "@/components/shared/Navbar";
-import { mockStats, analyticsData } from "@/data/complaints";
+import { analyticsData } from "@/data/complaints";
 
 // Dynamic import to avoid SSR issues with recharts
 const AnalyticsCharts = dynamic(() => import("@/components/admin/AnalyticsCharts"), {

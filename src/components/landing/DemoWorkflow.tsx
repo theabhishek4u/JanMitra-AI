@@ -8,7 +8,6 @@ import {
   FileSearch,
   Send,
   CheckCircle2,
-  ArrowDown,
 } from "lucide-react";
 
 const steps = [

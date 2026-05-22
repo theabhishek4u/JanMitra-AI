@@ -10,15 +10,12 @@ import {
   TrendingUp,
   Brain,
   MapPin,
-  Filter,
   Search,
   ChevronRight,
   Sparkles,
   Building2,
-  Users,
   ArrowUpRight,
   ArrowDownRight,
-  Eye,
   Zap,
   Shield,
 } from "lucide-react";
@@ -26,10 +23,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 import { Navbar } from "@/components/shared/Navbar";
-import { mockComplaints, mockStats, analyticsData } from "@/data/complaints";
+import { mockComplaints, mockStats } from "@/data/complaints";
 
 const statCards = [
   {

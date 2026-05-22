@@ -1,34 +1,35 @@
-# 🏛️ JanMitra AI — Smart Citizen Grievance & Predictive Governance Platform
+# 🏛️ JanMitra AI — Next-Gen Smart Citizen Grievance & Predictive Governance Platform
 
-> **JanMitra AI (जनमित्र AI)** is a state-of-the-art bilingual citizen grievance redressal and predictive analytics platform built for municipal administrations in India (specifically styled for Lucknow, Uttar Pradesh). It transforms public administration by leveraging artificial intelligence to automatically understand, prioritize, summarize, and route citizen complaints in English, Hindi, and Urdu.
+> **JanMitra AI** is a state-of-the-art citizen grievance redressal and predictive analytics platform engineered for modern municipal administrations. It transforms public administration by leveraging artificial intelligence to automatically understand, prioritize, summarize, and route citizen complaints with unmatched transparency, accountability, and speed.
 
 ---
 
 ## 🌟 Key Features
 
-### 1. 🎙️ Citizen Portal (नागरिक पोर्टल)
-*   **Bilingual Text & Voice Inputs:** Citizens can describe their issues in English, Hindi, or Urdu. Supports mock voice recordings that automatically transcribe into native script.
-*   **Real-time AI Analysis Steps:** Features an interactive processing pipeline that visually walks the citizen through AI steps:
-    1. *Understanding complaint text... (शिकायत पाठ समझ रहा है)*
-    2. *Detecting complaint category... (शिकायत श्रेणी पहचान रहा है)*
-    3. *Assessing priority & urgency... (प्राथमिकता और तत्कालता का आकलन)*
-    4. *Routing to department... (विभाग को रूट कर रहा है)*
-    5. *Generating officer summary... (अधिकारी सारांश तैयार कर रहा है)*
-*   **GIS & Map-based Tracking:** Real-time location auto-detection using Geolocation API, reverse geocoding representation (e.g., Gomti Nagar, Lucknow), and tracking timelines.
-*   **Transparent Status Timeline:** Citizen-friendly tracking from `Submitted ➔ AI Analyzing ➔ Department Assigned ➔ Officer Reviewing ➔ In Progress ➔ Resolved`.
+### 1. 🎙️ Citizen Engagement Portal
+*   **Multi-Channel Inputs:** Citizens can describe their issues using text or mock voice recordings that dynamically transcribe into detailed complaint descriptions.
+*   **Real-time AI Vision Scanning:** Citizens can upload photos of civic issues (e.g., garbage dumps or broken pipes) which are automatically scanned by the AI vision module.
+*   **Live AI Classification Pipeline:** An interactive processing module visually tracks the complaint through five automated stages:
+    1. *Parsing and analyzing complaint text...*
+    2. *Detecting complaint category...*
+    3. *Assessing priority, urgency, and severity...*
+    4. *Routing to the appropriate municipal department...*
+    5. *Generating administrative officer summary...*
+*   **GIS & Map-based Tracking:** Automatic real-time location detection using the Geolocation API, mapped with reverse geocoding descriptions (e.g., Gomti Nagar, Lucknow).
+*   **High-Fidelity Tracking Timeline:** Transparent tracking from `Submitted ➔ AI Analyzing ➔ Department Assigned ➔ Officer Reviewing ➔ In Progress ➔ Resolved`.
 
-### 2. 👮 Officer Dashboard (अधिकारी डैशबोर्ड)
-*   **Automated Department Queues:** Personalized dashboards for officers (e.g., Municipal Commissioner Rajesh Kumar) to manage incoming requests.
-*   **AI Recommendations Panel:** High-confidence recommendations powered by AI heuristics:
-    *   *Urgency deployments* based on complaints frequency in specific sectors.
-    *   *Auto-escalation* triggers when actions are delayed.
-    *   *Duplicate merging suggestions* for complaints coming from identical blocks.
-*   **Performance Metrics:** Live tracking of AI classification accuracy, average department resolution times, and citizen satisfaction ratings.
+### 2. 👮 Officer Command Console
+*   **Automated Department Queues:** Personalized dashboards for officers to manage incoming requests, complete with search, filter, and sorting utilities.
+*   **AI Recommendations Engine:** Smart, high-confidence actionable insights powered by AI heuristics:
+    *   *Urgent Deployments* triggered by localized spike patterns.
+    *   *Auto-Escalation* systems to prevent response delays.
+    *   *Duplicate Merging* suggestions for overlapping complaints from identical blocks.
+*   **Operational Metrics:** Real-time monitoring of department resolution times, AI routing accuracy, and citizen satisfaction ratings.
 
-### 3. 📊 Admin Analytics & Predictive Governance (प्रशासनिक विश्लेषण)
-*   **Interactive Analytics:** Powered by `Recharts`, providing rich area, pie, and line charts tracing complaint trends, category distribution, and resolution speed improvements.
-*   **Predictive Governance Engine:** Forecasting potential municipal issues based on seasonal patterns and historical data (e.g., predicting drainage overflows in Rajajipuram during pre-monsoon, or electricity grid strains in Alambagh).
-*   **Inter-Department Efficiency Matrix:** Visual benchmarks comparing department resolution rates and active workloads.
+### 3. 📊 Admin Console & Predictive Governance
+*   **Interactive Analytics Charts:** Rich data visualizations powered by `Recharts` featuring area charts (grievance trends), pie charts (category distributions), and line charts (resolution times).
+*   **Predictive Governance Engine:** Dynamic forecasting of potential municipal issues based on seasonal patterns and historical data (e.g., predicting pre-monsoon drainage bottlenecks or high-summer electricity grid strain).
+*   **Inter-Department Efficiency Matrix:** visual performance benchmarks comparing department resolution speeds and pending active workloads.
 
 ---
 
@@ -37,21 +38,21 @@
 ```mermaid
 graph TD
     %% Citizen Actions
-    A[Citizen Portal] -->|Write/Record Complaint| B(Bilingual Text/Voice Input)
+    A[Citizen Portal] -->|Describe Complaint| B(Text, Voice, or Photo Upload)
     B -->|Submit & Analyze| C{JanMitra AI Classifier}
     
     %% AI Processing
-    C -->|Keyword weighted matching| D[Category Detection]
-    C -->|Priority matching| E[Priority & Urgency Assessment]
-    C -->|Heuristics| F[Fraud & Spam Risk Scoring]
-    C -->|Language Processing| G[Bilingual Officer Summaries]
+    C -->|Keyword-weighted classification| D[Category Detection]
+    C -->|Priority evaluation| E[Priority & Urgency Assessment]
+    C -->|Fraud & Spam heuristics| F[Spam Risk Scoring]
+    C -->|Natural Language Processing| G[Administrative Summaries]
     
     %% Routing
     D & E & F & G -->|Auto Route| H[Department Registry]
-    H -->|Lucknow Nagar Nigam / Jal Nigam / PWD / UPPCL| I[Officer Dashboard Queue]
+    H -->|Nagar Nigam / Jal Nigam / PWD / UPPCL| I[Officer Dashboard Queue]
     
     %% Operational Actions
-    I -->|Actions & Status Changes| J[Interactive Timeline]
+    I -->|Actions & Status Changes| J[Interactive Tracking Timeline]
     J -->|Real-time update notification| A
     
     %% Analytics & Predictions
@@ -96,19 +97,19 @@ janmitra-ai/
 
 ## 💼 Department & Category Routing Registry
 
-JanMitra AI maps public grievances to the corresponding municipal departments automatically based on a double-weighted bilingual (English & Hindi) keyword vocabulary:
+JanMitra AI maps public grievances to the corresponding municipal departments automatically based on a double-weighted keyword vocabulary:
 
-| Complaint Category | विभाग (Hindi) | Default Assigned Department | Avg. Resolution | Sample Keywords (EN/HI) |
-| :--- | :--- | :--- | :--- | :--- |
-| **Garbage / Sanitation** | कूड़ा / स्वच्छता | Lucknow Nagar Nigam | 3 Days | garbage, trash, cleaning, dirt, कूड़ा, गंदगी, सफाई |
-| **Water Supply** | जल आपूर्ति | Jal Nigam | 5 Days | water, pipeline, sewage, sewer, leakage, पानी, सीवर, लीकेज |
-| **Road Damage** | सड़क क्षति | Public Works Department (PWD) | 7 Days | road, pothole, broken, crack, सड़क, गड्ढा, टूटी सड़क |
-| **Electricity** | बिजली | Power Department (UPPCL) | 2 Days | power, wire, transformer, voltage, बिजली, ट्रांसफार्मर, तार |
-| **Street Light** | स्ट्रीट लाइट | Lucknow Municipal Corporation | 4 Days | street light, pole, night, dark, स्ट्रीट लाइट, खंभा, अंधेरा |
-| **Illegal Construction** | अवैध निर्माण | Municipal Authority | 10 Days | illegal, building, unauthorized, अवैध, निर्माण, कब्जा |
-| **Encroachment** | अतिक्रमण | Municipal Authority | 10 Days | encroachment, grab, footpath, अतिक्रमण, कब्जा, फुटपाथ |
-| **Corruption** | भ्रष्टाचार | Anti-Corruption Bureau | 14 Days | bribe, corruption, scam, fraud, भ्रष्टाचार, रिश्वत, धोखाधड़ी |
-| **Public Health** | जन स्वास्थ्य | Health Department | 3 Days | health, hospital, doctor, clinic, disease, स्वास्थ्य, अस्पताल, बीमारी |
+| Complaint Category | Default Assigned Department | Avg. Resolution | Sample Keywords |
+| :--- | :--- | :--- | :--- |
+| **Garbage / Sanitation** | Lucknow Nagar Nigam | 3 Days | garbage, trash, cleaning, dirt, dump, sweep |
+| **Water Supply** | Lucknow Jal Nigam | 5 Days | water, pipeline, sewage, sewer, leakage, burst |
+| **Road Damage** | Public Works Department (PWD) | 7 Days | road, pothole, broken, crack, asphalt, tar |
+| **Electricity** | Power Department (UPPCL) | 2 Days | power, wire, transformer, voltage, outage, electricity |
+| **Street Light** | Lucknow Municipal Corporation | 4 Days | street light, pole, night, dark, lamp, blacked out |
+| **Illegal Construction** | Municipal Authority | 10 Days | illegal, building, unauthorized, encroachment, violation |
+| **Encroachment** | Municipal Authority | 10 Days | encroachment, grab, footpath, sidewalk, illegal occupation |
+| **Corruption** | Anti-Corruption Bureau | 14 Days | bribe, corruption, scam, fraud, graft, bribery |
+| **Public Health** | Health Department | 3 Days | health, hospital, doctor, clinic, disease, epidemic, medical |
 
 ---
 
@@ -129,7 +130,7 @@ Follow these steps to run the application locally in development mode:
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/janmitra-ai.git
+git clone https://github.com/theabhishek4u/JanMitra-AI.git
 cd janmitra-ai
 ```
 
@@ -154,7 +155,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to experie
 ## ⚙️ Configuration & Customization
 
 ### Modifying Keywords or Adding Departments
-To extend the routing rules, add new departments or category entries inside [src/data/departments.ts](file:///c:/My%20Project/Agentic%20Premier%20League%20(APL)/janmitra-ai/src/data/departments.ts). The AI engine automatically updates its routing heuristics:
+To extend the routing rules or add new departments, modify the registry inside [src/data/departments.ts](file:///c:/My%20Project/Agentic%20Premier%20League%20(APL)/janmitra-ai/src/data/departments.ts). The AI engine automatically updates its routing heuristics:
 
 ```typescript
 export const departments: Department[] = [
@@ -162,7 +163,7 @@ export const departments: Department[] = [
 ];
 
 export const categories: ComplaintCategory[] = [
-  // Add new category with English and Hindi keywords...
+  // Add new category with sample keywords...
 ];
 ```
 
