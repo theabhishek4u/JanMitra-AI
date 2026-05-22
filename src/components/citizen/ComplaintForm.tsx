@@ -125,53 +125,53 @@ export function ComplaintForm() {
             className="space-y-6"
           >
             {/* Complaint text */}
-            <div className="glass-card rounded-2xl p-6 space-y-4">
-              <div className="flex items-center gap-2 mb-2">
+            <div className="glass-card premium-glow-border rounded-2xl p-6 sm:p-8 space-y-4">
+              <div className="flex items-center gap-2 mb-1">
                 <FileText className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold">Describe Your Complaint</h3>
-                <span className="text-xs text-muted-foreground">(English Supported)</span>
+                <h3 className="font-bold text-base text-foreground/90">Describe Your Complaint</h3>
+                <span className="text-xs text-muted-foreground/80">(English Supported)</span>
               </div>
 
               <Textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="Write your complaint here..."
-                className="min-h-[120px] text-base resize-none border-2 focus:border-primary/40 transition-colors"
+                placeholder="Describe the issue in detail (e.g., Streetlight broken on Main Road Gomti Nagar for 3 days...)"
+                className="min-h-[140px] text-base resize-none border border-border/40 focus:border-primary/60 focus:ring-1 focus:ring-primary/40 rounded-xl transition-all duration-300 placeholder:text-muted-foreground/60 bg-background/30"
               />
 
               {/* Voice & Upload row */}
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 pt-1">
                 <Button
                   variant={isRecording ? "destructive" : "outline"}
                   size="sm"
                   onClick={toggleRecording}
-                  className="gap-2"
+                  className="gap-2 rounded-xl transition-all font-semibold active:scale-95"
                 >
                   {isRecording ? (
                     <>
-                      <MicOff className="w-4 h-4" />
-                      <span className="animate-pulse">Recording...</span>
+                      <MicOff className="w-4 h-4 text-white" />
+                      <span className="animate-pulse text-white">Recording...</span>
                     </>
                   ) : (
                     <>
-                      <Mic className="w-4 h-4" />
+                      <Mic className="w-4 h-4 text-primary" />
                       Voice Input
                     </>
                   )}
                 </Button>
 
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Upload className="w-4 h-4" />
+                <Button variant="outline" size="sm" className="gap-2 rounded-xl font-semibold transition-all">
+                  <Upload className="w-4 h-4 text-muted-foreground" />
                   Upload Photo
                 </Button>
 
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-2 ml-auto"
+                  className="gap-2 ml-auto rounded-xl font-semibold transition-all hover:bg-primary/5 active:scale-95"
                   onClick={detectLocation}
                 >
-                  <MapPin className="w-4 h-4" />
+                  <MapPin className="w-4 h-4 text-primary" />
                   {location ? location.area : "Detect Location"}
                 </Button>
               </div>
@@ -180,17 +180,17 @@ export function ComplaintForm() {
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
-                  className="flex items-center gap-2 text-sm text-trust-green"
+                  className="flex items-center gap-2 text-xs font-semibold text-trust-green pt-1"
                 >
-                  <CheckCircle2 className="w-4 h-4" />
-                  Location detected: {location.area}
+                  <span className="w-2 h-2 rounded-full bg-trust-green animate-ping" />
+                  Location successfully pinned: {location.area}
                 </motion.div>
               )}
             </div>
 
             {/* Personal details */}
-            <div className="glass-card rounded-2xl p-6 space-y-4">
-              <h3 className="font-semibold flex items-center gap-2">
+            <div className="glass-card rounded-2xl p-6 sm:p-7 space-y-4">
+              <h3 className="font-bold text-base text-foreground/90 flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-primary" />
                 Your Details
               </h3>
@@ -199,13 +199,13 @@ export function ComplaintForm() {
                   placeholder="Your Name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="border-2 focus:border-primary/40"
+                  className="border border-border/40 focus:border-primary/60 focus:ring-1 focus:ring-primary/40 rounded-xl bg-background/30 h-11"
                 />
                 <Input
                   placeholder="Phone Number"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="border-2 focus:border-primary/40"
+                  className="border border-border/40 focus:border-primary/60 focus:ring-1 focus:ring-primary/40 rounded-xl bg-background/30 h-11"
                 />
               </div>
             </div>
@@ -214,9 +214,9 @@ export function ComplaintForm() {
             <Button
               onClick={handleSubmit}
               disabled={!text.trim()}
-              className="w-full h-12 bg-gradient-to-r from-gov-blue to-gov-blue-light text-white shadow-lg shadow-gov-blue/25 text-base font-semibold group"
+              className="w-full h-12 rounded-xl bg-gradient-to-r from-gov-blue to-gov-blue-light text-white shadow-xl shadow-gov-blue/20 hover:shadow-gov-blue/45 hover:scale-[1.01] active:scale-98 transition-all duration-300 text-base font-bold group"
             >
-              <Brain className="w-5 h-5 mr-2" />
+              <Brain className="w-5 h-5 mr-2 animate-bounce" />
               Submit & Analyze with AI
               <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
@@ -227,52 +227,70 @@ export function ComplaintForm() {
         {step === "processing" && (
           <motion.div
             key="processing"
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="glass-card rounded-2xl p-8 text-center space-y-6"
+            exit={{ opacity: 0, scale: 0.96 }}
+            className="glass-card rounded-2xl p-8 sm:p-10 text-center space-y-6 scanning-laser-container neon-glow-ai"
           >
             <motion.div
-              className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-ai-purple/20 to-gov-blue/20 border border-ai-purple/30 flex items-center justify-center"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-ai-purple/20 via-primary/10 to-gov-blue/20 border border-ai-purple/30 flex items-center justify-center shadow-lg"
+              animate={{ 
+                rotate: 360,
+                boxShadow: ["0 0 0 0px rgba(124, 58, 237, 0.2)", "0 0 0 12px rgba(124, 58, 237, 0)", "0 0 0 0px rgba(124, 58, 237, 0.2)"]
+              }}
+              transition={{ 
+                rotate: { duration: 6, repeat: Infinity, ease: "linear" },
+                boxShadow: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+              }}
             >
-              <Brain className="w-10 h-10 text-ai-purple" />
+              <Brain className="w-10 h-10 text-ai-purple animate-pulse" />
             </motion.div>
 
-            <div>
-              <h3 className="text-xl font-bold mb-1">AI is Analyzing Your Complaint</h3>
-              <p className="text-sm text-muted-foreground">Classifying categories, detecting urgency & routing in real-time...</p>
+            <div className="space-y-1">
+              <h3 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-gov-blue to-ai-purple bg-clip-text text-transparent">AI is Analyzing Your Complaint</h3>
+              <p className="text-sm text-muted-foreground/80">Classifying categories, detecting urgency & routing in real-time...</p>
             </div>
 
-            <div className="max-w-md mx-auto space-y-3">
+            <div className="max-w-md mx-auto space-y-3 pt-3">
               {processingSteps.map((s, i) => (
                 <motion.div
                   key={i}
-                  className={`flex items-center gap-3 text-sm transition-all duration-300 ${
+                  className={`flex items-center gap-3 text-sm transition-all duration-300 font-medium ${
                     processingStep > i
                       ? "text-trust-green"
                       : processingStep === i
-                      ? "text-foreground"
-                      : "text-muted-foreground/40"
+                      ? "text-ai-purple scale-[1.02]"
+                      : "text-muted-foreground/35"
                   }`}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 }}
+                  transition={{ delay: i * 0.08 }}
                 >
                   {processingStep > i ? (
-                    <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                    <div className="w-5 h-5 rounded-full bg-trust-green/10 flex items-center justify-center text-trust-green flex-shrink-0">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                    </div>
                   ) : processingStep === i ? (
-                    <Loader2 className="w-4 h-4 flex-shrink-0 animate-spin" />
+                    <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+                      <Loader2 className="w-4 h-4 text-ai-purple animate-spin" />
+                    </div>
                   ) : (
-                    <div className="w-4 h-4 rounded-full border border-current flex-shrink-0" />
+                    <div className="w-5 h-5 rounded-full border border-current/30 flex-shrink-0 flex items-center justify-center" />
                   )}
                   <span>{s.label}</span>
                 </motion.div>
               ))}
             </div>
 
-            <Progress value={(processingStep / 5) * 100} className="h-2 max-w-md mx-auto" />
+            {/* Glowing Gradient Custom Progress Bar */}
+            <div className="max-w-md mx-auto h-2 bg-muted/50 rounded-full overflow-hidden p-0.5 border border-border/20">
+              <motion.div 
+                className="h-full bg-gradient-to-r from-gov-blue via-ai-purple to-trust-green rounded-full shadow-[0_0_8px_rgba(124,58,237,0.4)]"
+                initial={{ width: 0 }}
+                animate={{ width: `${(processingStep / 5) * 100}%` }}
+                transition={{ duration: 0.4 }}
+              />
+            </div>
           </motion.div>
         )}
 
@@ -282,99 +300,103 @@ export function ComplaintForm() {
             key="result"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-4"
+            className="space-y-5"
           >
             {/* Success banner */}
             <motion.div
-              className="glass-card rounded-2xl p-6 border-trust-green/30 bg-trust-green/5"
-              initial={{ scale: 0.95 }}
+              className="glass-premium rounded-2xl p-6 border-l-4 border-l-trust-green neon-glow-success bg-trust-green/5"
+              initial={{ scale: 0.96 }}
               animate={{ scale: 1 }}
             >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-xl bg-trust-green/10 flex items-center justify-center">
+              <div className="flex items-center gap-4">
+                <motion.div 
+                  className="w-12 h-12 rounded-xl bg-trust-green/10 flex items-center justify-center flex-shrink-0"
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 1.5, repeat: 2 }}
+                >
                   <CheckCircle2 className="w-6 h-6 text-trust-green" />
-                </div>
+                </motion.div>
                 <div>
-                  <h3 className="font-bold text-lg">Complaint Registered Successfully!</h3>
-                  <p className="text-sm text-muted-foreground">
-                    ID: JM-2026-011 • Track your complaint status anytime
+                  <h3 className="font-bold text-lg text-foreground/90">Complaint Registered Successfully!</h3>
+                  <p className="text-sm text-muted-foreground/80">
+                    ID: <span className="font-mono font-bold text-foreground">JM-2026-011</span> • Track progress in real-time
                   </p>
                 </div>
               </div>
             </motion.div>
 
             {/* AI Classification Details */}
-            <div className="glass-card rounded-2xl p-6 space-y-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="w-5 h-5 text-ai-purple" />
-                <h3 className="font-semibold">AI Classification Results</h3>
-                <Badge variant="outline" className="ml-auto text-xs">
+            <div className="glass-card premium-glow-border rounded-2xl p-6 space-y-5">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-ai-purple animate-pulse" />
+                <h3 className="font-bold text-base text-foreground/90">AI Classification Results</h3>
+                <Badge variant="outline" className="ml-auto text-xs border-ai-purple/35 text-ai-purple bg-ai-purple/5 font-semibold">
                   {Math.round(classification.confidence * 100)}% Confidence
                 </Badge>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Category</div>
-                  <div className="font-semibold">{classification.category}</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-muted/30 rounded-xl p-4 border border-border/20 transition-all hover:bg-muted/40">
+                  <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Category</div>
+                  <div className="font-bold text-sm text-foreground/90">{classification.category}</div>
                 </div>
 
-                <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Priority</div>
+                <div className="bg-muted/30 rounded-xl p-4 border border-border/20 transition-all hover:bg-muted/40">
+                  <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Priority</div>
                   <div className="flex items-center gap-2">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold priority-${classification.priority}`}>
-                      {classification.priority === "high" && <AlertTriangle className="w-3 h-3" />}
-                      {classification.priority === "medium" && <Clock className="w-3 h-3" />}
-                      {classification.priority === "low" && <CheckCircle2 className="w-3 h-3" />}
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold priority-${classification.priority}`}>
+                      {classification.priority === "high" && <AlertTriangle className="w-3.5 h-3.5" />}
+                      {classification.priority === "medium" && <Clock className="w-3.5 h-3.5" />}
+                      {classification.priority === "low" && <CheckCircle2 className="w-3.5 h-3.5" />}
                       {classification.priority.toUpperCase()}
                     </span>
                   </div>
                 </div>
 
-                <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Department</div>
-                  <div className="font-semibold flex items-center gap-1.5">
+                <div className="bg-muted/30 rounded-xl p-4 border border-border/20 transition-all hover:bg-muted/40">
+                  <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Department</div>
+                  <div className="font-bold text-sm text-foreground/90 flex items-center gap-1.5">
                     <Building2 className="w-4 h-4 text-gov-blue" />
                     {classification.department}
                   </div>
                 </div>
 
-                <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Est. Resolution</div>
-                  <div className="font-semibold">{classification.predictedResolutionDays} days</div>
-                  <div className="text-xs text-muted-foreground">{classification.urgency}</div>
+                <div className="bg-muted/30 rounded-xl p-4 border border-border/20 transition-all hover:bg-muted/40">
+                  <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Est. Resolution</div>
+                  <div className="font-bold text-sm text-foreground/90">{classification.predictedResolutionDays} days</div>
+                  <div className="text-[11px] text-muted-foreground/80 font-medium">{classification.urgency}</div>
                 </div>
               </div>
             </div>
 
             {/* AI Summary */}
-            <div className="glass-card rounded-2xl p-6">
+            <div className="glass-card rounded-2xl p-6 bg-ai-purple/3 border border-ai-purple/10">
               <div className="flex items-center gap-2 mb-3">
                 <Brain className="w-5 h-5 text-ai-purple" />
-                <h3 className="font-semibold">AI Officer Summary</h3>
+                <h3 className="font-bold text-base text-foreground/90">AI Officer Summary</h3>
               </div>
-              <div className="bg-ai-purple/5 rounded-xl p-4 border border-ai-purple/15 text-sm leading-relaxed">
+              <div className="bg-background/40 rounded-xl p-4 border border-ai-purple/15 text-sm leading-relaxed text-foreground/90 font-medium shadow-inner">
                 {classification.summary}
               </div>
             </div>
 
             {/* Citizen notification */}
-            <div className="glass-card rounded-2xl p-5 border-gov-blue/20 bg-gov-blue/5">
-              <div className="flex items-center gap-2 text-sm">
-                <Send className="w-4 h-4 text-gov-blue" />
-                <span className="font-medium">Notification sent:</span>
+            <div className="glass-card rounded-2xl p-5 border-l-4 border-l-gov-blue bg-gov-blue/5">
+              <div className="flex items-center gap-2 text-sm text-gov-blue font-bold">
+                <Send className="w-4 h-4" />
+                <span>Notification sent:</span>
               </div>
-              <p className="text-sm mt-2 text-muted-foreground">
+              <p className="text-xs sm:text-sm mt-2 text-muted-foreground leading-relaxed font-semibold">
                 &ldquo;Your complaint has been successfully forwarded to {classification.department}. Complaint ID: JM-2026-011&rdquo;
               </p>
             </div>
 
             {/* Action buttons */}
-            <div className="flex gap-3">
-              <Button onClick={reset} variant="outline" className="flex-1">
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <Button onClick={reset} variant="outline" className="flex-1 rounded-xl h-11 font-bold text-sm">
                 File Another Complaint
               </Button>
-              <Button className="flex-1 bg-gradient-to-r from-gov-blue to-gov-blue-light text-white">
+              <Button className="flex-1 rounded-xl h-11 font-bold text-sm bg-gradient-to-r from-gov-blue to-gov-blue-light text-white shadow-lg shadow-gov-blue/20">
                 Track This Complaint
               </Button>
             </div>

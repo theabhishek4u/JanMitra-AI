@@ -24,68 +24,79 @@ const statusConfig: Record<ComplaintStatus, { icon: React.ElementType; color: st
 
 export function TrackingTimeline({ events }: { events: TimelineEvent[] }) {
   return (
-    <div className="relative">
-      {/* Vertical line */}
-      <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-gradient-to-b from-gov-blue via-ai-purple to-trust-green" />
+    <div className="relative pl-2">
+      {/* Premium Thick Neon Trace Pipe */}
+      <div className="absolute left-[27px] top-2 bottom-2 w-[3px] rounded-full bg-gradient-to-b from-gov-blue via-ai-purple to-trust-green opacity-90 shadow-[0_0_12px_rgba(124,58,237,0.35)]" />
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         {events.map((event, i) => {
           const config = statusConfig[event.status];
           const Icon = config.icon;
-          const isLast = i === events.length - 1;
 
           return (
             <motion.div
               key={event.id}
-              className="relative flex gap-4"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.15, duration: 0.4 }}
+              className="relative flex gap-5 items-start"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.12, duration: 0.5, ease: "easeOut" }}
             >
-              {/* Node */}
+              {/* Pulse & Glow Timeline Node */}
               <div className="relative z-10 flex-shrink-0">
                 <motion.div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md"
+                  className="w-[38px] h-[38px] rounded-xl flex items-center justify-center transition-shadow shadow-lg"
                   style={{
                     background: event.isActive
                       ? `linear-gradient(135deg, ${config.color}, ${config.color}CC)`
-                      : `${config.color}15`,
-                    border: `2px solid ${config.color}${event.isActive ? "" : "30"}`,
+                      : `var(--card)`,
+                    border: `2px solid ${event.isActive ? 'transparent' : config.color + '40'}`,
                   }}
                   animate={
                     event.isActive
-                      ? { scale: [1, 1.08, 1], boxShadow: [`0 0 0 0 ${config.color}00`, `0 0 0 8px ${config.color}20`, `0 0 0 0 ${config.color}00`] }
+                      ? { 
+                          scale: [1, 1.08, 1],
+                          boxShadow: [
+                            `0 0 0 0px ${config.color}40`,
+                            `0 0 0 10px ${config.color}15`,
+                            `0 0 0 0px ${config.color}40`
+                          ]
+                        }
                       : {}
                   }
-                  transition={event.isActive ? { duration: 2, repeat: Infinity } : {}}
+                  transition={
+                    event.isActive 
+                      ? { duration: 2.2, repeat: Infinity, ease: "easeInOut" } 
+                      : {}
+                  }
                 >
                   <Icon
-                    className="w-4 h-4"
+                    className={`w-[18px] h-[18px] ${event.isActive ? 'animate-pulse' : ''}`}
                     style={{ color: event.isActive ? "white" : config.color }}
                   />
                 </motion.div>
               </div>
 
-              {/* Content */}
+              {/* High-Fidelity Glassmorphic Detail Card */}
               <div
-                className={`flex-1 rounded-xl p-4 transition-all ${
+                className={`flex-1 rounded-2xl p-4.5 transition-all duration-300 transform premium-glow-border ${
                   event.isActive
-                    ? "glass-card border-l-4"
-                    : "bg-muted/30 border border-border/30"
+                    ? "glass-premium border-l-[5px] active active-glow"
+                    : "glass-card hover:bg-muted/10"
                 }`}
                 style={event.isActive ? { borderLeftColor: config.color } : {}}
               >
-                <div className="flex items-center justify-between gap-2 mb-1">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                   <span
-                    className="text-xs font-bold px-2 py-0.5 rounded-md"
+                    className="text-[11px] font-bold tracking-wide uppercase px-2.5 py-0.5 rounded-full border"
                     style={{
-                      background: `${config.color}15`,
+                      background: `${config.color}0D`,
                       color: config.color,
+                      borderColor: `${config.color}25`,
                     }}
                   >
                     {config.label}
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs font-medium text-muted-foreground/80">
                     {new Date(event.timestamp).toLocaleString("en-IN", {
                       day: "numeric",
                       month: "short",
@@ -94,7 +105,7 @@ export function TrackingTimeline({ events }: { events: TimelineEvent[] }) {
                     })}
                   </span>
                 </div>
-                <p className="text-sm text-foreground/90">{event.message}</p>
+                <p className="text-sm text-foreground/90 leading-relaxed font-sans">{event.message}</p>
               </div>
             </motion.div>
           );

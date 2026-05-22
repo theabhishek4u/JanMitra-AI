@@ -38,10 +38,12 @@ export default function AnalyticsCharts({ data }: Props) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Card className="glass-card border-0">
+          <Card className="glass-premium border border-border/30 shadow-xl shadow-black/5 premium-glow-border relative overflow-hidden transition-all duration-300 hover:scale-[1.005]">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-gov-blue" />
+              <CardTitle className="text-lg flex items-center gap-2 font-bold text-foreground/90">
+                <div className="w-7 h-7 rounded-lg bg-gov-blue/10 flex items-center justify-center">
+                  <TrendingUp className="w-4 h-4 text-gov-blue-light" />
+                </div>
                 Complaint Trends
               </CardTitle>
             </CardHeader>
@@ -58,14 +60,15 @@ export default function AnalyticsCharts({ data }: Props) {
                       <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                   <XAxis dataKey="date" stroke="var(--muted-foreground)" fontSize={12} />
                   <YAxis stroke="var(--muted-foreground)" fontSize={12} />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "var(--card)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "12px",
+                      backgroundColor: "rgba(15, 23, 42, 0.9)",
+                      backdropFilter: "blur(12px)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: "16px",
                       fontSize: 13,
                     }}
                   />
@@ -75,7 +78,7 @@ export default function AnalyticsCharts({ data }: Props) {
                     dataKey="count"
                     stroke="#3B82F6"
                     fill="url(#colorCount)"
-                    strokeWidth={2}
+                    strokeWidth={2.5}
                     name="Filed"
                   />
                   <Area
@@ -83,7 +86,7 @@ export default function AnalyticsCharts({ data }: Props) {
                     dataKey="resolved"
                     stroke="#10B981"
                     fill="url(#colorResolved)"
-                    strokeWidth={2}
+                    strokeWidth={2.5}
                     name="Resolved"
                   />
                 </AreaChart>
@@ -99,10 +102,12 @@ export default function AnalyticsCharts({ data }: Props) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <Card className="glass-card border-0">
+          <Card className="glass-premium border border-border/30 shadow-xl shadow-black/5 premium-glow-border relative overflow-hidden transition-all duration-300 hover:scale-[1.005]">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <PieChartIcon className="w-5 h-5 text-ai-purple" />
+              <CardTitle className="text-lg flex items-center gap-2 font-bold text-foreground/90">
+                <div className="w-7 h-7 rounded-lg bg-ai-purple/10 flex items-center justify-center">
+                  <PieChartIcon className="w-4 h-4 text-ai-purple-light" />
+                </div>
                 Categories
               </CardTitle>
             </CardHeader>
@@ -114,8 +119,8 @@ export default function AnalyticsCharts({ data }: Props) {
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={2}
+                    outerRadius={95}
+                    paddingAngle={3}
                     dataKey="value"
                   >
                     {data.categoryDistribution.map((entry, index) => (
@@ -124,21 +129,22 @@ export default function AnalyticsCharts({ data }: Props) {
                   </Pie>
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "var(--card)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "12px",
+                      backgroundColor: "rgba(15, 23, 42, 0.9)",
+                      backdropFilter: "blur(12px)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: "16px",
                       fontSize: 13,
                     }}
                   />
                 </PieChart>
               </ResponsiveContainer>
               {/* Legend grid */}
-              <div className="grid grid-cols-2 gap-1 mt-2">
+              <div className="grid grid-cols-2 gap-2 mt-2 px-1">
                 {data.categoryDistribution.map((cat) => (
-                  <div key={cat.name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: cat.color }} />
+                  <div key={cat.name} className="flex items-center gap-2 text-xs text-muted-foreground/90 font-semibold">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
                     <span>{cat.name}</span>
-                    <span className="ml-auto font-medium text-foreground">{cat.value}</span>
+                    <span className="ml-auto font-extrabold text-foreground/90">{cat.value}</span>
                   </div>
                 ))}
               </div>
@@ -153,24 +159,27 @@ export default function AnalyticsCharts({ data }: Props) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
       >
-        <Card className="glass-card border-0">
+        <Card className="glass-premium border border-border/30 shadow-xl shadow-black/5 premium-glow-border relative overflow-hidden transition-all duration-300 hover:scale-[1.002]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Activity className="w-5 h-5 text-trust-green" />
+            <CardTitle className="text-lg flex items-center gap-2 font-bold text-foreground/90">
+              <div className="w-7 h-7 rounded-lg bg-trust-green/10 flex items-center justify-center">
+                <Activity className="w-4 h-4 text-trust-green" />
+              </div>
               Resolution Speed Improvement
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={data.resolutionSpeed}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                 <XAxis dataKey="month" stroke="var(--muted-foreground)" fontSize={12} />
                 <YAxis stroke="var(--muted-foreground)" fontSize={12} unit="h" />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "var(--card)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "12px",
+                    backgroundColor: "rgba(15, 23, 42, 0.9)",
+                    backdropFilter: "blur(12px)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: "16px",
                     fontSize: 13,
                   }}
                 />
@@ -178,7 +187,7 @@ export default function AnalyticsCharts({ data }: Props) {
                   type="monotone"
                   dataKey="avgHours"
                   stroke="#10B981"
-                  strokeWidth={3}
+                  strokeWidth={3.5}
                   dot={{ fill: "#10B981", strokeWidth: 2, r: 5 }}
                   name="Avg Hours"
                 />

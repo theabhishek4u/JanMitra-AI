@@ -81,37 +81,38 @@ export default function CitizenDashboard() {
                   </h3>
                   {mockComplaints.map((c, i) => {
                     const PIcon = priorityIcon[c.priority];
+                    const isActive = selectedComplaint === c.id;
                     return (
                       <motion.div
                         key={c.id}
-                        className={`glass-card rounded-xl p-4 cursor-pointer transition-all ${
-                          selectedComplaint === c.id
-                            ? "ring-2 ring-primary/40 border-primary/30"
-                            : ""
+                        className={`glass-card rounded-2xl p-4.5 cursor-pointer transition-all duration-300 border-l-[4px] premium-glow-border ${
+                          isActive
+                            ? "active active-glow-primary border-l-primary scale-[1.01] shadow-lg shadow-primary/5 bg-primary/[0.02]"
+                            : "border-l-transparent hover:border-l-border"
                         }`}
                         onClick={() => setSelectedComplaint(c.id)}
-                        initial={{ opacity: 0, y: 10 }}
+                        initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.05 }}
+                        transition={{ delay: i * 0.08, ease: "easeOut" }}
                       >
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <span className="text-xs font-mono text-muted-foreground">
+                        <div className="flex items-start justify-between gap-2 mb-2.5">
+                          <span className="text-xs font-mono font-bold text-muted-foreground/70">
                             {c.id}
                           </span>
                           <Badge
                             variant="outline"
-                            className={`text-xs priority-${c.priority}`}
+                            className={`text-[10px] uppercase font-bold tracking-wider priority-${c.priority}`}
                           >
                             <PIcon className="w-3 h-3 mr-1" />
                             {c.priority}
                           </Badge>
                         </div>
-                        <h4 className="font-medium text-sm mb-1 line-clamp-1">
+                        <h4 className="font-bold text-sm text-foreground/90 mb-1.5 line-clamp-1 leading-snug">
                           {c.title}
                         </h4>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground/80 font-medium">
                           <span
-                            className="w-2 h-2 rounded-full"
+                            className="w-2.5 h-2.5 rounded-full flex-shrink-0 animate-pulse"
                             style={{
                               backgroundColor:
                                 c.status === "resolved"
@@ -124,7 +125,7 @@ export default function CitizenDashboard() {
                           <span className="capitalize">
                             {c.status.replace(/_/g, " ")}
                           </span>
-                          <span className="ml-auto">
+                          <span className="ml-auto font-semibold">
                             {c.area}
                           </span>
                         </div>
@@ -132,53 +133,56 @@ export default function CitizenDashboard() {
                     );
                   })}
                 </div>
-
+ 
                 {/* Complaint Detail */}
                 <div className="lg:col-span-3">
                   {complaint ? (
                     <motion.div
                       key={complaint.id}
-                      initial={{ opacity: 0, x: 20 }}
+                      initial={{ opacity: 0, x: 15 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="space-y-4"
+                      className="space-y-5"
                     >
                       {/* Header card */}
-                      <div className="glass-card rounded-2xl p-6">
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="font-mono text-sm text-muted-foreground">
+                      <div className="glass-premium rounded-2xl p-6 relative overflow-hidden">
+                        {/* Soft decorative background orb */}
+                        <div className="absolute -right-12 -top-12 w-28 h-28 bg-primary/5 rounded-full filter blur-xl pointer-events-none" />
+                        
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="font-mono text-sm font-bold text-muted-foreground/70">
                             {complaint.id}
                           </span>
-                          <Badge className={`priority-${complaint.priority}`}>
+                          <Badge className={`priority-${complaint.priority} font-bold text-xs uppercase px-2.5 py-0.5`}>
                             {complaint.priority.toUpperCase()} PRIORITY
                           </Badge>
                         </div>
-                        <h2 className="text-xl font-bold mb-2">{complaint.title}</h2>
-                        <p className="text-sm text-muted-foreground mb-4">
+                        <h2 className="text-2xl font-bold tracking-tight text-foreground/90 mb-3">{complaint.title}</h2>
+                        <p className="text-sm text-muted-foreground/90 leading-relaxed mb-5">
                           {complaint.description}
                         </p>
-
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="bg-muted/40 rounded-lg p-3">
-                            <div className="text-xs text-muted-foreground">Department</div>
-                            <div className="font-medium text-sm">{complaint.department}</div>
+ 
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="bg-muted/30 rounded-xl p-4 border border-border/20">
+                            <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Department</div>
+                            <div className="font-bold text-sm text-foreground/90">{complaint.department}</div>
                           </div>
-                          <div className="bg-muted/40 rounded-lg p-3">
-                            <div className="text-xs text-muted-foreground">Area</div>
-                            <div className="font-medium text-sm">{complaint.area}</div>
+                          <div className="bg-muted/30 rounded-xl p-4 border border-border/20">
+                            <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Area</div>
+                            <div className="font-bold text-sm text-foreground/90">{complaint.area}</div>
                           </div>
                         </div>
                       </div>
-
+ 
                       {/* AI Summary */}
-                      <div className="glass-card rounded-2xl p-5">
+                      <div className="glass-card rounded-2xl p-6 bg-ai-purple/3 border border-ai-purple/10">
                         <div className="flex items-center gap-2 mb-3">
-                          <Bot className="w-4 h-4 text-ai-purple" />
-                          <span className="font-semibold text-sm">AI Summary</span>
-                          <Badge variant="outline" className="text-xs ml-auto">
-                            {Math.round(complaint.aiConfidence * 100)}% confidence
+                          <Bot className="w-5 h-5 text-ai-purple animate-pulse" />
+                          <span className="font-bold text-sm text-foreground/90">AI Officer Summary</span>
+                          <Badge variant="outline" className="text-xs ml-auto border-ai-purple/30 text-ai-purple bg-ai-purple/5 font-semibold">
+                            {Math.round(complaint.aiConfidence * 100)}% Confidence
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
+                        <p className="text-sm text-foreground/80 leading-relaxed font-semibold bg-background/40 border border-ai-purple/10 rounded-xl p-4 shadow-inner">
                           {complaint.aiSummary}
                         </p>
                       </div>

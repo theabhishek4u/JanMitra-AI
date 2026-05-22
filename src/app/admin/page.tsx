@@ -95,33 +95,45 @@ export default function AdminDashboard() {
 
           {/* Stats Row */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            {adminStats.map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <Card className="glass-card border-0">
-                  <CardContent className="p-5">
-                    <div className="flex items-center justify-between mb-3">
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center"
-                        style={{ background: `${stat.color}12`, border: `1px solid ${stat.color}20` }}
-                      >
-                        <stat.icon className="w-5 h-5" style={{ color: stat.color }} />
+            {adminStats.map((stat, i) => {
+              const glowClass = 
+                stat.label === "Total Complaints" ? "hover:neon-glow-primary border-gov-blue/20 hover:border-gov-blue/40" :
+                stat.label === "Resolution Rate" ? "hover:neon-glow-success border-trust-green/20 hover:border-trust-green/40" :
+                stat.label === "Avg Resolution" ? "hover:neon-glow-ai border-ai-purple/20 hover:border-ai-purple/40" :
+                "hover:shadow-[0_0_15px_-3px_rgba(239,68,68,0.35)] border-danger-red/20 hover:border-danger-red/40";
+              
+              return (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <Card className={`glass-premium border premium-glow-border relative overflow-hidden transition-all duration-300 hover:scale-[1.02] group ${glowClass}`}>
+                    <div
+                      className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full filter blur-xl opacity-15 pointer-events-none group-hover:scale-125 transition-transform duration-500"
+                      style={{ backgroundColor: stat.color }}
+                    />
+                    <CardContent className="p-5 relative z-10">
+                      <div className="flex items-center justify-between mb-3">
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors group-hover:bg-opacity-20"
+                          style={{ background: `${stat.color}15`, border: `1px solid ${stat.color}25` }}
+                        >
+                          <stat.icon className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" style={{ color: stat.color }} />
+                        </div>
+                        <span className={`text-xs font-bold flex items-center gap-0.5 ${stat.label === "Escalated" ? "text-danger-red" : "text-trust-green"}`}>
+                          {stat.up ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+                          {stat.change}
+                        </span>
                       </div>
-                      <span className={`text-xs font-semibold flex items-center gap-0.5 ${stat.up ? "text-trust-green" : "text-trust-green"}`}>
-                        {stat.up ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                        {stat.change}
-                      </span>
-                    </div>
-                    <div className="text-2xl font-bold">{stat.value}</div>
-                    <div className="text-xs text-muted-foreground mt-1">{stat.label}</div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+                      <div className="text-2xl font-bold tracking-tight text-foreground/90">{stat.value}</div>
+                      <div className="text-xs font-semibold text-muted-foreground mt-1.5">{stat.label}</div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
           </div>
 
           {/* Charts */}
@@ -130,37 +142,40 @@ export default function AdminDashboard() {
           {/* Bottom row: Department Efficiency + Predictions */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
             {/* Department Efficiency */}
-            <Card className="glass-card border-0">
+            <Card className="glass-premium border border-border/30 relative overflow-hidden shadow-xl shadow-black/5">
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Building2 className="w-5 h-5 text-gov-blue" />
+                <CardTitle className="text-lg flex items-center gap-2 font-bold text-foreground/90">
+                  <div className="w-7 h-7 rounded-lg bg-gov-blue/10 flex items-center justify-center">
+                    <Building2 className="w-4 h-4 text-gov-blue-light" />
+                  </div>
                   Department Performance
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 px-4 pb-4">
+              <CardContent className="space-y-4.5 px-4 pb-4">
                 {analyticsData.departmentEfficiency.map((dept, i) => (
                   <motion.div
                     key={dept.department}
-                    className="space-y-2"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
+                    className="space-y-2.5 p-3 rounded-xl hover:bg-muted/30 border border-transparent hover:border-border/10 transition-all duration-300"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 + i * 0.1 }}
                   >
                     <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium">{dept.department}</span>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <span className="font-bold text-foreground/90">{dept.department}</span>
+                      <div className="flex items-center gap-3 text-xs font-semibold">
                         <span className="text-trust-green">{dept.resolved} resolved</span>
                         <span className="text-warning-amber">{dept.pending} pending</span>
-                        <span>Avg: {dept.avgDays}d</span>
+                        <span className="text-muted-foreground">Avg: {dept.avgDays}d</span>
                       </div>
                     </div>
-                    <div className="flex gap-1 h-2">
+                    {/* Multi-segmented custom progress bar track */}
+                    <div className="flex gap-1 h-2 w-full bg-muted rounded-full overflow-hidden">
                       <div
-                        className="rounded-full bg-trust-green"
+                        className="h-full bg-gradient-to-r from-trust-green to-trust-green-light rounded-l-full"
                         style={{ width: `${(dept.resolved / (dept.resolved + dept.pending)) * 100}%` }}
                       />
                       <div
-                        className="rounded-full bg-warning-amber"
+                        className="h-full bg-gradient-to-r from-warning-amber to-warning-amber-light rounded-r-full"
                         style={{ width: `${(dept.pending / (dept.resolved + dept.pending)) * 100}%` }}
                       />
                     </div>
@@ -170,45 +185,66 @@ export default function AdminDashboard() {
             </Card>
 
             {/* Predictive Insights */}
-            <Card className="glass-card border-0">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-ai-purple" />
+            <Card className="glass-premium border border-ai-purple/20 neon-glow-ai relative overflow-hidden shadow-xl shadow-black/5 scanning-laser-container">
+              <div className="absolute right-0 top-0 w-24 h-24 bg-gradient-to-bl from-ai-purple/10 to-transparent pointer-events-none rounded-bl-full" />
+              <CardHeader className="pb-3 relative z-10">
+                <CardTitle className="text-lg flex items-center gap-2 font-bold text-foreground/90">
+                  <div className="w-7 h-7 rounded-lg bg-ai-purple/10 flex items-center justify-center flex-shrink-0 animate-pulse">
+                    <Sparkles className="w-4 h-4 text-ai-purple" />
+                  </div>
                   Predictive Governance
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 px-4 pb-4">
-                {predictions.map((p, i) => (
-                  <motion.div
-                    key={p.area}
-                    className="p-4 rounded-xl bg-muted/40 border border-border/40"
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.5 + i * 0.1 }}
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <MapPin className="w-4 h-4 text-primary" />
-                      <span className="font-semibold text-sm">{p.area}</span>
-                      <Badge
-                        variant="outline"
-                        className={`ml-auto text-[10px] ${
-                          p.risk === "high" ? "priority-high" : "priority-medium"
-                        }`}
-                      >
-                        {p.risk} risk
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-2">{p.prediction}</p>
-                    <div className="flex items-center gap-2">
-                      <Progress value={p.confidence} className="h-1.5 flex-1" />
-                      <span className="text-xs text-muted-foreground">{p.confidence}%</span>
-                    </div>
-                  </motion.div>
-                ))}
+              <CardContent className="space-y-4 px-4 pb-4 relative z-10">
+                {predictions.map((p, i) => {
+                  const isHigh = p.risk === "high";
+                  return (
+                    <motion.div
+                      key={p.area}
+                      className={`p-4 rounded-xl border transition-all duration-300 shadow-sm group hover:scale-[1.01] ${
+                        isHigh
+                          ? "bg-danger-red/[0.02] border-danger-red/15 hover:border-danger-red/40 hover:shadow-[0_0_15px_-4px_rgba(239,68,68,0.25)]"
+                          : "bg-warning-amber/[0.02] border-warning-amber/15 hover:border-warning-amber/40 hover:shadow-[0_0_15px_-4px_rgba(245,158,11,0.25)]"
+                      }`}
+                      initial={{ opacity: 0, x: 15 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.5 + i * 0.1 }}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className={`w-6 h-6 rounded-md flex items-center justify-center ${isHigh ? "bg-danger-red/10 text-danger-red" : "bg-warning-amber/10 text-warning-amber"}`}>
+                          <AlertTriangle className="w-3.5 h-3.5 animate-pulse" />
+                        </div>
+                        <span className="font-extrabold text-sm text-foreground/90">{p.area}</span>
+                        <Badge
+                          variant="outline"
+                          className={`ml-auto text-[9px] uppercase font-extrabold tracking-wider ${
+                            isHigh ? "priority-high px-2 py-0.5 animate-pulse" : "priority-medium px-2 py-0.5"
+                          }`}
+                        >
+                          {p.risk} risk
+                        </Badge>
+                      </div>
+                      <p className="text-xs font-semibold text-muted-foreground/90 mb-3 leading-relaxed">{p.prediction}</p>
+                      <div className="flex items-center gap-3">
+                        <div className="h-1.5 flex-1 bg-muted rounded-full overflow-hidden flex items-center">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              isHigh ? "bg-gradient-to-r from-danger-red to-warning-amber" : "bg-gradient-to-r from-warning-amber to-trust-green"
+                            }`}
+                            style={{ width: `${p.confidence}%` }}
+                          />
+                        </div>
+                        <span className={`text-xs font-extrabold tabular-nums ${isHigh ? "text-danger-red" : "text-warning-amber"}`}>
+                          {p.confidence}%
+                        </span>
+                      </div>
+                    </motion.div>
+                  );
+                })}
 
-                <div className="p-3 rounded-xl bg-ai-purple/5 border border-ai-purple/15 text-center">
-                  <p className="text-xs text-ai-purple/70">
-                    <Brain className="w-3 h-3 inline mr-1" />
+                <div className="p-3 rounded-xl bg-ai-purple/5 border border-ai-purple/15 text-center mt-2">
+                  <p className="text-xs text-ai-purple/70 font-semibold flex items-center justify-center gap-1.5">
+                    <Brain className="w-3.5 h-3.5" />
                     Predictions based on historical data + seasonal patterns
                   </p>
                 </div>

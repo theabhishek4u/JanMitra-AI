@@ -434,3 +434,114 @@
     font-size: 14px;
   }
 }
+
+/* ============================================
+   Premium Glowing & Next-Gen Styles
+   ============================================ */
+
+/* Advanced Glassmorphism */
+.glass-premium {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(20px) saturate(190%);
+  -webkit-backdrop-filter: blur(20px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 
+    0 8px 32px 0 rgba(31, 38, 135, 0.04),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.dark .glass-premium {
+  background: rgba(15, 23, 42, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 8px 32px 0 rgba(0, 0, 0, 0.37),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.07);
+}
+
+/* Neon Glow Indicators */
+.neon-glow-primary {
+  box-shadow: 0 0 15px -3px rgba(29, 78, 216, 0.35), 0 0 6px -2px rgba(29, 78, 216, 0.2);
+}
+.dark .neon-glow-primary {
+  box-shadow: 0 0 25px -5px rgba(59, 130, 246, 0.5), 0 0 10px -2px rgba(59, 130, 246, 0.3);
+}
+
+.neon-glow-ai {
+  box-shadow: 0 0 15px -3px rgba(124, 58, 237, 0.35), 0 0 6px -2px rgba(124, 58, 237, 0.2);
+}
+.dark .neon-glow-ai {
+  box-shadow: 0 0 25px -5px rgba(139, 92, 246, 0.55), 0 0 10px -2px rgba(139, 92, 246, 0.35);
+}
+
+.neon-glow-success {
+  box-shadow: 0 0 15px -3px rgba(16, 185, 129, 0.35), 0 0 6px -2px rgba(16, 185, 129, 0.2);
+}
+.dark .neon-glow-success {
+  box-shadow: 0 0 25px -5px rgba(52, 211, 153, 0.5), 0 0 10px -2px rgba(52, 211, 153, 0.3);
+}
+
+/* Interactive Premium Borders */
+.premium-glow-border {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.premium-glow-border::before {
+  content: '';
+  position: absolute;
+  inset: -1.5px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(135deg, rgba(29, 78, 216, 0.15), rgba(124, 58, 237, 0.15), rgba(16, 185, 129, 0.15));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.premium-glow-border:hover::before, .premium-glow-border.active::before {
+  background: linear-gradient(135deg, #1D4ED8, #7C3AED, #10B981);
+  opacity: 1;
+}
+
+/* AI Laser Scanning Sweep Effect */
+.scanning-laser-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.scanning-laser-container::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #7C3AED, #3B82F6, #7C3AED, transparent);
+  box-shadow: 0 0 12px 3px rgba(124, 58, 237, 0.6), 0 0 6px 1px rgba(59, 130, 246, 0.4);
+  animation: laser-sweep 2.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  z-index: 10;
+  pointer-events: none;
+}
+
+@keyframes laser-sweep {
+  0% { top: -5%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 105%; opacity: 0; }
+}
+
+/* Pulsing Radial Backgrounds */
+.radial-mesh-light {
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(29, 78, 216, 0.05) 0px, transparent 50%),
+    radial-gradient(at 50% 0%, rgba(124, 58, 237, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.03) 0px, transparent 50%);
+}
+
+.dark .radial-mesh-light {
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(29, 78, 216, 0.15) 0px, transparent 50%),
+    radial-gradient(at 50% 0%, rgba(124, 58, 237, 0.12) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.08) 0px, transparent 50%);
+}
