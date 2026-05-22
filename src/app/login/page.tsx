@@ -626,15 +626,32 @@ export default function LoginPage() {
                     </p>
 
                     {/* Authenticator Form */}
-                    <form onSubmit={handleLoginSubmit} className="space-y-5">
+                    <form onSubmit={handleLoginSubmit} className="space-y-6">
                       
                       {/* Email Input Field */}
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                          <Mail className="w-3.5 h-3.5 text-slate-500" style={{ color: emailFocused ? theme.solid : "#64748b" }} />
-                          Official Email Address
-                        </label>
-                        <div className="relative">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
+                            Official Email Address
+                          </label>
+                          {emailFocused && (
+                            <motion.span 
+                              initial={{ opacity: 0, x: 5 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              className="text-[9px] font-mono font-bold uppercase tracking-wider"
+                              style={{ color: theme.solid }}
+                            >
+                              Clearance Scan Active
+                            </motion.span>
+                          )}
+                        </div>
+                        <div className="relative group">
+                          <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-300 z-10">
+                            <Mail 
+                              className="w-4 h-4 transition-colors" 
+                              style={{ color: emailFocused ? theme.solid : "#64748b" }} 
+                            />
+                          </div>
                           <input
                             type="email"
                             value={email}
@@ -642,10 +659,12 @@ export default function LoginPage() {
                             onFocus={() => setEmailFocused(true)}
                             onBlur={() => setEmailFocused(false)}
                             placeholder="e.g. name@up.gov.in"
-                            className="w-full bg-slate-950/80 border border-slate-800 focus:border-slate-700 rounded-xl px-4 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all font-medium"
+                            className="w-full bg-slate-950/40 backdrop-blur-md border rounded-xl pl-11 pr-4 py-3.5 text-sm text-white placeholder:text-slate-500 focus:outline-none transition-all duration-300 font-medium"
                             style={{
-                              borderColor: emailFocused ? theme.solid : "rgba(255, 255, 255, 0.08)",
-                              boxShadow: emailFocused ? `0 0 12px ${theme.solid}20` : "none",
+                              borderColor: emailFocused ? theme.solid : "rgba(255, 255, 255, 0.06)",
+                              boxShadow: emailFocused 
+                                ? `0 0 16px ${theme.solid}25, inset 0 0 8px ${theme.solid}15` 
+                                : "inset 0 2px 4px rgba(0,0,0,0.4)",
                             }}
                             required
                             disabled={loading || success}
@@ -654,12 +673,29 @@ export default function LoginPage() {
                       </div>
 
                       {/* Password Input Field */}
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                          <KeyRound className="w-3.5 h-3.5 text-slate-500" style={{ color: passwordFocused ? theme.solid : "#64748b" }} />
-                          Security Passkey / Code
-                        </label>
-                        <div className="relative">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
+                            Security Passkey / Code
+                          </label>
+                          {passwordFocused && (
+                            <motion.span 
+                              initial={{ opacity: 0, x: 5 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              className="text-[9px] font-mono font-bold uppercase tracking-wider"
+                              style={{ color: theme.solid }}
+                            >
+                              Securing Terminal
+                            </motion.span>
+                          )}
+                        </div>
+                        <div className="relative group">
+                          <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-300 z-10">
+                            <KeyRound 
+                              className="w-4 h-4 transition-colors" 
+                              style={{ color: passwordFocused ? theme.solid : "#64748b" }} 
+                            />
+                          </div>
                           <input
                             type={showPassword ? "text" : "password"}
                             value={password}
@@ -667,10 +703,12 @@ export default function LoginPage() {
                             onFocus={() => setPasswordFocused(true)}
                             onBlur={() => setPasswordFocused(false)}
                             placeholder="••••"
-                            className="w-full bg-slate-950/80 border border-slate-800 focus:border-slate-700 rounded-xl pl-4 pr-10 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all font-medium tracking-[0.25em]"
+                            className="w-full bg-slate-950/40 backdrop-blur-md border rounded-xl pl-11 pr-12 py-3.5 text-sm text-white placeholder:text-slate-500 focus:outline-none transition-all duration-300 font-medium tracking-[0.25em]"
                             style={{
-                              borderColor: passwordFocused ? theme.solid : "rgba(255, 255, 255, 0.08)",
-                              boxShadow: passwordFocused ? `0 0 12px ${theme.solid}20` : "none",
+                              borderColor: passwordFocused ? theme.solid : "rgba(255, 255, 255, 0.06)",
+                              boxShadow: passwordFocused 
+                                ? `0 0 16px ${theme.solid}25, inset 0 0 8px ${theme.solid}15` 
+                                : "inset 0 2px 4px rgba(0,0,0,0.4)",
                             }}
                             required
                             disabled={loading || success}
@@ -678,10 +716,10 @@ export default function LoginPage() {
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors cursor-pointer"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors cursor-pointer z-10"
                             disabled={loading || success}
                           >
-                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
                           </button>
                         </div>
                       </div>

@@ -244,6 +244,7 @@ npm install
 npm run dev
 ```
 
+<<<<<<< HEAD
 Open [http://localhost:3000](http://localhost:3000) inside your browser. Navigate using the Navbar links or directly view protected pathways to experience the secure redirects.
 
 ### 5. Verify Feature Suite
@@ -251,6 +252,13 @@ Run the pre-configured feature validation test suite to verify the spatial clust
 ```bash
 npx tsx src/scripts/verify_features.ts
 ```
+=======
+Open [[http://localhost:3000](https://jan-mitra-ai-opal.vercel.app/)](https://jan-mitra-ai-opal.vercel.app) with your browser to experience the landing page, and visit the distinct routes:
+*   **Landing Page:** `/`
+*   **Citizen Dashboard:** `/citizen`
+*   **Officer Portal:** `/officer`
+*   **Admin Console:** `/admin`
+>>>>>>> e1be45055187c2a0bb8fa9d59b0ba31175400673
 
 ---
 
