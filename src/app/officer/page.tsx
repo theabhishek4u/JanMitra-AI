@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getAuthSession, clearAuthSession } from "@/lib/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import {
@@ -144,22 +145,17 @@ export default function OfficerDashboard() {
   // Load complaints and stats and listen to real-time local storage edits
   useEffect(() => {
     // Client-side secure route guard
-    const authSession = localStorage.getItem("janmitra_auth");
-    if (!authSession) {
-      window.location.href = "/login?role=officer";
-      return;
-    }
-    try {
-      const parsed = JSON.parse(authSession);
-      if (parsed.role !== "officer") {
+    const checkAuth = () => {
+      const session = getAuthSession();
+      if (!session || session.role !== "officer") {
+        clearAuthSession();
         window.location.href = "/login?role=officer";
-        return;
+        return false;
       }
-    } catch (e) {
-      localStorage.removeItem("janmitra_auth");
-      window.location.href = "/login?role=officer";
-      return;
-    }
+      return true;
+    };
+
+    if (!checkAuth()) return;
 
     setMounted(true);
     setComplaints(getComplaints());
@@ -169,11 +165,21 @@ export default function OfficerDashboard() {
       setComplaints(getComplaints());
       setStats(getStats());
     };
+
+    const handleTabSync = () => {
+      checkAuth();
+    };
+
     window.addEventListener("janmitra-db-change", handleSync);
     window.addEventListener("storage", handleSync);
+    window.addEventListener("focus", handleTabSync);
+    window.addEventListener("visibilitychange", handleTabSync);
+
     return () => {
       window.removeEventListener("janmitra-db-change", handleSync);
       window.removeEventListener("storage", handleSync);
+      window.removeEventListener("focus", handleTabSync);
+      window.removeEventListener("visibilitychange", handleTabSync);
     };
   }, []);
 

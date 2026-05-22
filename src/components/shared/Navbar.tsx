@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getAuthSession, clearAuthSession } from "@/lib/auth";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -32,29 +33,25 @@ export function Navbar() {
 
   useEffect(() => {
     const checkSession = () => {
-      const auth = localStorage.getItem("janmitra_auth");
-      if (auth) {
-        try {
-          setSession(JSON.parse(auth));
-        } catch (e) {
-          setSession(null);
-        }
-      } else {
-        setSession(null);
-      }
+      const activeSession = getAuthSession();
+      setSession(activeSession);
     };
 
     checkSession();
     
-    // Listen for storage events to sync active authentication state
+    // Listen for storage, focus, and visibilitychange events to sync active authentication state in real time
     window.addEventListener("storage", checkSession);
+    window.addEventListener("focus", checkSession);
+    window.addEventListener("visibilitychange", checkSession);
     return () => {
       window.removeEventListener("storage", checkSession);
+      window.removeEventListener("focus", checkSession);
+      window.removeEventListener("visibilitychange", checkSession);
     };
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("janmitra_auth");
+    clearAuthSession();
     setSession(null);
     window.dispatchEvent(new Event("storage"));
     window.location.href = "/login";
