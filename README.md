@@ -144,7 +144,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to experience the landing page, and visit the distinct routes:
+Open [[http://localhost:3000](https://jan-mitra-ai-opal.vercel.app/)](https://jan-mitra-ai-opal.vercel.app) with your browser to experience the landing page, and visit the distinct routes:
 *   **Landing Page:** `/`
 *   **Citizen Dashboard:** `/citizen`
 *   **Officer Portal:** `/officer`
