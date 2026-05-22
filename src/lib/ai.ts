@@ -135,3 +135,27 @@ function generateSummaryHi(text: string, categoryId: string, departmentHi: strin
 export function simulateAIProcessing(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 2500));
 }
+
+// Call Next.js API endpoint for Gemini Multi-modal AI classification
+export async function classifyComplaintAI(text: string, image?: string | null): Promise<AIClassification> {
+  try {
+    const response = await fetch("/api/classify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ text, image }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Server returned status ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Failed to run Gemini AI classifier, using local fallback:", error);
+    // Graceful fallback to keyword classifier
+    return classifyComplaint(text);
+  }
+}

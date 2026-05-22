@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import {
@@ -16,28 +17,22 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/shared/Navbar";
-import { analyticsData } from "@/data/complaints";
+import { getStats, getAnalytics } from "@/lib/complaints";
+import type { DashboardStats, AnalyticsData } from "@/types";
 
 // Dynamic import to avoid SSR issues with recharts
 const AnalyticsCharts = dynamic(() => import("@/components/admin/AnalyticsCharts"), {
   ssr: false,
   loading: () => (
     <div className="space-y-6">
-      <div className="skeleton h-[300px] rounded-2xl" />
+      <div className="skeleton h-[300px] rounded-2xl bg-card/40 animate-pulse border border-border/10" />
       <div className="grid grid-cols-2 gap-6">
-        <div className="skeleton h-[300px] rounded-2xl" />
-        <div className="skeleton h-[300px] rounded-2xl" />
+        <div className="skeleton h-[300px] rounded-2xl bg-card/40 animate-pulse border border-border/10" />
+        <div className="skeleton h-[300px] rounded-2xl bg-card/40 animate-pulse border border-border/10" />
       </div>
     </div>
   ),
 });
-
-const adminStats = [
-  { label: "Total Complaints", value: "1,247", icon: BarChart3, color: "#3B82F6", change: "+12%", up: true },
-  { label: "Resolution Rate", value: "68.6%", icon: TrendingUp, color: "#10B981", change: "+5.2%", up: true },
-  { label: "Avg Resolution", value: "36h", icon: Clock, color: "#7C3AED", change: "-18%", up: false },
-  { label: "Escalated", value: "23", icon: AlertTriangle, color: "#EF4444", change: "-3%", up: false },
-];
 
 const predictions = [
   {
@@ -61,6 +56,37 @@ const predictions = [
 ];
 
 export default function AdminDashboard() {
+  const [mounted, setMounted] = useState(false);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    setStats(getStats());
+    setAnalytics(getAnalytics());
+  }, []);
+
+  if (!mounted || !stats || !analytics) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-muted-foreground">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-ai-purple/20 via-primary/10 to-gov-blue/20 border border-ai-purple/30 flex items-center justify-center shadow-lg animate-spin">
+          <Sparkles className="w-6 h-6 text-ai-purple" />
+        </div>
+        <span className="text-sm font-bold mt-4 tracking-wider">LOADING ADMIN INSIGHTS PORTAL...</span>
+      </div>
+    );
+  }
+
+  // Calculate dynamic stats cards
+  const resolutionRate = stats.total > 0 ? ((stats.resolved / stats.total) * 100).toFixed(1) + "%" : "0%";
+
+  const adminStats = [
+    { label: "Total Complaints", value: stats.total.toLocaleString(), icon: BarChart3, color: "#3B82F6", change: "+12%", up: true },
+    { label: "Resolution Rate", value: resolutionRate, icon: TrendingUp, color: "#10B981", change: "+5.2%", up: true },
+    { label: "Avg Resolution", value: `${stats.avgResolutionHours}h`, icon: Clock, color: "#7C3AED", change: "-18%", up: false },
+    { label: "Escalated", value: stats.escalated.toLocaleString(), icon: AlertTriangle, color: "#EF4444", change: "-3%", up: false },
+  ];
+
   return (
     <>
       <Navbar />
@@ -73,7 +99,7 @@ export default function AdminDashboard() {
             animate={{ opacity: 1, y: 0 }}
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-ai-purple to-ai-purple-dark flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-ai-purple to-ai-purple flex items-center justify-center shadow-md shadow-ai-purple/20">
                 <BarChart3 className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -83,8 +109,8 @@ export default function AdminDashboard() {
                 </p>
               </div>
             </div>
-            <Badge variant="outline" className="gap-1.5">
-              <Brain className="w-3 h-3 text-ai-purple" />
+            <Badge variant="outline" className="gap-1.5 px-3 py-1 font-bold border-ai-purple/35 bg-ai-purple/5 text-ai-purple">
+              <Brain className="w-3.5 h-3.5 text-ai-purple animate-pulse" />
               AI Insights Engine Active
             </Badge>
           </motion.div>
@@ -103,7 +129,7 @@ export default function AdminDashboard() {
                   key={stat.label}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
+                  transition={{ delay: i * 0.08 }}
                 >
                   <Card className={`glass-premium border premium-glow-border relative overflow-hidden transition-all duration-300 hover:scale-[1.02] group ${glowClass}`}>
                     <div
@@ -132,51 +158,57 @@ export default function AdminDashboard() {
             })}
           </div>
 
-          {/* Charts */}
-          <AnalyticsCharts data={analyticsData} />
+          {/* Dynamic Charts Hookup */}
+          <AnalyticsCharts data={analytics} />
 
           {/* Bottom row: Department Efficiency + Predictions */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-            {/* Department Efficiency */}
+            {/* Department Performance */}
             <Card className="glass-premium border border-border/30 relative overflow-hidden shadow-xl shadow-black/5">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2 font-bold text-foreground/90">
                   <div className="w-7 h-7 rounded-lg bg-gov-blue/10 flex items-center justify-center">
                     <Building2 className="w-4 h-4 text-gov-blue-light" />
                   </div>
-                  Department Performance
+                  Department Performance Rankings
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4.5 px-4 pb-4">
-                {analyticsData.departmentEfficiency.map((dept, i) => (
-                  <motion.div
-                    key={dept.department}
-                    className="space-y-2.5 p-3 rounded-xl hover:bg-muted/30 border border-transparent hover:border-border/10 transition-all duration-300"
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 + i * 0.1 }}
-                  >
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-bold text-foreground/90">{dept.department}</span>
-                      <div className="flex items-center gap-3 text-xs font-semibold">
-                        <span className="text-trust-green">{dept.resolved} resolved</span>
-                        <span className="text-warning-amber">{dept.pending} pending</span>
-                        <span className="text-muted-foreground">Avg: {dept.avgDays}d</span>
+              <CardContent className="space-y-4 px-4 pb-4">
+                {analytics.departmentEfficiency.map((dept, i) => {
+                  const total = dept.resolved + dept.pending;
+                  const pctResolved = total > 0 ? (dept.resolved / total) * 100 : 0;
+                  const pctPending = total > 0 ? (dept.pending / total) * 100 : 0;
+                  
+                  return (
+                    <motion.div
+                      key={dept.department}
+                      className="space-y-2.5 p-3 rounded-xl hover:bg-muted/30 border border-transparent hover:border-border/10 transition-all duration-300"
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 + i * 0.05 }}
+                    >
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-bold text-foreground/90">{dept.department}</span>
+                        <div className="flex items-center gap-3 text-xs font-semibold">
+                          <span className="text-trust-green">{dept.resolved} resolved</span>
+                          <span className="text-warning-amber">{dept.pending} pending</span>
+                          <span className="text-muted-foreground">Avg: {dept.avgDays} days</span>
+                        </div>
                       </div>
-                    </div>
-                    {/* Multi-segmented custom progress bar track */}
-                    <div className="flex gap-1 h-2 w-full bg-muted rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-trust-green to-trust-green-light rounded-l-full"
-                        style={{ width: `${(dept.resolved / (dept.resolved + dept.pending)) * 100}%` }}
-                      />
-                      <div
-                        className="h-full bg-gradient-to-r from-warning-amber to-warning-amber-light rounded-r-full"
-                        style={{ width: `${(dept.pending / (dept.resolved + dept.pending)) * 100}%` }}
-                      />
-                    </div>
-                  </motion.div>
-                ))}
+                      {/* Multi-segmented custom progress bar track */}
+                      <div className="flex gap-1 h-2 w-full bg-muted/60 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-trust-green to-trust-green-light rounded-l-full transition-all duration-500"
+                          style={{ width: `${pctResolved || 5}%` }}
+                        />
+                        <div
+                          className="h-full bg-gradient-to-r from-warning-amber to-warning-amber-light rounded-r-full transition-all duration-500"
+                          style={{ width: `${pctPending || 5}%` }}
+                        />
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </CardContent>
             </Card>
 
@@ -188,7 +220,7 @@ export default function AdminDashboard() {
                   <div className="w-7 h-7 rounded-lg bg-ai-purple/10 flex items-center justify-center flex-shrink-0 animate-pulse">
                     <Sparkles className="w-4 h-4 text-ai-purple" />
                   </div>
-                  Predictive Governance
+                  Predictive Civic Analytics
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 px-4 pb-4 relative z-10">
@@ -204,7 +236,7 @@ export default function AdminDashboard() {
                       }`}
                       initial={{ opacity: 0, x: 15 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.5 + i * 0.1 }}
+                      transition={{ delay: 0.3 + i * 0.08 }}
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <div className={`w-6 h-6 rounded-md flex items-center justify-center ${isHigh ? "bg-danger-red/10 text-danger-red" : "bg-warning-amber/10 text-warning-amber"}`}>
@@ -241,7 +273,7 @@ export default function AdminDashboard() {
                 <div className="p-3 rounded-xl bg-ai-purple/5 border border-ai-purple/15 text-center mt-2">
                   <p className="text-xs text-ai-purple/70 font-semibold flex items-center justify-center gap-1.5">
                     <Brain className="w-3.5 h-3.5" />
-                    Predictions based on historical data + seasonal patterns
+                    Predictions based on real-time spatial trends & AI telemetry
                   </p>
                 </div>
               </CardContent>

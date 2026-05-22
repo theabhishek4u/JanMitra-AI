@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Plus,
@@ -11,6 +11,9 @@ import {
   Eye,
   ArrowUpRight,
   Bot,
+  Bell,
+  Trash2,
+  Inbox,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,7 +21,13 @@ import { Navbar } from "@/components/shared/Navbar";
 import { ComplaintForm } from "@/components/citizen/ComplaintForm";
 import { TrackingTimeline } from "@/components/citizen/TrackingTimeline";
 import { AIAgentFollowUpPanel } from "@/components/citizen/AIAgentFollowUpPanel";
-import { mockComplaints } from "@/data/complaints";
+import {
+  getComplaints,
+  getCitizenNotifications,
+  markNotificationAsRead,
+  clearNotifications,
+} from "@/lib/complaints";
+import type { Complaint, Notification } from "@/types";
 
 const priorityIcon = {
   high: AlertTriangle,
@@ -28,10 +37,71 @@ const priorityIcon = {
 
 export default function CitizenDashboard() {
   const [language, setLanguage] = useState<"en" | "hi">("en");
+  const [activeTab, setActiveTab] = useState("new");
+  const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [selectedComplaint, setSelectedComplaint] = useState<string | null>(null);
 
+  // Notification State
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+
   const isHi = language === "hi";
-  const complaint = mockComplaints.find((c) => c.id === selectedComplaint);
+
+  // Sync notifications whenever complaints update
+  useEffect(() => {
+    setNotifications(getCitizenNotifications());
+  }, [complaints]);
+
+  const handleClearAllNotifications = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    clearNotifications("citizen");
+    setNotifications([]);
+  };
+
+  const handleNotificationClick = (n: Notification) => {
+    markNotificationAsRead(n.id, "citizen");
+    setNotifications(getCitizenNotifications());
+    setShowNotifications(false);
+    handleTrackComplaint(n.complaintId);
+  };
+
+  const formatTime = (isoString: string) => {
+    try {
+      const d = new Date(isoString);
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      return "";
+    }
+  };
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  // Load complaints dynamically on mount
+  useEffect(() => {
+    setComplaints(getComplaints());
+  }, []);
+
+  // Sync check for url params (e.g. ?demo=true)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("tab") === "track") {
+        setActiveTab("track");
+      }
+    }
+  }, []);
+
+  const refreshComplaints = () => {
+    setComplaints(getComplaints());
+  };
+
+  const handleTrackComplaint = (id: string) => {
+    refreshComplaints();
+    setSelectedComplaint(id);
+    setActiveTab("track");
+  };
+
+  const complaint = complaints.find((c) => c.id === selectedComplaint);
 
   const dict = {
     newComplaint: isHi ? "नई शिकायत" : "New Complaint",
@@ -115,34 +185,125 @@ export default function CitizenDashboard() {
               </div>
             </div>
 
-            {/* Premium Language Toggler */}
-            <div className="flex items-center gap-1 bg-muted/60 border border-border/40 p-1 rounded-xl shadow-inner w-fit">
-              <button
-                type="button"
-                onClick={() => setLanguage("en")}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                  language === "en"
-                    ? "bg-primary text-white shadow-md shadow-primary/25"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                English
-              </button>
-              <button
-                type="button"
-                onClick={() => setLanguage("hi")}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                  language === "hi"
-                    ? "bg-primary text-white shadow-md shadow-primary/25"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                हिन्दी
-              </button>
+            {/* Header Interactive Controls */}
+            <div className="flex items-center gap-3 relative">
+              {/* Premium Notification Bell Component */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className={`relative p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-center active:scale-95 ${
+                    showNotifications 
+                      ? "bg-primary/10 text-primary border-primary/30" 
+                      : "bg-muted/60 border-border/40 hover:bg-muted/85 hover:text-foreground text-muted-foreground"
+                  }`}
+                  aria-label="Notifications"
+                >
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-[10px] font-bold text-white rounded-full flex items-center justify-center border-2 border-background animate-pulse shadow-md">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Notifications Dropdown */}
+                {showNotifications && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40 cursor-default" 
+                      onClick={() => setShowNotifications(false)} 
+                    />
+                    <div className="absolute right-0 mt-3 w-80 max-h-[420px] overflow-y-auto z-50 glass-card rounded-2xl p-4 shadow-xl border border-border/50 bg-background/95 backdrop-blur-md animate-in fade-in slide-in-from-top-3 duration-200">
+                      <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-3">
+                        <h4 className="font-bold text-sm text-foreground">
+                          {isHi ? "सूचनाएं" : "Notifications"}
+                        </h4>
+                        {notifications.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={handleClearAllNotifications}
+                            className="text-[11px] font-semibold text-red-500 hover:text-red-600 transition-colors flex items-center gap-1 cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            {isHi ? "साफ़ करें" : "Clear All"}
+                          </button>
+                        )}
+                      </div>
+
+                      {notifications.length === 0 ? (
+                        <div className="py-8 flex flex-col items-center justify-center text-center text-muted-foreground gap-2">
+                          <Inbox className="w-8 h-8 opacity-40 animate-bounce" />
+                          <p className="text-xs font-semibold">
+                            {isHi ? "कोई नई सूचना नहीं" : "No new notifications"}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2.5">
+                          {notifications.map((n) => (
+                            <div
+                              key={n.id}
+                              onClick={() => handleNotificationClick(n)}
+                              className={`p-3 rounded-xl border transition-all cursor-pointer flex flex-col gap-1.5 ${
+                                n.read
+                                  ? "bg-muted/20 border-border/20 hover:bg-muted/40"
+                                  : "bg-primary/[0.04] border-primary/25 hover:bg-primary/[0.07] shadow-sm active-glow-primary hover:border-primary/45"
+                              }`}
+                            >
+                              <div className="flex items-start justify-between gap-1.5">
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground uppercase tracking-wider font-mono">
+                                  {n.complaintId}
+                                </span>
+                                <span className="text-[9px] text-muted-foreground font-semibold">
+                                  {formatTime(n.timestamp)}
+                                </span>
+                              </div>
+                              <p className="text-xs font-semibold text-foreground/90 leading-normal">
+                                {isHi ? n.messageHi : n.message}
+                              </p>
+                              {!n.read && (
+                                <span className="text-[10px] font-bold text-primary self-end animate-pulse">
+                                  {isHi ? "● नया" : "● New"}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Premium Language Toggler */}
+              <div className="flex items-center gap-1 bg-muted/60 border border-border/40 p-1 rounded-xl shadow-inner w-fit">
+                <button
+                  type="button"
+                  onClick={() => setLanguage("en")}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    language === "en"
+                      ? "bg-primary text-white shadow-md shadow-primary/25"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  English
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLanguage("hi")}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    language === "hi"
+                      ? "bg-primary text-white shadow-md shadow-primary/25"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  हिन्दी
+                </button>
+              </div>
             </div>
           </motion.div>
 
-          <Tabs defaultValue="new" className="space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="bg-muted/50 border border-border/50 p-1">
               <TabsTrigger value="new" className="gap-2 data-[state=active]:bg-background">
                 <Plus className="w-4 h-4" />
@@ -156,70 +317,80 @@ export default function CitizenDashboard() {
 
             {/* New Complaint Tab */}
             <TabsContent value="new">
-              <ComplaintForm language={language} />
+              <ComplaintForm 
+                language={language} 
+                onComplaintCreated={refreshComplaints} 
+                onTrack={handleTrackComplaint}
+              />
             </TabsContent>
 
             {/* Track Complaints Tab */}
             <TabsContent value="track">
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+              <div className="grid grid-cols-1 grid-rows-1 lg:grid-cols-5 gap-6">
                 {/* Complaint List */}
                 <div className="lg:col-span-2 space-y-3">
                   <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-4">
-                    {dict.yourComplaints} ({mockComplaints.length})
+                    {dict.yourComplaints} ({complaints.length})
                   </h3>
-                  {mockComplaints.map((c, i) => {
-                    const PIcon = priorityIcon[c.priority];
-                    const isActive = selectedComplaint === c.id;
-                    return (
-                      <motion.div
-                        key={c.id}
-                        className={`glass-card rounded-2xl p-4.5 cursor-pointer transition-all duration-300 border-l-[4px] premium-glow-border ${
-                          isActive
-                            ? "active active-glow-primary border-l-primary scale-[1.01] shadow-lg shadow-primary/5 bg-primary/[0.02]"
-                            : "border-l-transparent hover:border-l-border"
-                        }`}
-                        onClick={() => setSelectedComplaint(c.id)}
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.08, ease: "easeOut" }}
-                      >
-                        <div className="flex items-start justify-between gap-2 mb-2.5">
-                          <span className="text-xs font-mono font-bold text-muted-foreground/70">
-                            {c.id}
-                          </span>
-                          <Badge
-                            variant="outline"
-                            className={`text-[10px] uppercase font-bold tracking-wider priority-${c.priority}`}
-                          >
-                            <PIcon className="w-3 h-3 mr-1" />
-                            {getPriorityLabel(c.priority)}
-                          </Badge>
-                        </div>
-                        <h4 className="font-bold text-sm text-foreground/90 mb-1.5 line-clamp-1 leading-snug">
-                          {isHi ? c.titleHi : c.title}
-                        </h4>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground/80 font-medium">
-                          <span
-                            className="w-2.5 h-2.5 rounded-full flex-shrink-0 animate-pulse"
-                            style={{
-                              backgroundColor:
-                                c.status === "resolved"
-                                  ? "#10B981"
-                                  : c.status === "escalated"
-                                  ? "#EF4444"
-                                  : "#F59E0B",
-                            }}
-                          />
-                          <span className="capitalize">
-                            {getStatusLabel(c.status)}
-                          </span>
-                          <span className="ml-auto font-semibold">
-                            {translateArea(c.area)}
-                          </span>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
+                  {complaints.length === 0 ? (
+                    <p className="text-sm text-muted-foreground/80 font-medium py-4 text-center">
+                      {isHi ? "कोई शिकायत नहीं मिली।" : "No complaints found."}
+                    </p>
+                  ) : (
+                    complaints.map((c, i) => {
+                      const PIcon = priorityIcon[c.priority] || Clock;
+                      const isActive = selectedComplaint === c.id;
+                      return (
+                        <motion.div
+                          key={c.id}
+                          className={`glass-card rounded-2xl p-4.5 cursor-pointer transition-all duration-300 border-l-[4px] premium-glow-border ${
+                            isActive
+                              ? "active active-glow-primary border-l-primary scale-[1.01] shadow-lg shadow-primary/5 bg-primary/[0.02]"
+                              : "border-l-transparent hover:border-l-border"
+                          }`}
+                          onClick={() => setSelectedComplaint(c.id)}
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.08, ease: "easeOut" }}
+                        >
+                          <div className="flex items-start justify-between gap-2 mb-2.5">
+                            <span className="text-xs font-mono font-bold text-muted-foreground/70">
+                              {c.id}
+                            </span>
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] uppercase font-bold tracking-wider priority-${c.priority}`}
+                            >
+                              <PIcon className="w-3 h-3 mr-1" />
+                              {getPriorityLabel(c.priority)}
+                            </Badge>
+                          </div>
+                          <h4 className="font-bold text-sm text-foreground/90 mb-1.5 line-clamp-1 leading-snug">
+                            {isHi ? c.titleHi : c.title}
+                          </h4>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground/80 font-medium">
+                            <span
+                              className="w-2.5 h-2.5 rounded-full flex-shrink-0 animate-pulse"
+                              style={{
+                                backgroundColor:
+                                  c.status === "resolved"
+                                    ? "#10B981"
+                                    : c.status === "escalated"
+                                    ? "#EF4444"
+                                    : "#F59E0B",
+                              }}
+                            />
+                            <span className="capitalize">
+                              {getStatusLabel(c.status)}
+                            </span>
+                            <span className="ml-auto font-semibold">
+                              {translateArea(c.area)}
+                            </span>
+                          </div>
+                        </motion.div>
+                      );
+                    })
+                  )}
                 </div>
 
                 {/* Complaint Detail */}
@@ -250,6 +421,13 @@ export default function CitizenDashboard() {
                         <p className="text-sm text-muted-foreground/90 leading-relaxed mb-5">
                           {isHi ? complaint.descriptionHi : complaint.description}
                         </p>
+
+                        {complaint.imageUrl && (
+                          <div className="mb-5 rounded-2xl overflow-hidden border border-border/40 max-h-[300px]">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={complaint.imageUrl} alt="Attached Evidence" className="w-full h-full object-cover" />
+                          </div>
+                        )}
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="bg-muted/30 rounded-xl p-4 border border-border/20">

@@ -11,6 +11,7 @@ import {
   FileText,
   Shield,
   BarChart3,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
@@ -61,8 +62,14 @@ export function Navbar() {
           {/* Right side */}
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            <Link href="/citizen?demo=true" className="hidden sm:block">
+              <Button className="bg-gradient-to-r from-gov-blue via-ai-purple to-gov-blue-light text-white border border-primary/20 shadow-[0_0_15px_rgba(124,58,237,0.3)] hover:shadow-[0_0_22px_rgba(124,58,237,0.5)] transition-all duration-300 text-sm font-bold gap-1.5 animate-pulse cursor-pointer">
+                <Sparkles className="w-4 h-4 animate-spin-slow text-white" />
+                Live AI Demo
+              </Button>
+            </Link>
             <Link href="/citizen" className="hidden sm:block">
-              <Button className="bg-gradient-to-r from-gov-blue to-gov-blue-light text-white shadow-lg shadow-gov-blue/25 hover:shadow-gov-blue/40 transition-all duration-300 text-sm">
+              <Button className="bg-gradient-to-r from-gov-blue to-gov-blue-light text-white shadow-lg shadow-gov-blue/25 hover:shadow-gov-blue/40 transition-all duration-300 text-sm cursor-pointer">
                 <Shield className="w-4 h-4 mr-1.5" />
                 Get Started
               </Button>
@@ -99,8 +106,14 @@ export function Navbar() {
                   </Button>
                 </Link>
               ))}
+              <Link href="/citizen?demo=true" onClick={() => setOpen(false)}>
+                <Button className="w-full mt-2 bg-gradient-to-r from-gov-blue via-ai-purple to-gov-blue-light text-white border border-primary/20 gap-2 cursor-pointer">
+                  <Sparkles className="w-4 h-4 animate-spin-slow text-white" />
+                  Live AI Demo Tour
+                </Button>
+              </Link>
               <Link href="/citizen" onClick={() => setOpen(false)}>
-                <Button className="w-full mt-2 bg-gradient-to-r from-gov-blue to-gov-blue-light text-white">
+                <Button className="w-full mt-2 bg-gradient-to-r from-gov-blue to-gov-blue-light text-white cursor-pointer">
                   <Shield className="w-4 h-4 mr-2" />
                   File a Complaint
                 </Button>

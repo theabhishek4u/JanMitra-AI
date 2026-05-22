@@ -20,7 +20,6 @@ const features = [
   {
     icon: Brain,
     title: "AI Classification Engine",
-    titleHi: "कृत्रिम बुद्धिमत्ता वर्गीकरण (AI Classification)",
     description:
       "Automatically understands complaints in Hindi, English, or Urdu. Detects category, priority, and urgency in milliseconds.",
     color: "#7C3AED",
@@ -29,7 +28,6 @@ const features = [
   {
     icon: Route,
     title: "Smart Department Routing",
-    titleHi: "स्वचालित विभाग आवंटन (Smart Routing)",
     description:
       "AI routes complaints to the correct department — Nagar Nigam, Jal Nigam, PWD, or others — with 94% accuracy.",
     color: "#1D4ED8",
@@ -38,7 +36,6 @@ const features = [
   {
     icon: Languages,
     title: "Multilingual Support",
-    titleHi: "बहुभाषी शिकायत प्रणाली (Multilingual Support)",
     description:
       "Submit in Hindi, Hinglish, Urdu, or English. Get updates in your preferred language. Voice input supported.",
     color: "#10B981",
@@ -47,7 +44,6 @@ const features = [
   {
     icon: MapPin,
     title: "Live Complaint Tracking",
-    titleHi: "लाइव शिकायत ट्रैकिंग (Live Track)",
     description:
       "Amazon/Swiggy-style tracking timeline. Know exactly where your complaint stands — from submission to resolution.",
     color: "#F59E0B",
@@ -56,7 +52,6 @@ const features = [
   {
     icon: BellRing,
     title: "Autonomous Follow-Ups",
-    titleHi: "स्वचालित अनुवर्ती कार्रवाई (Auto Follow-up)",
     description:
       "AI agent automatically reminds departments, escalates overdue complaints, and keeps citizens updated.",
     color: "#EF4444",
@@ -65,7 +60,6 @@ const features = [
   {
     icon: BarChart3,
     title: "Predictive Analytics",
-    titleHi: "पूर्वानुमानित विश्लेषण (Predictive Analytics)",
     description:
       "Heatmaps, trend analysis, and predictive governance. Know where problems will arise before they happen.",
     color: "#06B6D4",
@@ -74,12 +68,12 @@ const features = [
 ];
 
 const extraFeatures = [
-  { icon: Mic, label: "Voice Input (आवाज इनपुट)" },
-  { icon: ImageIcon, label: "Photo Analysis (फोटो विश्लेषण)" },
-  { icon: Shield, label: "Fraud Detection (धोखाधड़ी जांच)" },
-  { icon: Clock, label: "Auto Escalation (स्वचालित एस्कलेशन)" },
-  { icon: Sparkles, label: "AI Summaries (शिकायत संक्षेप)" },
-  { icon: TrendingUp, label: "Smart Analytics (स्मार्ट रिपोर्ट)" },
+  { icon: Mic, label: "Multilingual Voice Input" },
+  { icon: ImageIcon, label: "Multimodal Photo Analysis" },
+  { icon: Shield, label: "AI-Powered Fraud Detection" },
+  { icon: Clock, label: "Autonomous Escalation Engine" },
+  { icon: Sparkles, label: "Nodal Officer AI Summaries" },
+  { icon: TrendingUp, label: "District Analytics Heatmap" },
 ];
 
 export function Features() {
@@ -138,11 +132,8 @@ export function Features() {
               </div>
 
               {/* Title & subtitle */}
-              <div className="space-y-1.5 mb-2.5">
+              <div className="mb-3">
                 <h3 className="text-lg font-bold text-foreground">{feature.title}</h3>
-                <div className="text-[11px] font-semibold text-muted-foreground/80 font-mono">
-                  {feature.titleHi}
-                </div>
               </div>
 
               {/* Description */}

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import dynamic from "next/dynamic";
 import {
   LayoutDashboard,
   AlertTriangle,
@@ -18,89 +19,148 @@ import {
   ArrowDownRight,
   Zap,
   Shield,
+  FileText,
+  MessageSquare,
+  Activity,
+  Layers,
+  Sparkle,
+  Bell,
+  Trash2,
+  Inbox,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/shared/Navbar";
-import { mockComplaints, mockStats } from "@/data/complaints";
+import {
+  getComplaints,
+  getStats,
+  updateComplaintStatus,
+  mergeDuplicateComplaint,
+  getOfficerNotifications,
+  markNotificationAsRead,
+  clearNotifications,
+} from "@/lib/complaints";
+import type { Complaint, ComplaintStatus, DashboardStats, Notification } from "@/types";
 
-const statCards = [
-  {
-    title: "Total Complaints",
-    value: mockStats.total,
-    icon: LayoutDashboard,
-    color: "#3B82F6",
-    change: "+12%",
-    up: true,
-    glowClass: "hover:neon-glow-primary border-gov-blue/20 hover:border-gov-blue/40",
-  },
-  {
-    title: "Pending",
-    value: mockStats.pending,
-    icon: Clock,
-    color: "#F59E0B",
-    change: "-8%",
-    up: false,
-    glowClass: "hover:shadow-[0_0_15px_-3px_rgba(245,158,11,0.35)] border-warning-amber/20 hover:border-warning-amber/40",
-  },
-  {
-    title: "Resolved",
-    value: mockStats.resolved,
-    icon: CheckCircle2,
-    color: "#10B981",
-    change: "+23%",
-    up: true,
-    glowClass: "hover:neon-glow-success border-trust-green/20 hover:border-trust-green/40",
-  },
-  {
-    title: "High Priority",
-    value: mockStats.highPriority,
-    icon: AlertTriangle,
-    color: "#EF4444",
-    change: "+5%",
-    up: true,
-    glowClass: "hover:shadow-[0_0_15px_-3px_rgba(239,68,68,0.35)] border-danger-red/20 hover:border-danger-red/40",
-  },
-];
-
-const aiSuggestions = [
-  {
-    type: "urgent",
-    title: "Deploy sanitation team to Gomti Nagar Sector 12",
-    reason: "3 garbage complaints in same area within 48 hours",
-    confidence: 94,
-    icon: Zap,
-  },
-  {
-    type: "escalation",
-    title: "Escalate Chinhat construction complaint",
-    reason: "No action taken in 10 days — auto-escalation triggered",
-    confidence: 88,
-    icon: ArrowUpRight,
-  },
-  {
-    type: "prediction",
-    title: "Rajajipuram likely to face drainage issues",
-    reason: "Historical pattern + monsoon season approaching",
-    confidence: 82,
-    icon: Brain,
-  },
-  {
-    type: "duplicate",
-    title: "Merge 2 similar water supply complaints",
-    reason: "Indira Nagar complaints from adjacent blocks",
-    confidence: 91,
-    icon: Shield,
-  },
-];
+// Dynamically import Leaflet heatmap to avoid SSR error
+const ComplaintHeatmap = dynamic(
+  () => import("@/components/citizen/ComplaintHeatmap"),
+  { ssr: false }
+);
 
 export default function OfficerDashboard() {
+  const [mounted, setMounted] = useState(false);
+  const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [selectedComplaintId, setSelectedComplaintId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
+  const [activeSubTab, setActiveSubTab] = useState<"queue" | "map">("queue");
 
-  const filteredComplaints = mockComplaints.filter((c) => {
+  // Notes state
+  const [noteText, setNoteText] = useState("");
+  const [isSubmittingNote, setIsSubmittingNote] = useState(false);
+
+  // Notification State
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [directiveLang, setDirectiveLang] = useState<"en" | "hi">("en");
+
+  // Sync notifications whenever complaints update
+  useEffect(() => {
+    setNotifications(getOfficerNotifications());
+  }, [complaints]);
+
+  const handleClearAllNotifications = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    clearNotifications("officer");
+    setNotifications([]);
+  };
+
+  const handleNotificationClick = (n: Notification) => {
+    markNotificationAsRead(n.id, "officer");
+    setNotifications(getOfficerNotifications());
+    setShowNotifications(false);
+    setSelectedComplaintId(n.complaintId);
+    setActiveSubTab("queue");
+  };
+
+  const formatTime = (isoString: string) => {
+    try {
+      const d = new Date(isoString);
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      return "";
+    }
+  };
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const getAIClusterDirective = (category: string) => {
+    const norm = category.toLowerCase().trim();
+    if (norm.includes("garbage") || norm.includes("sanitation")) {
+      return {
+        rootEn: "Systemic garbage accumulation due to a dysfunctional localized dump container, causing waste overflows, stray animal concentration, and public health hazards in this block.",
+        rootHi: "स्थानीय कचरा पात्र के निष्क्रिय होने के कारण क्षेत्र में कचरे का भारी संचय, आवारा पशुओं का जमावड़ा और गंभीर सार्वजनिक स्वास्थ्य संबंधी खतरे उत्पन्न हो रहे हैं।",
+        actionEn: "1. Dispatch 3 additional heavy garbage containment vehicles immediately.\n2. Re-route Nagar Nigam sanitation trucks to clear the junction twice daily.\n3. Install a new automated smart waste container with a solar-powered compaction sensor.",
+        actionHi: "1. तुरंत 3 अतिरिक्त भारी कचरा संग्रह वाहनों को मौके पर भेजें।\n2. जंक्शन को दिन में दो बार साफ करने के लिए नगर निगम के स्वच्छता ट्रकों का मार्ग बदलें।\n3. सौर-ऊर्जा संचालित संघनन सेंसर के साथ एक नया स्वचालित स्मार्ट कचरा पात्र स्थापित करें।"
+      };
+    }
+    if (norm.includes("water")) {
+      return {
+        rootEn: "Sub-junction distribution pipeline rupture combined with severe sewer-water infiltration, resulting in highly contaminated local water discharge.",
+        rootHi: "उप-जंक्शन वितरण पाइपलाइन फटने और सीवर-पानी के गंभीर प्रवेश के संयोजन के कारण, अत्यधिक दूषित स्थानीय जल की आपूर्ति हो रही है।",
+        actionEn: "1. Issue urgent excavation and welding orders for the ruptured pipeline casing.\n2. Dispatch a repair squad to weld the pressure casing within 24 hours.\n3. Mobilize 4 clean drinking water tankers to provide immediate clean water relief.",
+        actionHi: "1. फटी पाइपलाइन आवरण के लिए तत्काल खुदाई और वेल्डिंग के आदेश जारी करें।\n2. 24 घंटे के भीतर प्रेशर केसिंग की मरम्मत के लिए एक विशेष दल रवाना करें।\n3. तत्काल स्वच्छ पेयजल राहत प्रदान करने के लिए 4 स्वच्छ जल टैंकरों को काम पर लगाएं।"
+      };
+    }
+    if (norm.includes("road") || norm.includes("damage")) {
+      return {
+        rootEn: "Sub-surface concrete base erosion from recent waterlogging, resulting in compounding active asphalt structural collapse and deep pothole formation.",
+        rootHi: "हाल ही में हुए जलभराव के कारण उप-सतह कंक्रीट बेस का क्षरण, जिसके परिणामस्वरूप संयुक्त रूप से सक्रिय डामर संरचनात्मक रूप से ढह गई है और गहरे गड्ढे बन गए हैं।",
+        actionEn: "1. Initiate localized quick-set asphalt paving and pothole patchwork within 12 hours.\n2. Direct PWD resources to clear sub-surface drainage blocks to prevent future water damage.\n3. Request budget allocation for complete road re-carpeting in the next fiscal sprint.",
+        actionHi: "1. 12 घंटे के भीतर स्थानीय स्तर पर त्वरित-सेट डामर बिछाने और गड्ढों को भरने का कार्य शुरू करें।\n2. भविष्य में जल क्षति को रोकने के लिए पीडब्ल्यूडी संसाधनों को उप-सतह जल निकासी ब्लॉकों को साफ करने का निर्देश दें।\n3. अगले वित्तीय चक्र में सड़क के पूर्ण पुनर्निर्माण के लिए बजट आवंटन का अनुरोध करें।"
+      };
+    }
+    return {
+      rootEn: "Cumulative civic asset deterioration and infrastructure capacity breach due to dense residential load in this urban micro-zone.",
+      rootHi: "इस शहरी सूक्ष्म क्षेत्र में सघन आवासीय भार के कारण संचयी नागरिक संपत्ति का ह्रास और बुनियादी ढांचे की क्षमता का उल्लंघन।",
+      actionEn: "1. Conduct an immediate zone-level inspection and structural audit.\n2. Dispatch maintenance crews to repair physical assets and secure safety boundaries.\n3. Present a preventive structural maintenance protocol within 48 hours.",
+      actionHi: "1. तत्काल क्षेत्र-स्तरीय निरीक्षण और संरचनात्मक ऑडिट करें।\n2. भौतिक संपत्तियों की मरम्मत और सुरक्षा सीमाओं को सुरक्षित करने के लिए रखरखाव दल भेजें।\n3. 48 घंटे के भीतर एक सुरक्षात्मक संरचनात्मक रखरखाव प्रोटोकॉल प्रस्तुत करें।"
+    };
+  };
+
+  // Load complaints and stats
+  useEffect(() => {
+    setMounted(true);
+    setComplaints(getComplaints());
+    setStats(getStats());
+  }, []);
+
+  const refreshData = () => {
+    const freshComplaints = getComplaints();
+    setComplaints(freshComplaints);
+    setStats(getStats());
+    // Keep selection or reset if deleted (though they're never deleted)
+  };
+
+  if (!mounted || !stats) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-muted-foreground">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gov-blue/20 via-primary/10 to-ai-purple/20 border border-ai-purple/30 flex items-center justify-center shadow-lg animate-spin">
+          <Sparkles className="w-6 h-6 text-ai-purple" />
+        </div>
+        <span className="text-sm font-bold mt-4 tracking-wider">LOADING COMMAND CONSOLE...</span>
+      </div>
+    );
+  }
+
+  // Filter complaints
+  const filteredComplaints = complaints.filter((c) => {
     const matchesSearch =
       c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.area.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -108,6 +168,150 @@ export default function OfficerDashboard() {
     const matchesPriority = selectedPriority === "all" || c.priority === selectedPriority;
     return matchesSearch && matchesPriority;
   });
+
+  const selectedComplaint = complaints.find((c) => c.id === selectedComplaintId);
+
+  // Setup adjacent duplicate detection for active selected complaint
+  const duplicateComplaints = selectedComplaint
+    ? complaints.filter(
+        (c) =>
+          c.id !== selectedComplaint.id &&
+          c.status !== "resolved" &&
+          c.category === selectedComplaint.category &&
+          (c.area.toLowerCase().includes(selectedComplaint.area.toLowerCase()) ||
+            selectedComplaint.area.toLowerCase().includes(c.area.toLowerCase()))
+      )
+    : [];
+
+  // Advancing status mappings
+  const getNextStatusText = (status: ComplaintStatus): string => {
+    switch (status) {
+      case "submitted":
+        return "Execute AI Diagnostic Hazard Scan";
+      case "ai_analyzing":
+        return "Route & Assign Public Department";
+      case "department_assigned":
+        return "Commence Officer Verification Review";
+      case "officer_reviewing":
+        return "Dispatch Technical Field Force";
+      case "action_in_progress":
+        return "Declare Grievance Fully Resolved";
+      case "escalated":
+        return "Commence Officer Verification Review";
+      default:
+        return "";
+    }
+  };
+
+  const getNextStatus = (status: ComplaintStatus): ComplaintStatus | null => {
+    switch (status) {
+      case "submitted":
+        return "ai_analyzing";
+      case "ai_analyzing":
+        return "department_assigned";
+      case "department_assigned":
+        return "officer_reviewing";
+      case "officer_reviewing":
+        return "action_in_progress";
+      case "action_in_progress":
+        return "resolved";
+      case "escalated":
+        return "officer_reviewing";
+      default:
+        return null;
+    }
+  };
+
+  const handleAdvanceStatus = () => {
+    if (!selectedComplaint) return;
+    const next = getNextStatus(selectedComplaint.status);
+    if (!next) return;
+
+    updateComplaintStatus(
+      selectedComplaint.id,
+      next,
+      "Shri Rajesh Kumar",
+      `Advanced automatically to ${next.replace(/_/g, " ")} by command console control.`,
+      `कमांड कंसोल नियंत्रण द्वारा स्थिति स्वचालित रूप से ${next} में परिवर्तित की गई।`
+    );
+    refreshData();
+  };
+
+  const handleManualEscalate = () => {
+    if (!selectedComplaint) return;
+    updateComplaintStatus(
+      selectedComplaint.id,
+      "escalated",
+      "Shri Rajesh Kumar",
+      "Manual priority SLA escalation override triggered by Municipal Commissioner.",
+      "नगर आयुक्त द्वारा मैन्युअल प्राथमिकता एसएलए एस्केलेशन ओवरराइड सक्रिय किया गया।"
+    );
+    refreshData();
+  };
+
+  const handleAddOfficialLog = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedComplaint || !noteText.trim()) return;
+
+    setIsSubmittingNote(true);
+    updateComplaintStatus(
+      selectedComplaint.id,
+      selectedComplaint.status,
+      "Shri Rajesh Kumar",
+      noteText,
+      `अधिकारी नोट: ${noteText}`
+    );
+
+    setNoteText("");
+    setIsSubmittingNote(false);
+    refreshData();
+  };
+
+  const handleJoinDuplicate = (duplicateId: string) => {
+    if (!selectedComplaint) return;
+    mergeDuplicateComplaint(duplicateId, selectedComplaint.id);
+    refreshData();
+  };
+
+  // Stat Card metadata
+  const statCards = [
+    {
+      title: "Total Complaints",
+      value: stats.total,
+      icon: LayoutDashboard,
+      color: "#3B82F6",
+      change: "+12%",
+      up: true,
+      glowClass: "hover:neon-glow-primary border-gov-blue/20 hover:border-gov-blue/40",
+    },
+    {
+      title: "Pending Resolution",
+      value: stats.pending,
+      icon: Clock,
+      color: "#F59E0B",
+      change: "-8%",
+      up: false,
+      glowClass: "hover:shadow-[0_0_15px_-3px_rgba(245,158,11,0.35)] border-warning-amber/20 hover:border-warning-amber/40",
+    },
+    {
+      title: "Resolved Grievances",
+      value: stats.resolved,
+      icon: CheckCircle2,
+      color: "#10B981",
+      change: "+23%",
+      up: true,
+      glowClass: "hover:neon-glow-success border-trust-green/20 hover:border-trust-green/40",
+    },
+    {
+      title: "High Priority Active",
+      value: stats.highPriority,
+      icon: AlertTriangle,
+      color: "#EF4444",
+      change: "+5%",
+      up: true,
+      glowClass: "hover:shadow-[0_0_15px_-3px_rgba(239,68,68,0.35)] border-danger-red/20 hover:border-danger-red/40",
+    },
+  ];
 
   return (
     <>
@@ -121,21 +325,109 @@ export default function OfficerDashboard() {
             animate={{ opacity: 1, y: 0 }}
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gov-blue to-gov-blue-light flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gov-blue to-gov-blue-light flex items-center justify-center shadow-md shadow-gov-blue/15">
                 <LayoutDashboard className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">Officer Dashboard</h1>
+                <h1 className="text-2xl font-bold">Officer Command Console</h1>
                 <p className="text-sm text-muted-foreground">
                   Welcome, Shri Rajesh Kumar — Municipal Commissioner
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 text-xs text-trust-green">
+            <div className="flex items-center gap-3 relative">
+              <span className="inline-flex items-center gap-1.5 text-xs text-trust-green bg-trust-green/5 border border-trust-green/25 px-2.5 py-1 rounded-full font-bold">
                 <span className="w-2 h-2 bg-trust-green rounded-full animate-pulse" />
                 AI Agent Active
               </span>
+
+              {/* Officer Notification Bell Dropdown */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className={`relative p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-center active:scale-95 ${
+                    showNotifications 
+                      ? "bg-primary/10 text-primary border-primary/30" 
+                      : "bg-muted/65 border-border/30 hover:bg-muted/85 hover:text-foreground text-muted-foreground"
+                  }`}
+                  aria-label="System Alerts"
+                >
+                  <Bell className="w-4 h-4" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4.5 h-4.5 bg-red-500 text-[9px] font-bold text-white rounded-full flex items-center justify-center border-2 border-background animate-pulse shadow-md">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Notifications Dropdown */}
+                {showNotifications && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40 cursor-default" 
+                      onClick={() => setShowNotifications(false)} 
+                    />
+                    <div className="absolute right-0 mt-3 w-80 max-h-[420px] overflow-y-auto z-50 glass-card rounded-2xl p-4 shadow-xl border border-border/50 bg-background/95 backdrop-blur-md animate-in fade-in slide-in-from-top-3 duration-200">
+                      <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-3">
+                        <h4 className="font-bold text-sm text-foreground">
+                          System Alerts
+                        </h4>
+                        {notifications.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={handleClearAllNotifications}
+                            className="text-[11px] font-semibold text-red-500 hover:text-red-600 transition-colors flex items-center gap-1 cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Clear All
+                          </button>
+                        )}
+                      </div>
+
+                      {notifications.length === 0 ? (
+                        <div className="py-8 flex flex-col items-center justify-center text-center text-muted-foreground gap-2">
+                          <Inbox className="w-7 h-7 opacity-40 animate-bounce" />
+                          <p className="text-xs font-semibold">
+                            No active alerts
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2.5">
+                          {notifications.map((n) => (
+                            <div
+                              key={n.id}
+                              onClick={() => handleNotificationClick(n)}
+                              className={`p-3 rounded-xl border transition-all cursor-pointer flex flex-col gap-1.5 ${
+                                n.read
+                                  ? "bg-muted/20 border-border/20 hover:bg-muted/40"
+                                  : "bg-primary/[0.04] border-primary/25 hover:bg-primary/[0.07] shadow-sm active-glow-primary hover:border-primary/45"
+                              }`}
+                            >
+                              <div className="flex items-start justify-between gap-1.5">
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground uppercase tracking-wider font-mono">
+                                  {n.complaintId}
+                                </span>
+                                <span className="text-[9px] text-muted-foreground font-semibold">
+                                  {formatTime(n.timestamp)}
+                                </span>
+                              </div>
+                              <p className="text-xs font-semibold text-foreground/90 leading-normal">
+                                {n.message}
+                              </p>
+                              {!n.read && (
+                                <span className="text-[10px] font-bold text-primary self-end animate-pulse">
+                                  ● New Alert
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </motion.div>
 
@@ -146,10 +438,9 @@ export default function OfficerDashboard() {
                 key={stat.title}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
+                transition={{ delay: i * 0.08 }}
               >
                 <Card className={`glass-premium border premium-glow-border relative overflow-hidden transition-all duration-300 hover:scale-[1.02] group ${stat.glowClass}`}>
-                  {/* Subtle dynamic background glow */}
                   <div
                     className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full filter blur-xl opacity-15 pointer-events-none group-hover:scale-125 transition-transform duration-500"
                     style={{ backgroundColor: stat.color }}
@@ -186,204 +477,647 @@ export default function OfficerDashboard() {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Complaint Queue */}
-            <div className="lg:col-span-2">
-              <Card className="glass-premium border border-border/30 relative overflow-hidden shadow-xl shadow-black/5">
-                {/* Accent light ray at the top */}
+          {/* Double Split-Pane Dashboard */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            {/* Left Column: Complaint Queue & Heatmap (Col 5) */}
+            <div className={`lg:col-span-5 flex flex-col h-[700px] lg:h-[780px] w-full ${selectedComplaintId ? "hidden lg:flex" : "flex"}`}>
+              <Card className="glass-premium border border-border/30 h-full relative overflow-hidden flex flex-col shadow-xl shadow-black/5">
                 <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
-                <CardHeader className="pb-3 relative z-10">
-                  <div className="flex items-center justify-between">
+                
+                <CardHeader className="pb-3 relative z-10 flex-shrink-0">
+                  <div className="flex items-center justify-between mb-3">
                     <CardTitle className="text-lg flex items-center gap-2 font-extrabold text-foreground/90">
-                      <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
                         <Building2 className="w-4 h-4 text-primary" />
                       </div>
-                      Complaint Queue
+                      Grievance Portal
                     </CardTitle>
-                    <Badge variant="outline" className="font-semibold">{filteredComplaints.length} complaints</Badge>
+                    <Badge variant="outline" className="font-semibold">{filteredComplaints.length} tickets</Badge>
                   </div>
 
-                  {/* Filters */}
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-4">
-                    <div className="relative flex-1">
-                      <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        placeholder="Search complaints..."
-                        className="pl-9 h-9 text-sm glass-premium border-border/40 focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:border-primary/40"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                      />
-                    </div>
-                    <div className="flex gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-                      {["all", "high", "medium", "low"].map((p) => (
-                        <Button
-                          key={p}
-                          variant={selectedPriority === p ? "default" : "outline"}
-                          size="sm"
-                          className={`text-xs h-9 px-3.5 capitalize transition-all duration-300 ${
-                            selectedPriority === p
-                              ? "bg-gradient-to-r from-gov-blue via-primary to-ai-purple border-0 text-white font-bold shadow-md shadow-primary/20"
-                              : "glass-premium hover:bg-muted/60 border-border/40 text-muted-foreground hover:text-foreground"
-                          }`}
-                          onClick={() => setSelectedPriority(p)}
-                        >
-                          {p}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="max-h-[500px] overflow-y-auto space-y-3 px-4 pb-4">
-                  {filteredComplaints.map((c, i) => (
-                    <motion.div
-                      key={c.id}
-                      className="flex items-center gap-4 p-4.5 rounded-2xl bg-muted/20 hover:bg-primary/[0.02] border border-border/10 hover:border-primary/20 hover:scale-[1.01] hover:shadow-md hover:shadow-primary/5 transition-all duration-300 cursor-pointer group"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.03, ease: "easeOut" }}
+                  {/* Left Column Tabs Toggle */}
+                  <div className="flex items-center gap-1.5 bg-muted/65 p-1 rounded-xl border border-border/30 mb-3">
+                    <button
+                      onClick={() => setActiveSubTab("queue")}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                        activeSubTab === "queue"
+                          ? "bg-primary text-white shadow-md shadow-primary/20"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
                     >
-                      <div
-                        className="w-2.5 h-2.5 rounded-full flex-shrink-0 animate-pulse"
-                        style={{
-                          backgroundColor:
-                            c.priority === "high"
-                              ? "#EF4444"
-                              : c.priority === "medium"
-                              ? "#F59E0B"
-                              : "#10B981",
-                        }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <span className="text-[11px] font-mono font-bold text-muted-foreground/70">
-                            {c.id}
-                          </span>
-                          <Badge
-                            variant="outline"
-                            className={`text-[9px] uppercase font-extrabold tracking-wider px-2 py-0.5 priority-${c.priority}`}
-                          >
-                            {c.priority}
-                          </Badge>
-                          <span className="text-[10px] font-bold text-muted-foreground ml-auto capitalize bg-muted/40 border border-border/20 px-2 py-0.5 rounded-md">
-                            {c.status.replace(/_/g, " ")}
-                          </span>
-                        </div>
-                        <div className="text-sm font-bold text-foreground/90 group-hover:text-primary transition-colors line-clamp-1">{c.title}</div>
-                        <div className="text-xs text-muted-foreground/80 font-medium flex items-center gap-2 mt-1.5">
-                          <MapPin className="w-3.5 h-3.5 text-muted-foreground/60" />
-                          <span>{c.area}</span>
-                          <span className="text-muted-foreground/40">•</span>
-                          <span className="bg-primary/5 border border-primary/10 text-primary px-1.5 py-0.5 rounded text-[10px] font-bold uppercase">{c.category}</span>
-                        </div>
+                      <Layers className="w-3.5 h-3.5" />
+                      Active Queue
+                    </button>
+                    <button
+                      onClick={() => setActiveSubTab("map")}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                        activeSubTab === "map"
+                          ? "bg-primary text-white shadow-md shadow-primary/20"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <MapPin className="w-3.5 h-3.5" />
+                      Lucknow Heatmap
+                    </button>
+                  </div>
+
+                  {/* Queue Filters (Only show when queue active) */}
+                  {activeSubTab === "queue" && (
+                    <div className="flex flex-col gap-2 mt-1">
+                      <div className="relative">
+                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          placeholder="Search ID, Area, Issue..."
+                          className="pl-9 h-9 text-sm glass-premium border-border/40 focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:border-primary/40"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
                       </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all duration-300" />
-                    </motion.div>
-                  ))}
+                      <div className="flex gap-1 overflow-x-auto pb-1">
+                        {["all", "high", "medium", "low"].map((p) => (
+                          <Button
+                            key={p}
+                            variant={selectedPriority === p ? "default" : "outline"}
+                            size="sm"
+                            className={`text-xs h-8 px-2.5 capitalize transition-all duration-300 flex-shrink-0 cursor-pointer ${
+                              selectedPriority === p
+                                ? "bg-gradient-to-r from-gov-blue via-primary to-ai-purple border-0 text-white font-bold shadow-md shadow-primary/20"
+                                : "glass-premium hover:bg-muted/60 border-border/40 text-muted-foreground hover:text-foreground"
+                            }`}
+                            onClick={() => setSelectedPriority(p)}
+                          >
+                            {p}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardHeader>
+
+                <CardContent className="flex-1 overflow-hidden p-4 pt-1 flex flex-col">
+                  <AnimatePresence mode="wait">
+                    {activeSubTab === "queue" ? (
+                      <motion.div
+                        key="queue-list"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -10 }}
+                        className="h-full overflow-y-auto space-y-2.5 pr-1.5 custom-scrollbar flex-1"
+                      >
+                        {filteredComplaints.length === 0 ? (
+                          <div className="text-center py-12 text-sm text-muted-foreground">
+                            No active grievances match current filter.
+                          </div>
+                        ) : (
+                          filteredComplaints.map((c, i) => {
+                            const isSelected = selectedComplaintId === c.id;
+                            return (
+                              <motion.div
+                                key={c.id}
+                                className={`flex items-center gap-3.5 p-3.5 rounded-2xl cursor-pointer border transition-all duration-300 group ${
+                                  isSelected
+                                    ? "bg-primary/[0.04] border-primary/45 active-glow-primary scale-[1.01]"
+                                    : "bg-muted/15 border-border/10 hover:border-primary/25 hover:bg-primary/[0.01]"
+                                }`}
+                                onClick={() => setSelectedComplaintId(c.id)}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: Math.min(i * 0.03, 0.3), ease: "easeOut" }}
+                              >
+                                <div
+                                  className="w-2.5 h-2.5 rounded-full flex-shrink-0 animate-pulse"
+                                  style={{
+                                    backgroundColor:
+                                      c.priority === "high"
+                                        ? "#EF4444"
+                                        : c.priority === "medium"
+                                        ? "#F59E0B"
+                                        : "#10B981",
+                                  }}
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-[10px] font-mono font-bold text-muted-foreground/75">
+                                      {c.id}
+                                    </span>
+                                    <Badge
+                                      variant="outline"
+                                      className={`text-[8px] uppercase tracking-wider px-1.5 py-0.1 priority-${c.priority}`}
+                                    >
+                                      {c.priority}
+                                    </Badge>
+                                    {c.isHotspot && (
+                                      <span className="bg-red-500/10 border border-red-500/25 text-red-500 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase animate-pulse flex items-center gap-0.5">
+                                        🔥 HOTSPOT
+                                      </span>
+                                    )}
+                                    <span className="text-[9px] font-bold text-muted-foreground ml-auto capitalize bg-muted/50 border border-border/10 px-1.5 py-0.2 rounded">
+                                      {c.status.replace(/_/g, " ")}
+                                    </span>
+                                  </div>
+                                  <div className="text-xs font-bold text-foreground/90 group-hover:text-primary transition-colors line-clamp-1">
+                                    {c.title}
+                                  </div>
+                                  <div className="text-[10px] text-muted-foreground/80 font-medium flex items-center gap-1.5 mt-1">
+                                    <MapPin className="w-3 h-3 text-muted-foreground/50" />
+                                    <span className="truncate">{c.area}</span>
+                                    <span className="text-muted-foreground/30">•</span>
+                                    <span className="bg-primary/5 border border-primary/15 text-primary px-1 py-0.1 rounded text-[8px] font-bold uppercase truncate max-w-[80px]">
+                                      {c.category}
+                                    </span>
+                                  </div>
+                                </div>
+                                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-300" />
+                              </motion.div>
+                            );
+                          })
+                        )}
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="heatmap"
+                        initial={{ opacity: 0, x: 10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 10 }}
+                        className="h-full flex-1"
+                      >
+                        <ComplaintHeatmap
+                          onSelectComplaint={(id) => {
+                            setSelectedComplaintId(id);
+                            setActiveSubTab("queue");
+                          }}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </CardContent>
               </Card>
             </div>
 
-            {/* AI Suggestions Panel */}
-            <div className="space-y-6">
-              <Card className="glass-premium border border-ai-purple/30 neon-glow-ai relative overflow-hidden scanning-laser-container">
-                {/* Subtle digital backdrop indicator */}
-                <div className="absolute right-0 top-0 w-24 h-24 bg-gradient-to-bl from-ai-purple/10 to-transparent pointer-events-none rounded-bl-full" />
-                <CardHeader className="pb-3 relative z-10">
-                  <CardTitle className="text-lg flex items-center gap-2 text-foreground/90 font-extrabold">
-                    <div className="w-7 h-7 rounded-lg bg-ai-purple/10 flex items-center justify-center flex-shrink-0 animate-pulse">
-                      <Sparkles className="w-4 h-4 text-ai-purple" />
+            {/* Right Column: High-Tech Detail Inspection Terminal (Col 7) */}
+            <div className={`lg:col-span-7 flex flex-col h-[700px] lg:h-[780px] w-full ${!selectedComplaintId ? "hidden lg:flex" : "flex"}`}>
+              <Card className="glass-premium border border-border/30 h-full overflow-hidden flex flex-col shadow-xl shadow-black/5 relative">
+                {/* Visual Scanner laser track boundary */}
+                <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
+                
+                {selectedComplaint ? (
+                  <div className="h-full flex flex-col overflow-hidden">
+                    {/* Header bar */}
+                    <div className="p-4 border-b border-border/25 bg-muted/10 flex-shrink-0 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {/* Mobile Back Button */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedComplaintId(null)}
+                          className="lg:hidden h-8 px-2 rounded-xl text-primary border-primary/20 hover:bg-primary/5 cursor-pointer font-bold flex items-center gap-1 mr-1.5"
+                        >
+                          ← Back
+                        </Button>
+                        <span className="font-mono text-xs font-bold text-muted-foreground">
+                          {selectedComplaint.id}
+                        </span>
+                        <Badge className={`priority-${selectedComplaint.priority} font-extrabold text-[10px] uppercase px-2 py-0.5`}>
+                          {selectedComplaint.priority} priority
+                        </Badge>
+                        <Badge variant="outline" className="border-primary/25 bg-primary/5 text-primary text-[10px] uppercase font-bold">
+                          {selectedComplaint.category}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <span className="w-1.5 h-1.5 bg-trust-green rounded-full animate-pulse" />
+                        Live Monitoring Active
+                      </div>
                     </div>
-                    AI Recommendations
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3.5 px-4 pb-4 relative z-10">
-                  {aiSuggestions.map((s, i) => (
-                    <motion.div
-                      key={s.title}
-                      className="p-4 rounded-xl bg-muted/40 hover:bg-ai-purple/[0.02] border border-border/20 hover:border-ai-purple/35 transition-all duration-300 cursor-pointer shadow-sm group"
-                      initial={{ opacity: 0, x: 15 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.3 + i * 0.1 }}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-ai-purple/10 border border-ai-purple/20 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-300">
-                          <s.icon className="w-4 h-4 text-ai-purple" />
+
+                    {/* Scrollable details */}
+                    <div className="flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar">
+                      {/* Hotspot Warning Banner */}
+                      {selectedComplaint.isHotspot && (
+                        <motion.div
+                          className="bg-gradient-to-r from-red-500/15 via-red-500/5 to-transparent border border-red-500/25 rounded-2xl p-4.5 flex items-start gap-3.5 shadow-md hover:shadow-red-500/5 transition-all active-glow-danger"
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                        >
+                          <div className="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/35 flex items-center justify-center flex-shrink-0 animate-pulse">
+                            <AlertTriangle className="w-5.5 h-5.5 text-red-500" />
+                          </div>
+                          <div className="space-y-1">
+                            <h4 className="font-extrabold text-sm text-red-500 uppercase tracking-wide flex items-center gap-1.5">
+                              🔥 AI Hotspot Detected
+                            </h4>
+                            <p className="text-xs font-semibold text-foreground/80 leading-normal">
+                              Warning: <span className="text-red-500 font-bold underline">{selectedComplaint.hotspotCount} active complaints</span> have been filed in this precise area ({selectedComplaint.area}) regarding {selectedComplaint.category}!
+                            </p>
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {/* Title & Description */}
+                      <div className="space-y-2">
+                        <h2 className="text-xl font-bold tracking-tight text-foreground/90 leading-tight">
+                          {selectedComplaint.title}
+                        </h2>
+                        <div className="text-xs text-muted-foreground font-semibold flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-primary" />
+                          <span>{selectedComplaint.area}</span>
+                          <span className="text-muted-foreground/30">•</span>
+                          <span className="text-muted-foreground/60">{selectedComplaint.department}</span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-foreground/90 leading-snug group-hover:text-ai-purple transition-colors">{s.title}</p>
-                          <p className="text-xs text-muted-foreground/80 font-medium mt-1 leading-normal">{s.reason}</p>
-                          <div className="flex items-center gap-3 mt-3">
-                            {/* Premium inline custom progress bar */}
-                            <div className="h-1.5 flex-1 bg-ai-purple/10 rounded-full overflow-hidden flex items-center">
-                              <div
-                                className="h-full bg-gradient-to-r from-ai-purple to-ai-purple-light rounded-full transition-all duration-500"
-                                style={{ width: `${s.confidence}%` }}
-                              />
+                        <p className="text-sm text-foreground/80 leading-relaxed bg-muted/10 border border-border/10 rounded-xl p-3.5 mt-2">
+                          {selectedComplaint.description}
+                        </p>
+                      </div>
+
+                      {/* AI Intelligence HUD: Spam risk index, Resolution Est, Confidence */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Card className="glass-card border border-ai-purple/15 bg-ai-purple/3 p-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Brain className="w-4 h-4 text-ai-purple animate-pulse" />
+                            <span className="text-xs font-bold text-foreground">AI Diagnostics Suite</span>
+                          </div>
+                          
+                          <div className="space-y-3.5">
+                            {/* Trust Index */}
+                            <div className="space-y-1">
+                              <div className="flex justify-between text-[11px] font-bold">
+                                <span className="text-muted-foreground">Trust Index Score</span>
+                                <span className="text-trust-green">{Math.round(selectedComplaint.aiConfidence * 100)}%</span>
+                              </div>
+                              <div className="h-1.5 bg-trust-green/10 rounded-full overflow-hidden flex">
+                                <div
+                                  className="h-full bg-gradient-to-r from-trust-green to-trust-green-light rounded-full transition-all duration-300"
+                                  style={{ width: `${selectedComplaint.aiConfidence * 100}%` }}
+                                />
+                              </div>
                             </div>
-                            <span className="text-xs font-extrabold text-ai-purple tabular-nums">
-                              {s.confidence}%
-                            </span>
+
+                            {/* Spam Risk */}
+                            <div className="space-y-1">
+                              <div className="flex justify-between text-[11px] font-bold">
+                                <span className="text-muted-foreground">Spam & Fraud Risk</span>
+                                <span className="text-danger-red">{Math.round((1 - selectedComplaint.aiConfidence) * 100)}%</span>
+                              </div>
+                              <div className="h-1.5 bg-danger-red/10 rounded-full overflow-hidden flex">
+                                <div
+                                  className="h-full bg-gradient-to-r from-danger-red to-danger-red-light rounded-full transition-all duration-300"
+                                  style={{ width: `${(1 - selectedComplaint.aiConfidence) * 100}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </Card>
+
+                        {/* Estimated Duration SLA */}
+                        <Card className="glass-card border border-border/20 bg-muted/15 p-4 flex flex-col justify-between">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Activity className="w-4 h-4 text-gov-blue" />
+                            <span className="text-xs font-bold text-foreground">SLA Threshold Monitor</span>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-[11px] font-bold text-muted-foreground">
+                              <span>Estimated Resolution:</span>
+                              <span className="text-foreground">36 Hours</span>
+                            </div>
+                            <div className="flex items-center justify-between text-[11px] font-bold text-muted-foreground">
+                              <span>Escalation Level:</span>
+                              <span className={selectedComplaint.escalationLevel > 0 ? "text-danger-red" : "text-trust-green"}>
+                                Level {selectedComplaint.escalationLevel}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="mt-3 text-[10px] text-muted-foreground leading-normal border-t border-border/10 pt-2 flex items-center gap-1 font-bold">
+                            <Clock className="w-3.5 h-3.5 text-warning-amber" />
+                            <span>Day 1-3-5 Auto-Escalation triggers active.</span>
+                          </div>
+                        </Card>
+                      </div>
+
+                      {/* Multimodal evidence scanner (Image/Audio laser scanner HUD) */}
+                      {(selectedComplaint.imageUrl || selectedComplaint.voiceUrl) && (
+                        <div className="space-y-3">
+                          <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Multimodal Evidence Audit</span>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {selectedComplaint.imageUrl && (
+                              <div className="relative rounded-2xl overflow-hidden border border-border/40 h-44 bg-slate-950/80 group">
+                                {/* Visual laser scanner bar */}
+                                <motion.div
+                                  className="absolute left-0 right-0 h-[2.5px] bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.85)] z-20"
+                                  animate={{ top: ["0%", "100%", "0%"] }}
+                                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                                />
+                                
+                                <img
+                                  src={selectedComplaint.imageUrl}
+                                  alt="Evidence Preview"
+                                  className="w-full h-full object-cover opacity-70 group-hover:opacity-85 transition-opacity duration-300"
+                                />
+
+                                <div className="absolute bottom-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between bg-black/60 backdrop-blur-sm border border-white/10 rounded-xl px-2.5 py-1.5">
+                                  <span className="text-[9px] font-mono text-cyan-400 font-bold tracking-wider animate-pulse flex items-center gap-1">
+                                    <Zap className="w-3 h-3" />
+                                    AI SCANNER ACTIVE
+                                  </span>
+                                  <Badge className="bg-trust-green text-white font-extrabold text-[8px]">
+                                    {Math.round(selectedComplaint.aiConfidence * 100)}% Match
+                                  </Badge>
+                                </div>
+                              </div>
+                            )}
+
+                            {selectedComplaint.voiceUrl && (
+                              <div className="rounded-2xl border border-primary/20 bg-primary/[0.02] p-4 flex flex-col justify-center h-44">
+                                <span className="text-[10px] text-primary uppercase font-bold tracking-wider mb-2 text-center animate-pulse flex items-center justify-center gap-1">
+                                  <MessageSquare className="w-3.5 h-3.5" />
+                                  Speech-to-Text Equalizer
+                                </span>
+                                
+                                <div className="flex items-center gap-1 h-14 justify-center">
+                                  {[...Array(15)].map((_, i) => (
+                                    <motion.span
+                                      key={i}
+                                      className="w-1 bg-gradient-to-t from-primary to-ai-purple rounded-full"
+                                      animate={{ height: [6, 38, 6] }}
+                                      transition={{ duration: 0.7 + i * 0.04, repeat: Infinity, ease: "easeInOut" }}
+                                      style={{ height: 12 }}
+                                    />
+                                  ))}
+                                </div>
+                                <p className="text-[10px] text-muted-foreground text-center font-bold tracking-wide mt-2 truncate">
+                                  &quot;Bilingual Hindi/English Audio File Transcribed&quot;
+                                </p>
+                              </div>
+                            )}
                           </div>
                         </div>
+                      )}
+
+                      {/* AI Summary Synopsis */}
+                      <div className="bg-ai-purple/[0.02] border border-ai-purple/15 p-4 rounded-2xl relative">
+                        <div className="flex items-center gap-1.5 mb-2.5">
+                          <Brain className="w-4 h-4 text-ai-purple animate-pulse" />
+                          <span className="text-xs font-extrabold text-foreground">AI Predictive Summary</span>
+                        </div>
+                        <p className="text-xs font-semibold text-foreground/80 leading-relaxed font-sans">
+                          {selectedComplaint.aiSummary}
+                        </p>
                       </div>
-                    </motion.div>
-                  ))}
-                </CardContent>
-              </Card>
 
-              {/* Quick Stats */}
-              <Card className="glass-premium border border-border/30 relative overflow-hidden shadow-xl shadow-black/5">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg flex items-center gap-2 font-extrabold text-foreground/90">
-                    <div className="w-7 h-7 rounded-lg bg-trust-green/10 flex items-center justify-center flex-shrink-0">
-                      <TrendingUp className="w-4 h-4 text-trust-green" />
-                    </div>
-                    Performance
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-5 px-4 pb-4">
-                  {/* Accuracy */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs font-semibold">
-                      <span className="text-muted-foreground">AI Accuracy</span>
-                      <span className="font-extrabold text-ai-purple">{mockStats.aiAccuracy}%</span>
-                    </div>
-                    <div className="h-2 w-full bg-ai-purple/10 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-ai-purple to-ai-purple-light rounded-full"
-                        style={{ width: `${mockStats.aiAccuracy}%` }}
-                      />
+                      {/* AI Cluster Pattern & Resolution Directive Panel */}
+                      {selectedComplaint.isHotspot && (
+                        <motion.div
+                          className="border border-cyan-500/30 bg-cyan-950/15 rounded-2xl p-5 relative overflow-hidden active-glow-primary shadow-[0_0_15px_-3px_rgba(6,182,212,0.15)]"
+                          initial={{ opacity: 0, y: 15 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.1 }}
+                        >
+                          {/* Laser Scanner Bar */}
+                          <motion.div
+                            className="absolute left-0 right-0 h-[1.5px] bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.7)] z-20 pointer-events-none"
+                            animate={{ top: ["0%", "100%", "0%"] }}
+                            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                          />
+
+                          <div className="flex items-center justify-between border-b border-cyan-500/20 pb-3 mb-4.5">
+                            <div className="flex items-center gap-2">
+                              <Sparkles className="w-5 h-5 text-cyan-400 animate-pulse" />
+                              <span className="text-xs font-black uppercase text-cyan-400 tracking-wider">AI Cluster Directive Panel</span>
+                            </div>
+                            
+                            {/* Local Language Toggler inside Directive Panel */}
+                            <div className="flex items-center gap-0.5 bg-cyan-950/40 border border-cyan-500/20 p-0.5 rounded-lg">
+                              <button
+                                type="button"
+                                onClick={() => setDirectiveLang("en")}
+                                className={`px-2 py-1 text-[9px] font-bold rounded cursor-pointer transition-colors ${
+                                  directiveLang === "en"
+                                    ? "bg-cyan-500 text-black shadow-sm"
+                                    : "text-cyan-400/70 hover:text-cyan-400"
+                                }`}
+                              >
+                                English
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setDirectiveLang("hi")}
+                                className={`px-2 py-1 text-[9px] font-bold rounded cursor-pointer transition-colors ${
+                                  directiveLang === "hi"
+                                    ? "bg-cyan-500 text-black shadow-sm"
+                                    : "text-cyan-400/70 hover:text-cyan-400"
+                                }`}
+                              >
+                                हिन्दी
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Content */}
+                          <div className="space-y-4 relative z-10">
+                            <div>
+                              <span className="text-[9px] font-bold uppercase text-cyan-400/70 tracking-wider">Root Cause Analysis</span>
+                              <p className="text-xs text-foreground/90 font-medium leading-relaxed mt-1">
+                                {directiveLang === "en" 
+                                  ? getAIClusterDirective(selectedComplaint.category).rootEn 
+                                  : getAIClusterDirective(selectedComplaint.category).rootHi}
+                              </p>
+                            </div>
+
+                            <div className="border-t border-cyan-500/10 pt-3">
+                              <span className="text-[9px] font-bold uppercase text-cyan-400/70 tracking-wider">Actionable Administrative Recommendation</span>
+                              <div className="text-xs text-foreground/80 font-semibold leading-relaxed mt-2 whitespace-pre-line bg-cyan-950/20 border border-cyan-500/10 p-3 rounded-xl">
+                                {directiveLang === "en" 
+                                  ? getAIClusterDirective(selectedComplaint.category).actionEn 
+                                  : getAIClusterDirective(selectedComplaint.category).actionHi}
+                              </div>
+                            </div>
+
+                            <div className="border-t border-cyan-500/10 pt-3 flex items-center justify-between text-[9px] text-cyan-400/60 font-bold">
+                              <span>Consolidated Hotspot Protocol active.</span>
+                              <span className="animate-pulse">● Scanning Lucknow Zone</span>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {/* Interactive Status Transition timeline */}
+                      <div className="space-y-4">
+                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Grievance Step Status Control (6 Stages)</span>
+                        <div className="flex items-center justify-between relative px-2">
+                          {/* Progress bar line */}
+                          <div className="absolute top-1/2 left-2 right-2 h-0.5 bg-border/20 -translate-y-1/2 z-0" />
+                          
+                          {/* 6 status states */}
+                          {(["submitted", "ai_analyzing", "department_assigned", "officer_reviewing", "action_in_progress", "resolved"] as ComplaintStatus[]).map((st, i) => {
+                            const statuses = ["submitted", "ai_analyzing", "department_assigned", "officer_reviewing", "action_in_progress", "resolved"];
+                            const currentIdx = statuses.indexOf(selectedComplaint.status);
+                            const thisIdx = statuses.indexOf(st);
+                            
+                            const isCompleted = thisIdx < currentIdx || selectedComplaint.status === "resolved";
+                            const isActive = st === selectedComplaint.status;
+
+                            return (
+                              <div key={st} className="flex flex-col items-center z-10 relative">
+                                <div
+                                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
+                                    isCompleted
+                                      ? "bg-trust-green border-trust-green text-white"
+                                      : isActive
+                                      ? "bg-primary border-primary text-white scale-110 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
+                                      : "bg-card border-border text-muted-foreground"
+                                  }`}
+                                >
+                                  {isCompleted ? (
+                                    <CheckCircle2 className="w-3.5 h-3.5" />
+                                  ) : (
+                                    <span className="text-[9px] font-bold font-mono">{i + 1}</span>
+                                  )}
+                                </div>
+                                <span className={`text-[8px] font-extrabold capitalize mt-1.5 tracking-wider hidden sm:block ${isActive ? "text-primary font-black" : "text-muted-foreground"}`}>
+                                  {st.replace(/_/g, " ")}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Interactive Status Advancer Actions Panel */}
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-muted/20 border border-border/10 p-3.5 rounded-2xl">
+                          {selectedComplaint.status !== "resolved" ? (
+                            <>
+                              <Button
+                                size="sm"
+                                className="flex-1 text-xs h-10 rounded-xl bg-gradient-to-r from-gov-blue via-primary to-ai-purple text-white font-extrabold shadow-md cursor-pointer hover:shadow-primary/30"
+                                onClick={handleAdvanceStatus}
+                              >
+                                <Zap className="w-3.5 h-3.5 mr-1.5 animate-pulse" />
+                                {getNextStatusText(selectedComplaint.status)}
+                              </Button>
+                              
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-xs h-10 border-danger-red/35 hover:bg-danger-red/5 text-danger-red font-extrabold rounded-xl cursor-pointer"
+                                onClick={handleManualEscalate}
+                              >
+                                <AlertTriangle className="w-3.5 h-3.5 mr-1.5" />
+                                Escalation Override
+                              </Button>
+                            </>
+                          ) : (
+                            <div className="w-full flex items-center justify-center gap-2 py-2 text-trust-green font-bold text-sm bg-trust-green/5 border border-trust-green/20 rounded-xl">
+                              <CheckCircle2 className="w-4 h-4" />
+                              Grievance Completely Resolved & Closed
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Official Custom Note Logger */}
+                      <div className="space-y-3">
+                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Log Administrative Notes</span>
+                        <form onSubmit={handleAddOfficialLog} className="space-y-3">
+                          <Textarea
+                            placeholder="Enter official resolution notes, inspection decisions, or department directives..."
+                            value={noteText}
+                            onChange={(e) => setNoteText(e.target.value)}
+                            className="text-xs min-h-[75px] rounded-xl border border-border/40 focus-visible:ring-1 focus-visible:ring-primary/45"
+                          />
+                          <Button
+                            type="submit"
+                            size="sm"
+                            disabled={isSubmittingNote || !noteText.trim()}
+                            className="bg-card hover:bg-muted text-foreground border border-border/40 font-bold text-xs h-9 px-4.5 rounded-xl flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            Log Note Entry
+                          </Button>
+                        </form>
+                      </div>
+
+                      {/* Duplicate mitigation joined console */}
+                      {duplicateComplaints.length > 0 && (
+                        <div className="border border-warning-amber/15 bg-warning-amber/[0.02] rounded-2xl p-4.5 space-y-3">
+                          <div className="flex items-center gap-1.5 text-warning-amber font-extrabold text-xs">
+                            <AlertTriangle className="w-4 h-4 animate-bounce" />
+                            <span>{duplicateComplaints.length} Nearby Match Grievances (Potential Duplicates)</span>
+                          </div>
+                          
+                          <p className="text-[10px] text-muted-foreground leading-normal font-semibold">
+                            Our AI spatial cluster engine has detected adjacent complaints reported under the same category. You can merge consolidated files below to unify resolution action.
+                          </p>
+
+                          <div className="space-y-2 max-h-[150px] overflow-y-auto pr-1">
+                            {duplicateComplaints.map((dup) => (
+                              <div
+                                key={dup.id}
+                                className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-border/20 text-xs gap-3 group"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-1.5 font-bold mb-0.5">
+                                    <span className="font-mono text-muted-foreground text-[10px]">{dup.id}</span>
+                                    <span className="truncate text-foreground/80">{dup.title}</span>
+                                  </div>
+                                  <span className="text-[9px] text-muted-foreground font-semibold flex items-center gap-0.5">
+                                    <MapPin className="w-3 h-3 text-muted-foreground/50" />
+                                    {dup.area}
+                                  </span>
+                                </div>
+                                <Button
+                                  size="xs"
+                                  className="bg-warning-amber hover:bg-warning-amber/90 text-black font-extrabold text-[10px] h-7 px-3 rounded-lg flex-shrink-0 cursor-pointer shadow-sm shadow-warning-amber/20"
+                                  onClick={() => handleJoinDuplicate(dup.id)}
+                                >
+                                  <Layers className="w-3 h-3 mr-1" />
+                                  Join & Merge
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Active Timeline Tracking (read-only for logs) */}
+                      <div className="space-y-4 border-t border-border/15 pt-5">
+                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Administrative Investigation logs</span>
+                        <div className="space-y-3.5 pl-3 border-l-[1.5px] border-border/30">
+                          {selectedComplaint.timeline.map((event) => (
+                            <div key={event.id} className="relative pl-4 flex flex-col gap-0.5">
+                              {/* Glowing timeline node bullet */}
+                              <div
+                                className={`absolute left-0 -translate-x-[22.5px] top-1.5 w-3 h-3 rounded-full border border-card ${
+                                  event.isActive
+                                    ? "bg-primary shadow-[0_0_8px_var(--primary)] animate-pulse"
+                                    : "bg-muted-foreground/60"
+                                }`}
+                              />
+                              <span className="text-[9px] font-mono text-muted-foreground font-semibold">
+                                {new Date(event.timestamp).toLocaleString("en-IN")}
+                              </span>
+                              <span className="text-[11px] font-extrabold text-foreground/90 capitalize">
+                                {event.status.replace(/_/g, " ")}
+                              </span>
+                              <p className="text-[11px] text-muted-foreground/90 font-medium leading-normal mt-0.5">
+                                {event.message}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
-
-                  {/* Satisfaction */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs font-semibold">
-                      <span className="text-muted-foreground">Satisfaction Rate</span>
-                      <span className="font-extrabold text-trust-green">{mockStats.satisfactionRate}%</span>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center p-12 text-center h-full">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/10 to-ai-purple/10 border border-primary/20 flex items-center justify-center mb-5 animate-pulse shadow-md">
+                      <Shield className="w-8 h-8 text-primary" />
                     </div>
-                    <div className="h-2 w-full bg-trust-green/10 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-trust-green to-trust-green-light rounded-full"
-                        style={{ width: `${mockStats.satisfactionRate}%` }}
-                      />
-                    </div>
+                    <h3 className="font-extrabold text-lg mb-2 text-foreground/80">Awaiting Grievance Selection</h3>
+                    <p className="text-sm text-muted-foreground max-w-sm font-semibold leading-relaxed">
+                      Select an active citizen grievance ticket from the left panel to begin hazard scanning, spatial tracking, and advanced department routing overrides.
+                    </p>
                   </div>
-
-                  {/* Resolution time */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs font-semibold">
-                      <span className="text-muted-foreground">Avg Resolution</span>
-                      <span className="font-extrabold text-gov-blue-light">{mockStats.avgResolutionHours}h</span>
-                    </div>
-                    <div className="h-2 w-full bg-gov-blue-light/10 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-gov-blue to-gov-blue-light rounded-full"
-                        style={{ width: `${(1 - mockStats.avgResolutionHours / 72) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
+                )}
               </Card>
             </div>
           </div>

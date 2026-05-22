@@ -101,6 +101,8 @@ export interface Complaint {
   resolvedAt?: string;
   escalationLevel: number;
   assignedOfficer?: string;
+  isHotspot?: boolean;
+  hotspotCount?: number;
 }
 
 export interface DashboardStats {

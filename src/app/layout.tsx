@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Suspense } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { DemoTour } from "@/components/landing/DemoTour";
 import "./globals.css";
 
 const inter = Inter({
@@ -35,6 +37,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans antialiased">
         <TooltipProvider>
           {children}
+          <Suspense fallback={null}>
+            <DemoTour />
+          </Suspense>
         </TooltipProvider>
       </body>
     </html>
