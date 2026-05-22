@@ -110,7 +110,7 @@ export function AIPlayground() {
     if (!matchedResult) {
       // Generate a mock dynamic response based on custom text
       const lower = (inputText || customText).toLowerCase();
-      let category = "General Grievance (सामान्य शिकायत)";
+      let category = "General Grievance";
       let priority: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" = "MEDIUM";
       let dept = "Lucknow District Administration";
       let officer = "Shri Anand Vardhan (SDM Lucknow)";
@@ -123,9 +123,9 @@ export function AIPlayground() {
       ];
 
       if (lower.includes("sadak") || lower.includes("road") || lower.includes("pothole") || lower.includes("gaddha")) {
-        category = "Roads & Infrastructure (सड़क एवं लोक निर्माण)";
+        category = "Roads & Infrastructure";
         priority = "HIGH";
-        dept = "Public Works Department (PWD UP) - लोक निर्माण विभाग";
+        dept = "Public Works Department (PWD UP)";
         officer = "Shri K. K. Yadav (Chief Engineer)";
         summaryHi = "सड़क मरम्मत और गड्ढों के कारण यातायात अवरोध एवं सुरक्षा संबंधी शिकायत।";
         summaryEn = "Road repair and pothole grievance causing safety and transport issues.";
@@ -135,7 +135,7 @@ export function AIPlayground() {
           "Scheduled review by Sub-Divisional Engineer"
         ];
       } else if (lower.includes("bijli") || lower.includes("light") || lower.includes("electricity") || lower.includes("wire")) {
-        category = "Power & Electricity (विद्युत विभाग)";
+        category = "Power & Electricity";
         priority = "HIGH";
         dept = "UP Power Corporation Limited (UPPCL)";
         officer = "Shri S. K. Dwivedi (Sub-Station Officer)";
@@ -150,7 +150,7 @@ export function AIPlayground() {
 
       matchedResult = {
         text: inputText || customText,
-        lang: lower.match(/[\u0900-\u097F]/) ? "Hindi / देवनागरी" : "English / Mixed",
+        lang: lower.match(/[\u0900-\u097F]/) ? "Hindi / Devanagari" : "English / Mixed",
         category,
         priority,
         dept,

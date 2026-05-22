@@ -55,15 +55,21 @@ export function Footer() {
               Resources
             </h3>
             <ul className="space-y-2">
-              {["API Documentation", "Privacy Policy", "Terms of Service", "Help Center"].map(
-                (label) => (
-                  <li key={label}>
-                    <span className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                      {label}
-                    </span>
-                  </li>
-                )
-              )}
+              {[
+                { label: "API Documentation", href: "/api-docs" },
+                { label: "Privacy Policy", href: "/privacy" },
+                { label: "Terms of Service", href: "/terms" },
+                { label: "Help Center", href: "/help" }
+              ].map((item) => (
+                <li key={item.label}>
+                  <Link
+                    href={item.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 

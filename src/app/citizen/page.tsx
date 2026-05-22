@@ -16,6 +16,7 @@ import {
   Inbox,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/shared/Navbar";
 import { ComplaintForm } from "@/components/citizen/ComplaintForm";
@@ -328,7 +329,7 @@ export default function CitizenDashboard() {
             <TabsContent value="track">
               <div className="grid grid-cols-1 grid-rows-1 lg:grid-cols-5 gap-6">
                 {/* Complaint List */}
-                <div className="lg:col-span-2 space-y-3">
+                <div className={`${selectedComplaint ? "hidden lg:block" : "block"} lg:col-span-2 space-y-3`}>
                   <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-4">
                     {dict.yourComplaints} ({complaints.length})
                   </h3>
@@ -394,7 +395,7 @@ export default function CitizenDashboard() {
                 </div>
 
                 {/* Complaint Detail */}
-                <div className="lg:col-span-3">
+                <div className={`${!selectedComplaint ? "hidden lg:block" : "block"} lg:col-span-3`}>
                   {complaint ? (
                     <motion.div
                       key={complaint.id}
@@ -402,6 +403,17 @@ export default function CitizenDashboard() {
                       animate={{ opacity: 1, x: 0 }}
                       className="space-y-5"
                     >
+                      {/* Premium Mobile-only Back Button */}
+                      <div className="lg:hidden">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedComplaint(null)}
+                          className="gap-1.5 text-xs font-bold bg-muted/65 border border-border/40 hover:bg-muted/90 text-foreground cursor-pointer shadow-sm rounded-xl px-4 py-2 hover:border-primary/20 active:scale-95 transition-all"
+                        >
+                          {isHi ? "← वापस" : "← Back"}
+                        </Button>
+                      </div>
                       {/* Header card */}
                       <div className="glass-premium rounded-2xl p-6 relative overflow-hidden">
                         {/* Soft decorative background orb */}

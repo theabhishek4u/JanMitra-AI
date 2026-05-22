@@ -627,3 +627,56 @@
 .ai-active-glow-border {
   background: linear-gradient(135deg, var(--color-gov-blue), var(--color-ai-purple), var(--color-trust-green));
 }
+
+/* ============================================
+   Futuristic Active Glow & Pulsing Card Borders
+   ============================================ */
+.active-glow-primary {
+  box-shadow: 
+    0 0 16px -2px rgba(59, 130, 246, 0.4),
+    0 0 8px -2px rgba(124, 58, 237, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  border-color: rgba(59, 130, 246, 0.5) !important;
+}
+
+@keyframes border-glow-pulse-red {
+  0%, 100% {
+    border-color: rgba(239, 68, 68, 0.25);
+    box-shadow: 
+      0 4px 6px -1px rgba(0, 0, 0, 0.3),
+      0 0 8px -3px rgba(239, 68, 68, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  50% {
+    border-color: rgba(239, 68, 68, 0.7);
+    box-shadow: 
+      0 8px 16px -2px rgba(0, 0, 0, 0.4),
+      0 0 20px -2px rgba(239, 68, 68, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+}
+
+.active-glowing-card-red {
+  animation: border-glow-pulse-red 2.5s ease-in-out infinite;
+}
+
+@keyframes border-glow-pulse-amber {
+  0%, 100% {
+    border-color: rgba(245, 158, 11, 0.25);
+    box-shadow: 
+      0 4px 6px -1px rgba(0, 0, 0, 0.3),
+      0 0 8px -3px rgba(245, 158, 11, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  50% {
+    border-color: rgba(245, 158, 11, 0.6);
+    box-shadow: 
+      0 8px 16px -2px rgba(0, 0, 0, 0.4),
+      0 0 18px -2px rgba(245, 158, 11, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+}
+
+.active-glowing-card-amber {
+  animation: border-glow-pulse-amber 3s ease-in-out infinite;
+}

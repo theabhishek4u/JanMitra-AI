@@ -70,6 +70,10 @@ export default function OfficerDashboard() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [directiveLang, setDirectiveLang] = useState<"en" | "hi">("en");
 
+  // Interactive scanner state overrides
+  const [scanSpeed, setScanSpeed] = useState<"slow" | "normal" | "hyper">("normal");
+  const [isAudioPlaying, setIsAudioPlaying] = useState(true);
+
   // Sync notifications whenever complaints update
   useEffect(() => {
     setNotifications(getOfficerNotifications());
@@ -291,7 +295,7 @@ export default function OfficerDashboard() {
       color: "#F59E0B",
       change: "-8%",
       up: false,
-      glowClass: "hover:shadow-[0_0_15px_-3px_rgba(245,158,11,0.35)] border-warning-amber/20 hover:border-warning-amber/40",
+      glowClass: "hover:shadow-[0_0_15px_-3px_rgba(245,158,11,0.35)] border-warning-amber/20 hover:border-warning-amber/40 active-glowing-card-amber",
     },
     {
       title: "Resolved Grievances",
@@ -309,7 +313,7 @@ export default function OfficerDashboard() {
       color: "#EF4444",
       change: "+5%",
       up: true,
-      glowClass: "hover:shadow-[0_0_15px_-3px_rgba(239,68,68,0.35)] border-danger-red/20 hover:border-danger-red/40",
+      glowClass: "hover:shadow-[0_0_15px_-3px_rgba(239,68,68,0.35)] border-danger-red/20 hover:border-danger-red/40 active-glowing-card-red",
     },
   ];
 
@@ -798,7 +802,30 @@ export default function OfficerDashboard() {
                       {/* Multimodal evidence scanner (Image/Audio laser scanner HUD) */}
                       {(selectedComplaint.imageUrl || selectedComplaint.voiceUrl) && (
                         <div className="space-y-3">
-                          <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Multimodal Evidence Audit</span>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                              Multimodal Evidence Audit
+                            </span>
+                            {selectedComplaint.imageUrl && (
+                              <div className="flex items-center gap-1.5 bg-muted/40 border border-border/25 p-0.5 rounded-lg">
+                                <span className="text-[9px] text-muted-foreground font-bold px-1.5">Scan Speed:</span>
+                                {(["slow", "normal", "hyper"] as const).map((speed) => (
+                                  <button
+                                    key={speed}
+                                    type="button"
+                                    onClick={() => setScanSpeed(speed)}
+                                    className={`px-2 py-0.5 text-[9px] font-bold rounded cursor-pointer transition-all ${
+                                      scanSpeed === speed
+                                        ? "bg-cyan-500 text-black shadow-sm"
+                                        : "text-muted-foreground hover:text-foreground"
+                                    }`}
+                                  >
+                                    {speed.toUpperCase()}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {selectedComplaint.imageUrl && (
                               <div className="relative rounded-2xl overflow-hidden border border-border/40 h-44 bg-slate-950/80 group">
@@ -806,7 +833,11 @@ export default function OfficerDashboard() {
                                 <motion.div
                                   className="absolute left-0 right-0 h-[2.5px] bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.85)] z-20"
                                   animate={{ top: ["0%", "100%", "0%"] }}
-                                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                                  transition={{
+                                    duration: scanSpeed === "slow" ? 6 : scanSpeed === "normal" ? 3 : 0.8,
+                                    repeat: Infinity,
+                                    ease: "easeInOut"
+                                  }}
                                 />
                                 
                                 <img
@@ -818,7 +849,7 @@ export default function OfficerDashboard() {
                                 <div className="absolute bottom-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between bg-black/60 backdrop-blur-sm border border-white/10 rounded-xl px-2.5 py-1.5">
                                   <span className="text-[9px] font-mono text-cyan-400 font-bold tracking-wider animate-pulse flex items-center gap-1">
                                     <Zap className="w-3 h-3" />
-                                    AI SCANNER ACTIVE
+                                    AI SCANNER ACTIVE ({scanSpeed.toUpperCase()})
                                   </span>
                                   <Badge className="bg-trust-green text-white font-extrabold text-[8px]">
                                     {Math.round(selectedComplaint.aiConfidence * 100)}% Match
@@ -828,25 +859,38 @@ export default function OfficerDashboard() {
                             )}
 
                             {selectedComplaint.voiceUrl && (
-                              <div className="rounded-2xl border border-primary/20 bg-primary/[0.02] p-4 flex flex-col justify-center h-44">
-                                <span className="text-[10px] text-primary uppercase font-bold tracking-wider mb-2 text-center animate-pulse flex items-center justify-center gap-1">
-                                  <MessageSquare className="w-3.5 h-3.5" />
-                                  Speech-to-Text Equalizer
-                                </span>
+                              <div className="rounded-2xl border border-primary/20 bg-primary/[0.02] p-4 flex flex-col justify-center h-44 relative group">
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-[10px] text-primary uppercase font-bold tracking-wider animate-pulse flex items-center gap-1">
+                                    <MessageSquare className="w-3.5 h-3.5" />
+                                    Speech-to-Text Equalizer
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => setIsAudioPlaying(!isAudioPlaying)}
+                                    className={`px-2 py-0.5 text-[9px] font-bold rounded cursor-pointer transition-all border ${
+                                      isAudioPlaying
+                                        ? "bg-primary/20 text-primary border-primary/30 shadow-[0_0_10px_rgba(124,58,237,0.2)]"
+                                        : "bg-muted text-muted-foreground border-border"
+                                    }`}
+                                  >
+                                    {isAudioPlaying ? "PAUSE" : "PLAY"}
+                                  </button>
+                                </div>
                                 
                                 <div className="flex items-center gap-1 h-14 justify-center">
                                   {[...Array(15)].map((_, i) => (
                                     <motion.span
                                       key={i}
                                       className="w-1 bg-gradient-to-t from-primary to-ai-purple rounded-full"
-                                      animate={{ height: [6, 38, 6] }}
+                                      animate={{ height: isAudioPlaying ? [6, 38, 6] : 6 }}
                                       transition={{ duration: 0.7 + i * 0.04, repeat: Infinity, ease: "easeInOut" }}
                                       style={{ height: 12 }}
                                     />
                                   ))}
                                 </div>
                                 <p className="text-[10px] text-muted-foreground text-center font-bold tracking-wide mt-2 truncate">
-                                  &quot;Bilingual Hindi/English Audio File Transcribed&quot;
+                                  {isAudioPlaying ? "🔊 Playback Active — Transcribed" : "🔇 Playback Paused — Transcribed"}
                                 </p>
                               </div>
                             )}

@@ -57,7 +57,10 @@ export function ComplaintForm({
   const [scanProgress, setScanProgress] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const recognitionRef = useRef<any>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioStreamRef = useRef<MediaStream | null>(null);
+  const [isTranscribing, setIsTranscribing] = useState(false);
 
   // Clean up recognition and listen for demo autofill events
   useEffect(() => {
@@ -80,7 +83,7 @@ export function ComplaintForm({
       setPhone(mockPhone);
       
       // Beautiful custom mockup SVG garbage image
-      const garbageMockImage = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 100 100'><rect width='100%' height='100%' fill='%23121214'/><text x='50%' y='45%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='8' fill='%237c3aed' font-weight='bold'>[ HAZARD IMAGE ]</text><text x='50%' y='60%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='6' fill='%239ca3af'>Gomti Nagar Garbage Pile</text><path d='M30,80 L70,80 L65,50 L35,50 Z' fill='%233f3f46' stroke='%237c3aed' stroke-width='1.5'/><circle cx='45' cy='60' r='3' fill='%23e11d48'/><circle cx='55' cy='65' r='4' fill='%23ea580c'/><circle cx='40' cy='70' r='3.5' fill='%23ca8a04'/></svg>";
+      const garbageMockImage = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 100 100'><defs><linearGradient id='bgGrad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%230b0b0f'/><stop offset='100%' stop-color='%23181824'/></linearGradient><linearGradient id='trashGrad' x1='0%' y1='0%' x2='0%' y2='100%'><stop offset='0%' stop-color='%233f3f46'/><stop offset='100%' stop-color='%2327272a'/></linearGradient><linearGradient id='glowGrad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%23a78bfa'/><stop offset='100%' stop-color='%23ec4899'/></linearGradient><filter id='neonGlow'><feGaussianBlur stdDeviation='1.5' result='coloredBlur'/><feMerge><feMergeNode in='coloredBlur'/><feMergeNode in='SourceGraphic'/></feMerge></filter></defs><rect width='100%' height='100%' fill='url(%23bgGrad)' rx='4'/><path d='M0,20 L100,20 M0,40 L100,40 M0,60 L100,60 M0,80 L100,80 M20,0 L20,100 M40,0 L40,100 M60,0 L60,100 M80,0 L80,100' stroke='%23ffffff' stroke-width='0.1' stroke-opacity='0.15' /><circle cx='50' cy='50' r='35' fill='none' stroke='%238b5cf6' stroke-width='0.5' stroke-dasharray='1 3' stroke-opacity='0.4'/><circle cx='50' cy='50' r='15' fill='none' stroke='%23ec4899' stroke-width='0.3' stroke-opacity='0.3'/><path d='M25,75 Q40,45 55,75 Z' fill='url(%23trashGrad)' opacity='0.8' stroke='%2352525b' stroke-width='0.5'/><path d='M45,75 Q60,50 75,75 Z' fill='url(%23trashGrad)' opacity='0.7' stroke='%2352525b' stroke-width='0.5'/><path d='M35,78 Q50,38 65,78 Z' fill='url(%23trashGrad)' stroke='%238b5cf6' stroke-width='0.8' filter='url(%23neonGlow)'/><rect x='62' y='68' width='8' height='10' rx='1' fill='%2352525b' transform='rotate(15, 66, 73)' stroke='%23a78bfa' stroke-width='0.4'/><line x1='63' y1='70' x2='71' y2='72' stroke='%233f3f46' stroke-width='0.5'/><circle cx='48' cy='55' r='2.5' fill='%23ef4444' filter='url(%23neonGlow)'/><line x1='48' y1='55' x2='30' y2='45' stroke='%23ef4444' stroke-width='0.4' stroke-dasharray='1 1'/><rect x='15' y='38' width='14' height='6' rx='1' fill='%23ef4444' fill-opacity='0.15' stroke='%23ef4444' stroke-width='0.4'/><text x='22' y='42' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='3.5' fill='%23ef4444' font-weight='bold'>BIO</text><circle cx='58' cy='63' r='2' fill='%23f59e0b' filter='url(%23neonGlow)'/><line x1='58' y1='63' x2='72' y2='52' stroke='%23f59e0b' stroke-width='0.4' stroke-dasharray='1 1'/><rect x='73' y='48' width='14' height='6' rx='1' fill='%23f59e0b' fill-opacity='0.15' stroke='%23f59e0b' stroke-width='0.4'/><text x='80' y='52' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='3.5' fill='%23f59e0b' font-weight='bold'>HAZARD</text><path d='M5,12 L5,5 L12,5' fill='none' stroke='%238b5cf6' stroke-width='0.8'/><path d='M95,12 L95,5 L88,5' fill='none' stroke='%238b5cf6' stroke-width='0.8'/><path d='M5,88 L5,95 L12,95' fill='none' stroke='%238b5cf6' stroke-width='0.8'/><path d='M95,88 L95,95 L88,95' fill='none' stroke='%238b5cf6' stroke-width='0.8'/><text x='50%' y='15%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='5' fill='url(%23glowGrad)' font-weight='black' letter-spacing='0.5'>EVIDENCE IDENTIFIED</text><text x='50%' y='88%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='4' fill='%23a78bfa' font-weight='medium'>Gomti Nagar, Lucknow</text></svg>";
       
       setPhoto(garbageMockImage);
       setPhotoName("Gomti_Nagar_Garbage.jpg");
@@ -103,8 +106,11 @@ export function ComplaintForm({
     window.addEventListener("janmitra-autofill", handleAutofill);
 
     return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.abort();
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        mediaRecorderRef.current.stop();
+      }
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach((track) => track.stop());
       }
       window.removeEventListener("janmitra-autofill", handleAutofill);
     };
@@ -207,65 +213,116 @@ export function ComplaintForm({
     }
   }, [isHi]);
 
-  // Speech Recognition (Multilingual en-IN / hi-IN / ur-PK)
-  const startSpeechRecognition = useCallback(() => {
-    // @ts-ignore
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      console.warn("Speech recognition not supported in this browser.");
+  // Speech Recording via HTML5 MediaRecorder & Backend Gemini API transcription
+  const startVoiceRecording = useCallback(async () => {
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Media devices or getUserMedia not supported in this browser.");
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioStreamRef.current = stream;
+
+      let options = {};
+      let mimeType = "audio/webm";
+      if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+        options = { mimeType: "audio/webm;codecs=opus" };
+        mimeType = "audio/webm";
+      } else if (MediaRecorder.isTypeSupported("audio/webm")) {
+        options = { mimeType: "audio/webm" };
+        mimeType = "audio/webm";
+      } else if (MediaRecorder.isTypeSupported("audio/ogg")) {
+        options = { mimeType: "audio/ogg" };
+        mimeType = "audio/ogg";
+      } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+        options = { mimeType: "audio/mp4" };
+        mimeType = "audio/mp4";
+      } else if (MediaRecorder.isTypeSupported("audio/aac")) {
+        options = { mimeType: "audio/aac" };
+        mimeType = "audio/aac";
+      }
+
+      const mediaRecorder = new MediaRecorder(stream, options);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+        
+        // Stop all tracks to release mic
+        if (audioStreamRef.current) {
+          audioStreamRef.current.getTracks().forEach((track) => track.stop());
+          audioStreamRef.current = null;
+        }
+
+        setIsTranscribing(true);
+        try {
+          const reader = new FileReader();
+          reader.readAsDataURL(audioBlob);
+          reader.onloadend = async () => {
+            const base64Audio = reader.result as string;
+            const res = await fetch("/api/transcribe", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                audio: base64Audio,
+                mimeType: mimeType,
+              }),
+            });
+            
+            if (!res.ok) throw new Error(`Server returned error: ${res.status}`);
+            
+            const data = await res.json();
+            if (data.text) {
+              setText((prev) => (prev ? prev.trim() + " " + data.text.trim() : data.text.trim()));
+            }
+            setIsTranscribing(false);
+          };
+        } catch (err) {
+          console.error("Transcription execution error:", err);
+          setIsTranscribing(false);
+        }
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+
+    } catch (e: any) {
+      console.warn("Speech recording could not start:", e);
       
-      // Believable voice input simulation fallback
+      // Premium graceful simulation fallback for demo environments
       setIsRecording(true);
       setTimeout(() => {
         setIsRecording(false);
         if (isHi) {
-          setText("गोमती नगर में चारों तरफ कचरा फैला हुआ है। पिछले एक हफ्ते से सफाई नहीं हुई है और बहुत बदबू आ रही है।");
+          setText((prev) => (prev ? prev.trim() + " " + "गोमती नगर में मिठाई चौराहे के पास सड़क पर गहरे गड्ढे हो गए हैं। वाहनों को निकलने में भारी असुविधा हो रही है और दुर्घटना का खतरा बना रहता है। कृपया शीघ्र मरम्मत कराएं।" : "गोमती नगर में मिठाई चौराहे के पास सड़क पर गहरे गड्ढे हो गए हैं। वाहनों को निकलने में भारी असुविधा हो रही है और दुर्घटना का खतरा बना रहता है। कृपया शीघ्र मरम्मत कराएं।"));
         } else {
-          setText("Gomti Nagar is full of garbage. There has been no sanitation cleaning for the past week. It smells very bad.");
+          setText((prev) => (prev ? prev.trim() + " " + "Deep potholes have formed on the road near Mithai Chauraha in Gomti Nagar. Vehicles are facing severe inconvenience and there is a constant risk of accidents. Please repair it immediately." : "Deep potholes have formed on the road near Mithai Chauraha in Gomti Nagar. Vehicles are facing severe inconvenience and there is a constant risk of accidents. Please repair it immediately."));
         }
       }, 3000);
-      return;
     }
-
-    const rec = new SpeechRecognition();
-    rec.continuous = false;
-    rec.interimResults = false;
-    rec.lang = isHi ? "hi-IN" : "en-IN";
-
-    rec.onstart = () => {
-      setIsRecording(true);
-    };
-
-    rec.onresult = (event: any) => {
-      const speechToText = event.results[0][0].transcript;
-      setText((prev) => (prev ? prev + " " + speechToText : speechToText));
-    };
-
-    rec.onerror = (e: any) => {
-      console.error("Speech recognition error:", e);
-      setIsRecording(false);
-    };
-
-    rec.onend = () => {
-      setIsRecording(false);
-    };
-
-    recognitionRef.current = rec;
-    rec.start();
   }, [isHi]);
 
-  const stopSpeechRecognition = useCallback(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
+  const stopVoiceRecording = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
     }
     setIsRecording(false);
   }, []);
 
   const toggleRecording = () => {
     if (isRecording) {
-      stopSpeechRecognition();
+      stopVoiceRecording();
     } else {
-      startSpeechRecognition();
+      startVoiceRecording();
     }
   };
 
@@ -443,15 +500,21 @@ export function ComplaintForm({
               <div className="flex flex-wrap items-center gap-3 pt-1">
                 <Button
                   type="button"
-                  variant={isRecording ? "destructive" : "outline"}
+                  variant={isRecording ? "destructive" : isTranscribing ? "secondary" : "outline"}
                   size="sm"
                   onClick={toggleRecording}
+                  disabled={isTranscribing}
                   className="gap-2 rounded-xl transition-all font-semibold active:scale-95 cursor-pointer relative overflow-hidden"
                 >
                   {isRecording ? (
                     <>
                       <MicOff className="w-4 h-4 text-white z-10" />
                       <span className="animate-pulse text-white z-10">{dict.voiceRecording}</span>
+                    </>
+                  ) : isTranscribing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                      <span>{isHi ? "AI विश्लेषण हो रहा है..." : "AI Transcribing..."}</span>
                     </>
                   ) : (
                     <>
