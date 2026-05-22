@@ -12,17 +12,28 @@ import {
 } from "lucide-react";
 import type { TimelineEvent, ComplaintStatus } from "@/types";
 
-const statusConfig: Record<ComplaintStatus, { icon: React.ElementType; color: string; label: string }> = {
-  submitted: { icon: FileText, color: "#3B82F6", label: "Complaint Submitted" },
-  ai_analyzing: { icon: Brain, color: "#7C3AED", label: "AI Analysis Complete" },
-  department_assigned: { icon: Building2, color: "#F59E0B", label: "Department Assigned" },
-  officer_reviewing: { icon: Eye, color: "#06B6D4", label: "Officer Reviewing" },
-  action_in_progress: { icon: Wrench, color: "#F97316", label: "Action In Progress" },
-  resolved: { icon: CheckCircle2, color: "#10B981", label: "Resolved" },
-  escalated: { icon: AlertTriangle, color: "#EF4444", label: "Escalated" },
+const statusConfig: Record<
+  ComplaintStatus,
+  { icon: React.ElementType; color: string; label: string; labelHi: string }
+> = {
+  submitted: { icon: FileText, color: "#3B82F6", label: "Complaint Submitted", labelHi: "शिकायत दर्ज" },
+  ai_analyzing: { icon: Brain, color: "#7C3AED", label: "AI Analysis Complete", labelHi: "AI विश्लेषण पूर्ण" },
+  department_assigned: { icon: Building2, color: "#F59E0B", label: "Department Assigned", labelHi: "विभाग आवंटित" },
+  officer_reviewing: { icon: Eye, color: "#06B6D4", label: "Officer Reviewing", labelHi: "अधिकारी समीक्षा" },
+  action_in_progress: { icon: Wrench, color: "#F97316", label: "Action In Progress", labelHi: "कार्य प्रगति पर" },
+  resolved: { icon: CheckCircle2, color: "#10B981", label: "Resolved", labelHi: "शिकायत का निवारण" },
+  escalated: { icon: AlertTriangle, color: "#EF4444", label: "Escalated", labelHi: "उच्चाधिकारी को प्रेषित" },
 };
 
-export function TrackingTimeline({ events }: { events: TimelineEvent[] }) {
+export function TrackingTimeline({
+  events,
+  language = "en",
+}: {
+  events: TimelineEvent[];
+  language?: "en" | "hi";
+}) {
+  const isHi = language === "hi";
+
   return (
     <div className="relative pl-2">
       {/* Premium Thick Neon Trace Pipe */}
@@ -94,10 +105,10 @@ export function TrackingTimeline({ events }: { events: TimelineEvent[] }) {
                       borderColor: `${config.color}25`,
                     }}
                   >
-                    {config.label}
+                    {isHi ? config.labelHi : config.label}
                   </span>
                   <span className="text-xs font-medium text-muted-foreground/80">
-                    {new Date(event.timestamp).toLocaleString("en-IN", {
+                    {new Date(event.timestamp).toLocaleString(isHi ? "hi-IN" : "en-IN", {
                       day: "numeric",
                       month: "short",
                       hour: "2-digit",
@@ -105,7 +116,9 @@ export function TrackingTimeline({ events }: { events: TimelineEvent[] }) {
                     })}
                   </span>
                 </div>
-                <p className="text-sm text-foreground/90 leading-relaxed font-sans">{event.message}</p>
+                <p className="text-sm text-foreground/90 leading-relaxed font-sans">
+                  {isHi ? event.messageHi : event.message}
+                </p>
               </div>
             </motion.div>
           );

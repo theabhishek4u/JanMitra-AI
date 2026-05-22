@@ -1,6 +1,7 @@
 import { Navbar } from "@/components/shared/Navbar";
 import { Footer } from "@/components/shared/Footer";
 import { Hero } from "@/components/landing/Hero";
+import { AIPlayground } from "@/components/landing/AIPlayground";
 import { Features } from "@/components/landing/Features";
 import { DemoWorkflow } from "@/components/landing/DemoWorkflow";
 import { Statistics } from "@/components/landing/Statistics";
@@ -13,6 +14,7 @@ export default function LandingPage() {
       <Navbar />
       <main>
         <Hero />
+        <AIPlayground />
         <Features />
         <DemoWorkflow />
         <Statistics />
@@ -23,3 +25,4 @@ export default function LandingPage() {
     </>
   );
 }
+

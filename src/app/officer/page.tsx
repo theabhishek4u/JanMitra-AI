@@ -112,7 +112,7 @@ export default function OfficerDashboard() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen pt-20 pb-12 bg-background">
+      <main className="min-h-screen pt-24 md:pt-28 pb-12 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <motion.div

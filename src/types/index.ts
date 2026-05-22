@@ -75,7 +75,9 @@ export interface TimelineEvent {
 export interface Complaint {
   id: string;
   title: string;
+  titleHi: string;
   description: string;
+  descriptionHi: string;
   category: string;
   categoryHi: string;
   priority: Priority;

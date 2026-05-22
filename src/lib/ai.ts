@@ -20,7 +20,7 @@ export function classifyComplaint(text: string): AIClassification {
       if (lowerText.includes(kw)) score += 2;
     }
     for (const kw of cat.keywordsHi) {
-      if (text.includes(kw)) score += 3; // Higher weight for Hindi keywords if entered
+      if (text.includes(kw) || lowerText.includes(kw)) score += 3; // Higher weight for Hindi keywords if entered
     }
     if (score > bestScore) {
       bestScore = score;
@@ -34,16 +34,17 @@ export function classifyComplaint(text: string): AIClassification {
   const confidence = Math.min(0.65 + bestScore * 0.05, 0.98);
 
   const englishSummary = generateSummary(text, bestCategory.name, department?.name || "General Administration");
+  const hindiSummary = generateSummaryHi(text, bestCategory.id, department?.nameHi || "सामान्य प्रशासन");
 
   return {
     category: bestCategory.name,
-    categoryHi: bestCategory.name, // Make identical to avoid Hindi in UI
+    categoryHi: bestCategory.nameHi,
     priority,
     urgency,
     department: department?.name || "General Administration",
-    departmentHi: department?.name || "General Administration",
+    departmentHi: department?.nameHi || "सामान्य प्रशासन",
     summary: englishSummary,
-    summaryHi: englishSummary, // Make identical to avoid Hindi in UI
+    summaryHi: hindiSummary,
     confidence,
     fraudRisk: detectFraudRisk(text),
     predictedResolutionDays: department?.avgResolutionDays || 5,
@@ -112,6 +113,22 @@ function generateSummary(text: string, category: string, department: string): st
   };
 
   return summaries[category] || `Citizen complaint categorized under ${category}. Assigned to ${department} for review and action.`;
+}
+
+function generateSummaryHi(text: string, categoryId: string, departmentHi: string): string {
+  const summariesHi: Record<string, string> = {
+    "garbage": `सफाई एवं स्वच्छता से संबंधित शिकायत। कचरा संग्रहण की विफलता के कारण तत्काल ${departmentHi} का हस्तक्षेप आवश्यक है। क्षेत्र के नागरिकों ने स्वास्थ्य और स्वच्छता के खतरों की सूचना दी है।`,
+    "water-supply": `पानी की आपूर्ति में व्यवधान की शिकायत। नागरिकों को पानी की तीव्र कमी का सामना करना पड़ रहा है, जिसके लिए ${departmentHi} द्वारा तत्काल पाइपलाइन निरीक्षण और आपातकालीन वाटर टैंकर की आवश्यकता है।`,
+    "road-damage": `सड़क क्षति और गड्ढों के कारण सुरक्षा का खतरा। सड़क पर बड़े गड्ढों से वाहनों को नुकसान हो रहा है। ${departmentHi} द्वारा इसे जल्द से जल्द ठीक करने की आवश्यकता है।`,
+    "electricity": `विद्युत बुनियादी ढांचे से संबंधित समस्या। नागरिकों की सुरक्षा हेतु ${departmentHi} द्वारा तत्काल तकनीकी निरीक्षण और बिजली बहाल करने की आवश्यकता है।`,
+    "street-light": `स्ट्रीट लाइट खराब होने की शिकायत। रात में अत्यधिक अंधेरा होने के कारण सुरक्षा की चिंता बनी हुई है। ${departmentHi} द्वारा विद्युत निरीक्षण और बल्ब बदलने की आवश्यकता है।`,
+    "illegal-construction": `अनाधिकृत निर्माण की शिकायत। ${departmentHi} द्वारा स्थल निरीक्षण और कानूनी अनुपालन की जांच आवश्यक है।`,
+    "encroachment": `सार्वजनिक भूमि पर अवैध अतिक्रमण। ${departmentHi} द्वारा तत्काल अतिक्रमण हटाने की कार्रवाई की आवश्यकता है।`,
+    "corruption": `भ्रष्टाचार और रिश्वतखोरी से संबंधित गंभीर शिकायत। ${departmentHi} द्वारा मामले की त्वरित जांच की आवश्यकता है।`,
+    "health": `जन स्वास्थ्य संबंधी गंभीर समस्या। ${departmentHi} के चिकित्सा दल द्वारा स्थल निरीक्षण और त्वरित कार्रवाई की आवश्यकता है।`,
+  };
+
+  return summariesHi[categoryId] || `नागरिक द्वारा दर्ज शिकायत (${categoryId})। आवश्यक कार्रवाई हेतु इसे ${departmentHi} को अग्रेषित किया गया है।`;
 }
 
 // Simulate AI processing delay for demo effect

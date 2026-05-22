@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/shared/Navbar";
 import { ComplaintForm } from "@/components/citizen/ComplaintForm";
 import { TrackingTimeline } from "@/components/citizen/TrackingTimeline";
+import { AIAgentFollowUpPanel } from "@/components/citizen/AIAgentFollowUpPanel";
 import { mockComplaints } from "@/data/complaints";
 
 const priorityIcon = {
@@ -26,30 +27,118 @@ const priorityIcon = {
 };
 
 export default function CitizenDashboard() {
+  const [language, setLanguage] = useState<"en" | "hi">("en");
   const [selectedComplaint, setSelectedComplaint] = useState<string | null>(null);
+
+  const isHi = language === "hi";
   const complaint = mockComplaints.find((c) => c.id === selectedComplaint);
+
+  const dict = {
+    newComplaint: isHi ? "नई शिकायत" : "New Complaint",
+    myComplaints: isHi ? "मेरी शिकायतें" : "My Complaints",
+    yourComplaints: isHi ? "आपकी शिकायतें" : "Your Complaints",
+    selectComplaint: isHi ? "एक शिकायत चुनें" : "Select a Complaint",
+    selectDesc: isHi ? "विवरण और ट्रैकिंग टाइमलाइन देखने के लिए किसी भी शिकायत पर क्लिक करें।" : "Click on any complaint to view details and tracking timeline.",
+    priority: isHi ? "प्राथमिकता" : "Priority",
+    department: isHi ? "विभाग" : "Department",
+    area: isHi ? "क्षेत्र" : "Area",
+    aiSummary: isHi ? "AI अधिकारी सारांश" : "AI Officer Summary",
+    confidence: isHi ? "सटीकता" : "Confidence",
+    trackingTimeline: isHi ? "शिकायत ट्रैकिंग टाइमलाइन" : "Tracking Timeline",
+    assignedOfficer: isHi ? "आवंटित अधिकारी" : "Assigned Officer",
+  };
+
+  const getPriorityLabel = (p: string) => {
+    if (p === "high") return isHi ? "उच्च" : "High";
+    if (p === "medium") return isHi ? "मध्यम" : "Medium";
+    return isHi ? "निम्न" : "Low";
+  };
+
+  const getStatusLabel = (s: string) => {
+    switch (s) {
+      case "submitted":
+        return isHi ? "दर्ज की गई" : "Submitted";
+      case "ai_analyzing":
+        return isHi ? "AI विश्लेषण पूर्ण" : "AI Analysis Complete";
+      case "department_assigned":
+        return isHi ? "विभाग आवंटित" : "Department Assigned";
+      case "officer_reviewing":
+        return isHi ? "समीक्षा जारी" : "Officer Reviewing";
+      case "action_in_progress":
+        return isHi ? "कार्य प्रगति पर" : "Action In Progress";
+      case "resolved":
+        return isHi ? "निवारण पूर्ण" : "Resolved";
+      case "escalated":
+        return isHi ? "उच्चाधिकारी को प्रेषित" : "Escalated";
+      default:
+        return s.replace(/_/g, " ");
+    }
+  };
+
+  const translateArea = (area: string) => {
+    if (!isHi) return area;
+    return area
+      .replace("Gomti Nagar, Lucknow", "गोमती नगर, लखनऊ")
+      .replace("Aliganj, Lucknow", "अलीगंज, लखनऊ")
+      .replace("Indira Nagar, Lucknow", "इन्दिरा नगर, लखनऊ")
+      .replace("Hazratganj, Lucknow", "हजरतगंज, लखनऊ")
+      .replace("Chinhat, Lucknow", "चिनहट, लखनऊ")
+      .replace("Alambagh, Lucknow", "आलमबाग, लखनऊ")
+      .replace("Chowk, Lucknow", "चौक, लखनऊ")
+      .replace("Rajajipuram, Lucknow", "राजाजीपुरम, लखनऊ")
+      .replace("Aminabad, Lucknow", "अमीनाबाद, लखनऊ")
+      .replace("Mahanagar, Lucknow", "महानगर, लखनऊ");
+  };
 
   return (
     <>
       <Navbar />
-      <main className="min-h-screen pt-20 pb-12 bg-background">
+      <main className="min-h-screen pt-24 md:pt-28 pb-12 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <motion.div
-            className="mb-8"
+            className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <div className="flex items-center gap-3 mb-2">
+            <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gov-blue to-ai-purple flex items-center justify-center">
                 <Bot className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">Citizen Portal</h1>
+                <h1 className="text-2xl font-bold">
+                  {isHi ? "नागरिक शिकायत पोर्टल" : "Citizen Portal"}
+                </h1>
                 <p className="text-sm text-muted-foreground">
-                  File and track your complaints
+                  {isHi ? "अपनी शिकायतें दर्ज करें और ट्रैक करें" : "File and track your complaints"}
                 </p>
               </div>
+            </div>
+
+            {/* Premium Language Toggler */}
+            <div className="flex items-center gap-1 bg-muted/60 border border-border/40 p-1 rounded-xl shadow-inner w-fit">
+              <button
+                type="button"
+                onClick={() => setLanguage("en")}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                  language === "en"
+                    ? "bg-primary text-white shadow-md shadow-primary/25"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                English
+              </button>
+              <button
+                type="button"
+                onClick={() => setLanguage("hi")}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                  language === "hi"
+                    ? "bg-primary text-white shadow-md shadow-primary/25"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                हिन्दी
+              </button>
             </div>
           </motion.div>
 
@@ -57,17 +146,17 @@ export default function CitizenDashboard() {
             <TabsList className="bg-muted/50 border border-border/50 p-1">
               <TabsTrigger value="new" className="gap-2 data-[state=active]:bg-background">
                 <Plus className="w-4 h-4" />
-                New Complaint
+                {dict.newComplaint}
               </TabsTrigger>
               <TabsTrigger value="track" className="gap-2 data-[state=active]:bg-background">
                 <Search className="w-4 h-4" />
-                My Complaints
+                {dict.myComplaints}
               </TabsTrigger>
             </TabsList>
 
             {/* New Complaint Tab */}
             <TabsContent value="new">
-              <ComplaintForm />
+              <ComplaintForm language={language} />
             </TabsContent>
 
             {/* Track Complaints Tab */}
@@ -76,7 +165,7 @@ export default function CitizenDashboard() {
                 {/* Complaint List */}
                 <div className="lg:col-span-2 space-y-3">
                   <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-4">
-                    Your Complaints ({mockComplaints.length})
+                    {dict.yourComplaints} ({mockComplaints.length})
                   </h3>
                   {mockComplaints.map((c, i) => {
                     const PIcon = priorityIcon[c.priority];
@@ -103,11 +192,11 @@ export default function CitizenDashboard() {
                             className={`text-[10px] uppercase font-bold tracking-wider priority-${c.priority}`}
                           >
                             <PIcon className="w-3 h-3 mr-1" />
-                            {c.priority}
+                            {getPriorityLabel(c.priority)}
                           </Badge>
                         </div>
                         <h4 className="font-bold text-sm text-foreground/90 mb-1.5 line-clamp-1 leading-snug">
-                          {c.title}
+                          {isHi ? c.titleHi : c.title}
                         </h4>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground/80 font-medium">
                           <span
@@ -122,17 +211,17 @@ export default function CitizenDashboard() {
                             }}
                           />
                           <span className="capitalize">
-                            {c.status.replace(/_/g, " ")}
+                            {getStatusLabel(c.status)}
                           </span>
                           <span className="ml-auto font-semibold">
-                            {c.area}
+                            {translateArea(c.area)}
                           </span>
                         </div>
                       </motion.div>
                     );
                   })}
                 </div>
- 
+
                 {/* Complaint Detail */}
                 <div className="lg:col-span-3">
                   {complaint ? (
@@ -152,55 +241,79 @@ export default function CitizenDashboard() {
                             {complaint.id}
                           </span>
                           <Badge className={`priority-${complaint.priority} font-bold text-xs uppercase px-2.5 py-0.5`}>
-                            {complaint.priority.toUpperCase()} PRIORITY
+                            {getPriorityLabel(complaint.priority).toUpperCase()} {isHi ? "प्राथमिकता" : "PRIORITY"}
                           </Badge>
                         </div>
-                        <h2 className="text-2xl font-bold tracking-tight text-foreground/90 mb-3">{complaint.title}</h2>
+                        <h2 className="text-2xl font-bold tracking-tight text-foreground/90 mb-3">
+                          {isHi ? complaint.titleHi : complaint.title}
+                        </h2>
                         <p className="text-sm text-muted-foreground/90 leading-relaxed mb-5">
-                          {complaint.description}
+                          {isHi ? complaint.descriptionHi : complaint.description}
                         </p>
- 
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="bg-muted/30 rounded-xl p-4 border border-border/20">
-                            <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Department</div>
-                            <div className="font-bold text-sm text-foreground/90">{complaint.department}</div>
+                            <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">
+                              {dict.department}
+                            </div>
+                            <div className="font-bold text-sm text-foreground/90">
+                              {isHi ? complaint.departmentHi : complaint.department}
+                            </div>
                           </div>
                           <div className="bg-muted/30 rounded-xl p-4 border border-border/20">
-                            <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Area</div>
-                            <div className="font-bold text-sm text-foreground/90">{complaint.area}</div>
+                            <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">
+                              {dict.area}
+                            </div>
+                            <div className="font-bold text-sm text-foreground/90">
+                              {translateArea(complaint.area)}
+                            </div>
                           </div>
                         </div>
+
+                        {complaint.assignedOfficer && (
+                          <div className="mt-4 bg-muted/20 rounded-xl p-3 border border-border/10 flex items-center gap-2">
+                            <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                              {dict.assignedOfficer}:
+                            </span>
+                            <span className="text-xs font-extrabold text-foreground/80">
+                              {complaint.assignedOfficer}
+                            </span>
+                          </div>
+                        )}
                       </div>
- 
+
                       {/* AI Summary */}
                       <div className="glass-card rounded-2xl p-6 bg-ai-purple/3 border border-ai-purple/10">
                         <div className="flex items-center gap-2 mb-3">
                           <Bot className="w-5 h-5 text-ai-purple animate-pulse" />
-                          <span className="font-bold text-sm text-foreground/90">AI Officer Summary</span>
+                          <span className="font-bold text-sm text-foreground/90">{dict.aiSummary}</span>
                           <Badge variant="outline" className="text-xs ml-auto border-ai-purple/30 text-ai-purple bg-ai-purple/5 font-semibold">
-                            {Math.round(complaint.aiConfidence * 100)}% Confidence
+                            {Math.round(complaint.aiConfidence * 100)}% {dict.confidence}
                           </Badge>
                         </div>
                         <p className="text-sm text-foreground/80 leading-relaxed font-semibold bg-background/40 border border-ai-purple/10 rounded-xl p-4 shadow-inner">
-                          {complaint.aiSummary}
+                          {isHi ? complaint.aiSummaryHi : complaint.aiSummary}
                         </p>
                       </div>
+
+                      {/* AI Agent Autonomous Action Panel */}
+                      <AIAgentFollowUpPanel complaint={complaint} language={language} />
 
                       {/* Timeline */}
                       <div className="glass-card rounded-2xl p-6">
                         <h3 className="font-semibold mb-4 flex items-center gap-2">
                           <Eye className="w-4 h-4 text-primary" />
-                          Tracking Timeline
+                          {dict.trackingTimeline}
                         </h3>
-                        <TrackingTimeline events={complaint.timeline} />
+                        <TrackingTimeline events={complaint.timeline} language={language} />
                       </div>
                     </motion.div>
                   ) : (
                     <div className="glass-card rounded-2xl p-12 text-center">
                       <ArrowUpRight className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-                      <h3 className="font-semibold text-lg mb-2">Select a Complaint</h3>
+                      <h3 className="font-semibold text-lg mb-2">{dict.selectComplaint}</h3>
                       <p className="text-sm text-muted-foreground">
-                        Click on any complaint to view details and tracking timeline.
+                        {dict.selectDesc}
                       </p>
                     </div>
                   )}
