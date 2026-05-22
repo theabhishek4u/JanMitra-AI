@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getAuthSession, clearAuthSession } from "@/lib/auth";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import {
@@ -62,26 +63,33 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     // Client-side secure route guard
-    const authSession = localStorage.getItem("janmitra_auth");
-    if (!authSession) {
-      window.location.href = "/login?role=admin";
-      return;
-    }
-    try {
-      const parsed = JSON.parse(authSession);
-      if (parsed.role !== "admin") {
+    const checkAuth = () => {
+      const session = getAuthSession();
+      if (!session || session.role !== "admin") {
+        clearAuthSession();
         window.location.href = "/login?role=admin";
-        return;
+        return false;
       }
-    } catch (e) {
-      localStorage.removeItem("janmitra_auth");
-      window.location.href = "/login?role=admin";
-      return;
-    }
+      return true;
+    };
+
+    if (!checkAuth()) return;
 
     setMounted(true);
     setStats(getStats());
     setAnalytics(getAnalytics());
+
+    const handleTabSync = () => {
+      checkAuth();
+    };
+
+    window.addEventListener("focus", handleTabSync);
+    window.addEventListener("visibilitychange", handleTabSync);
+
+    return () => {
+      window.removeEventListener("focus", handleTabSync);
+      window.removeEventListener("visibilitychange", handleTabSync);
+    };
   }, []);
 
   if (!mounted || !stats || !analytics) {

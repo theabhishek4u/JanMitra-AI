@@ -25,6 +25,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getAuthSession, setAuthSession, clearAuthSession } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -49,17 +50,18 @@ export default function LoginPage() {
   useEffect(() => {
     setMounted(true);
     
-    // Clear any previous bad session state on load
-    const session = localStorage.getItem("janmitra_auth");
+    // Auto-redirect if session is active
+    const session = getAuthSession();
     if (session) {
-      try {
-        const parsed = JSON.parse(session);
-        if (parsed.role === "officer" || parsed.role === "admin") {
-          setActiveSessionRole(parsed.role);
-        }
-      } catch (e) {
-        localStorage.removeItem("janmitra_auth");
-      }
+      setActiveSessionRole(session.role);
+      setLoading(true);
+      setSuccess(true);
+      setActiveLoginForm(session.role);
+      
+      const timer = setTimeout(() => {
+        router.replace(session.role === "officer" ? "/officer" : "/admin");
+      }, 500);
+      return () => clearTimeout(timer);
     }
 
     // Parse role from query string
@@ -70,7 +72,28 @@ export default function LoginPage() {
         setActiveLoginForm(roleParam);
       }
     }
-  }, []);
+
+    // Real-time tab sync and auto-forwarding
+    const handleSync = () => {
+      const activeSession = getAuthSession();
+      if (activeSession) {
+        setLoading(true);
+        setSuccess(true);
+        setActiveLoginForm(activeSession.role);
+        router.replace(activeSession.role === "officer" ? "/officer" : "/admin");
+      }
+    };
+
+    window.addEventListener("focus", handleSync);
+    window.addEventListener("visibilitychange", handleSync);
+    window.addEventListener("storage", handleSync);
+
+    return () => {
+      window.removeEventListener("focus", handleSync);
+      window.removeEventListener("visibilitychange", handleSync);
+      window.removeEventListener("storage", handleSync);
+    };
+  }, [router]);
 
   // Officer & Admin roles list (Citizen removed for direct access)
   const roles = [
@@ -143,21 +166,14 @@ export default function LoginPage() {
 
   const handleRoleSelect = (roleId: string, href: string) => {
     // Check if session already exists for this role
-    const session = localStorage.getItem("janmitra_auth");
-    if (session) {
-      try {
-        const parsed = JSON.parse(session);
-        if (parsed.role === roleId) {
-          setLoading(true);
-          setSuccess(true);
-          setTimeout(() => {
-            router.push(href);
-          }, 600);
-          return;
-        }
-      } catch (e) {
-        localStorage.removeItem("janmitra_auth");
-      }
+    const session = getAuthSession();
+    if (session && session.role === roleId) {
+      setLoading(true);
+      setSuccess(true);
+      setTimeout(() => {
+        router.push(href);
+      }, 600);
+      return;
     }
 
     // Otherwise, transition to Login Form
@@ -196,14 +212,14 @@ export default function LoginPage() {
         }
       }
 
-      if (isValid) {
-        // Save session
+      if (isValid && activeLoginForm) {
+        // Save session using unified helper
         const authData = {
           role: activeLoginForm,
           email: normalizedEmail,
           authenticatedAt: new Date().toISOString(),
         };
-        localStorage.setItem("janmitra_auth", JSON.stringify(authData));
+        setAuthSession(authData);
         
         // Dispatch event so layout and navbar sync instantly
         window.dispatchEvent(new Event("storage"));
