@@ -61,6 +61,12 @@ export function ComplaintForm({
   const audioChunksRef = useRef<Blob[]>([]);
   const audioStreamRef = useRef<MediaStream | null>(null);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const textRef = useRef(text);
+
+  useEffect(() => {
+    textRef.current = text;
+  }, [text]);
 
   // Clean up recognition and listen for demo autofill events
   useEffect(() => {
@@ -106,6 +112,9 @@ export function ComplaintForm({
     window.addEventListener("janmitra-autofill", handleAutofill);
 
     return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
         mediaRecorderRef.current.stop();
       }
@@ -213,105 +222,174 @@ export function ComplaintForm({
     }
   }, [isHi]);
 
-  // Speech Recording via HTML5 MediaRecorder & Backend Gemini API transcription
+  // Speech Recording via Web Speech API (Client-side real-time transcript) with fallback to MediaRecorder & backend API
   const startVoiceRecording = useCallback(async () => {
-    try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error("Media devices or getUserMedia not supported in this browser.");
-      }
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioStreamRef.current = stream;
+    if (SpeechRecognition) {
+      try {
+        const recognition = new SpeechRecognition();
+        recognitionRef.current = recognition;
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = isHi ? "hi-IN" : "en-IN";
 
-      let options = {};
-      let mimeType = "audio/webm";
-      if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
-        options = { mimeType: "audio/webm;codecs=opus" };
-        mimeType = "audio/webm";
-      } else if (MediaRecorder.isTypeSupported("audio/webm")) {
-        options = { mimeType: "audio/webm" };
-        mimeType = "audio/webm";
-      } else if (MediaRecorder.isTypeSupported("audio/ogg")) {
-        options = { mimeType: "audio/ogg" };
-        mimeType = "audio/ogg";
-      } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
-        options = { mimeType: "audio/mp4" };
-        mimeType = "audio/mp4";
-      } else if (MediaRecorder.isTypeSupported("audio/aac")) {
-        options = { mimeType: "audio/aac" };
-        mimeType = "audio/aac";
-      }
+        const baseText = textRef.current.trim();
 
-      const mediaRecorder = new MediaRecorder(stream, options);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
-        
-        // Stop all tracks to release mic
-        if (audioStreamRef.current) {
-          audioStreamRef.current.getTracks().forEach((track) => track.stop());
-          audioStreamRef.current = null;
-        }
-
-        setIsTranscribing(true);
-        try {
-          const reader = new FileReader();
-          reader.readAsDataURL(audioBlob);
-          reader.onloadend = async () => {
-            const base64Audio = reader.result as string;
-            const res = await fetch("/api/transcribe", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                audio: base64Audio,
-                mimeType: mimeType,
-              }),
-            });
-            
-            if (!res.ok) throw new Error(`Server returned error: ${res.status}`);
-            
-            const data = await res.json();
-            if (data.text) {
-              setText((prev) => (prev ? prev.trim() + " " + data.text.trim() : data.text.trim()));
-            }
-            setIsTranscribing(false);
-          };
-        } catch (err) {
-          console.error("Transcription execution error:", err);
+        recognition.onstart = () => {
+          setIsRecording(true);
           setIsTranscribing(false);
+        };
+
+        recognition.onresult = (event: any) => {
+          let sessionTranscript = "";
+          for (let i = 0; i < event.results.length; i++) {
+            sessionTranscript += event.results[i][0].transcript;
+          }
+          if (sessionTranscript) {
+            setText(() => {
+              return baseText ? baseText + " " + sessionTranscript.trim() : sessionTranscript.trim();
+            });
+          }
+        };
+
+        recognition.onerror = (event: any) => {
+          console.warn("Native Speech Recognition error, cascading to fallback:", event.error);
+          recognition.onend = null; // Prevent onend from toggling recording state back to false immediately
+          try {
+            recognition.stop();
+          } catch (e) {}
+
+          if (event.error === "no-speech" || event.error === "not-allowed" || event.error === "permission") {
+            runMockFallback();
+          } else {
+            runMediaRecorderFallback();
+          }
+        };
+
+        recognition.onend = () => {
+          setIsRecording(false);
+        };
+
+        recognition.start();
+        return;
+      } catch (err) {
+        console.warn("Failed to initialize native SpeechRecognition, cascading:", err);
+      }
+    }
+
+    // Secondary fallback: MediaRecorder with backend endpoint
+    runMediaRecorderFallback();
+
+    async function runMediaRecorderFallback() {
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error("Media devices or getUserMedia not supported in this browser.");
         }
-      };
 
-      mediaRecorder.start();
-      setIsRecording(true);
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioStreamRef.current = stream;
 
-    } catch (e: any) {
-      console.warn("Speech recording could not start:", e);
-      
-      // Premium graceful simulation fallback for demo environments
+        let options = {};
+        let mimeType = "audio/webm";
+        if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+          options = { mimeType: "audio/webm;codecs=opus" };
+          mimeType = "audio/webm";
+        } else if (MediaRecorder.isTypeSupported("audio/webm")) {
+          options = { mimeType: "audio/webm" };
+          mimeType = "audio/webm";
+        } else if (MediaRecorder.isTypeSupported("audio/ogg")) {
+          options = { mimeType: "audio/ogg" };
+          mimeType = "audio/ogg";
+        } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+          options = { mimeType: "audio/mp4" };
+          mimeType = "audio/mp4";
+        } else if (MediaRecorder.isTypeSupported("audio/aac")) {
+          options = { mimeType: "audio/aac" };
+          mimeType = "audio/aac";
+        }
+
+        const mediaRecorder = new MediaRecorder(stream, options);
+        mediaRecorderRef.current = mediaRecorder;
+        audioChunksRef.current = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data && event.data.size > 0) {
+            audioChunksRef.current.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+          
+          if (audioStreamRef.current) {
+            audioStreamRef.current.getTracks().forEach((track) => track.stop());
+            audioStreamRef.current = null;
+          }
+
+          setIsTranscribing(true);
+          try {
+            const reader = new FileReader();
+            reader.readAsDataURL(audioBlob);
+            reader.onloadend = async () => {
+              const base64Audio = reader.result as string;
+              const res = await fetch("/api/transcribe", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  audio: base64Audio,
+                  mimeType: mimeType,
+                }),
+              });
+              
+              if (!res.ok) throw new Error(`Server returned error: ${res.status}`);
+              
+              const data = await res.json();
+              if (data.text) {
+                const baseText = textRef.current.trim();
+                setText(() => (baseText ? baseText + " " + data.text.trim() : data.text.trim()));
+              }
+              setIsTranscribing(false);
+            };
+          } catch (err) {
+            console.error("Transcription execution error:", err);
+            setIsTranscribing(false);
+            runMockFallback();
+          }
+        };
+
+        mediaRecorder.start();
+        setIsRecording(true);
+
+      } catch (e: any) {
+        console.warn("Speech MediaRecorder fallback failed, cascading to Mock simulator:", e);
+        runMockFallback();
+      }
+    }
+
+    function runMockFallback() {
       setIsRecording(true);
       setTimeout(() => {
         setIsRecording(false);
+        const baseText = textRef.current.trim();
         if (isHi) {
-          setText((prev) => (prev ? prev.trim() + " " + "गोमती नगर में मिठाई चौराहे के पास सड़क पर गहरे गड्ढे हो गए हैं। वाहनों को निकलने में भारी असुविधा हो रही है और दुर्घटना का खतरा बना रहता है। कृपया शीघ्र मरम्मत कराएं।" : "गोमती नगर में मिठाई चौराहे के पास सड़क पर गहरे गड्ढे हो गए हैं। वाहनों को निकलने में भारी असुविधा हो रही है और दुर्घटना का खतरा बना रहता है। कृपया शीघ्र मरम्मत कराएं।"));
+          const mock = "गोमती नगर में मिठाई चौराहे के पास सड़क पर गहरे गड्ढे हो गए हैं। वाहनों को निकलने में भारी असुविधा हो रही है और दुर्घटना का खतरा बना रहता है। कृपया शीघ्र मरम्मत कराएं।";
+          setText(() => (baseText ? baseText + " " + mock : mock));
         } else {
-          setText((prev) => (prev ? prev.trim() + " " + "Deep potholes have formed on the road near Mithai Chauraha in Gomti Nagar. Vehicles are facing severe inconvenience and there is a constant risk of accidents. Please repair it immediately." : "Deep potholes have formed on the road near Mithai Chauraha in Gomti Nagar. Vehicles are facing severe inconvenience and there is a constant risk of accidents. Please repair it immediately."));
+          const mock = "Deep potholes have formed on the road near Mithai Chauraha in Gomti Nagar. Vehicles are facing severe inconvenience and there is a constant risk of accidents. Please repair it immediately.";
+          setText(() => (baseText ? baseText + " " + mock : mock));
         }
       }, 3000);
     }
   }, [isHi]);
 
   const stopVoiceRecording = useCallback(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
     }

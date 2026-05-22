@@ -27,6 +27,8 @@ import {
   Bell,
   Trash2,
   Inbox,
+  Droplet,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,6 +61,7 @@ export default function OfficerDashboard() {
   const [selectedComplaintId, setSelectedComplaintId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [activeSubTab, setActiveSubTab] = useState<"queue" | "map">("queue");
 
   // Notes state
@@ -138,11 +141,22 @@ export default function OfficerDashboard() {
     };
   };
 
-  // Load complaints and stats
+  // Load complaints and stats and listen to real-time local storage edits
   useEffect(() => {
     setMounted(true);
     setComplaints(getComplaints());
     setStats(getStats());
+
+    const handleSync = () => {
+      setComplaints(getComplaints());
+      setStats(getStats());
+    };
+    window.addEventListener("janmitra-db-change", handleSync);
+    window.addEventListener("storage", handleSync);
+    return () => {
+      window.removeEventListener("janmitra-db-change", handleSync);
+      window.removeEventListener("storage", handleSync);
+    };
   }, []);
 
   const refreshData = () => {
@@ -170,7 +184,8 @@ export default function OfficerDashboard() {
       c.area.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.id.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesPriority = selectedPriority === "all" || c.priority === selectedPriority;
-    return matchesSearch && matchesPriority;
+    const matchesCategory = selectedCategory === "all" || c.category === selectedCategory;
+    return matchesSearch && matchesPriority && matchesCategory;
   });
 
   const selectedComplaint = complaints.find((c) => c.id === selectedComplaintId);
@@ -316,6 +331,32 @@ export default function OfficerDashboard() {
       glowClass: "hover:shadow-[0_0_15px_-3px_rgba(239,68,68,0.35)] border-danger-red/20 hover:border-danger-red/40 active-glowing-card-red",
     },
   ];
+
+  const categoriesList = [
+    { name: "Garbage / Sanitation", label: "Sanitation", icon: Trash2, color: "#3B82F6", glowClass: "hover:shadow-[0_0_15px_-3px_rgba(59,130,246,0.3)] border-blue-500/20 shadow-blue-500/5", bg: "bg-blue-500/5" },
+    { name: "Water Supply", label: "Water", icon: Droplet, color: "#06B6D4", glowClass: "hover:shadow-[0_0_15px_-3px_rgba(6,182,212,0.3)] border-cyan-500/20 shadow-cyan-500/5", bg: "bg-cyan-500/5" },
+    { name: "Road Damage", label: "Roads", icon: AlertTriangle, color: "#10B981", glowClass: "hover:shadow-[0_0_15px_-3px_rgba(16,185,129,0.3)] border-emerald-500/20 shadow-emerald-500/5", bg: "bg-emerald-500/5" },
+    { name: "Electricity", label: "Power", icon: Zap, color: "#F59E0B", glowClass: "hover:shadow-[0_0_15px_-3px_rgba(245,158,11,0.3)] border-amber-500/20 shadow-amber-500/5", bg: "bg-amber-500/5" },
+    { name: "Street Light", label: "Lights", icon: Sparkles, color: "#7C3AED", glowClass: "hover:shadow-[0_0_15px_-3px_rgba(124,58,237,0.3)] border-violet-500/20 shadow-violet-500/5", bg: "bg-violet-500/5" },
+    { name: "Illegal Construction", label: "Civic Construction", icon: Building2, color: "#F97316", glowClass: "hover:shadow-[0_0_15px_-3px_rgba(249,115,22,0.3)] border-orange-500/20 shadow-orange-500/5", bg: "bg-orange-500/5" },
+    { name: "Encroachment", label: "Encroach", icon: Layers, color: "#EC4899", glowClass: "hover:shadow-[0_0_15px_-3px_rgba(236,72,153,0.3)] border-pink-500/20 shadow-pink-500/5", bg: "bg-pink-500/5" },
+    { name: "Corruption", label: "Vigilance", icon: Shield, color: "#EF4444", glowClass: "hover:shadow-[0_0_15px_-3px_rgba(239,68,68,0.3)] border-red-500/20 shadow-red-500/5", bg: "bg-red-500/5" },
+    { name: "Public Health", label: "Health", icon: Activity, color: "#8B5CF6", glowClass: "hover:shadow-[0_0_15px_-3px_rgba(139,92,246,0.3)] border-purple-500/20 shadow-purple-500/5", bg: "bg-purple-500/5" },
+  ];
+
+  const categoryStats = complaints.reduce((acc, c) => {
+    const cat = c.category;
+    if (!acc[cat]) {
+      acc[cat] = { total: 0, active: 0 };
+    }
+    acc[cat].total += 1;
+    if (c.status !== "resolved") {
+      acc[cat].active += 1;
+    }
+    return acc;
+  }, {} as Record<string, { total: number; active: number }>);
+
+  const maxActive = Math.max(...categoriesList.map(c => categoryStats[c.name]?.active || 0), 1);
 
   return (
     <>
@@ -481,6 +522,115 @@ export default function OfficerDashboard() {
             ))}
           </div>
 
+          {/* Interactive Category Breakdown Section */}
+          <motion.div
+            className="mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-4 bg-primary rounded-full" />
+                <h2 className="text-sm font-bold tracking-wider text-muted-foreground uppercase">
+                  Category Distribution Matrix
+                </h2>
+              </div>
+              {selectedCategory !== "all" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-7 px-2.5 rounded-lg border-primary/30 text-primary bg-primary/5 hover:bg-primary/10 transition-all cursor-pointer font-bold flex items-center gap-1.5 active:scale-95 animate-pulse"
+                  onClick={() => setSelectedCategory("all")}
+                >
+                  <X className="w-3.5 h-3.5" />
+                  Clear Filter: {selectedCategory.replace(" / ", " & ")}
+                </Button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 2xl:grid-cols-9 gap-4">
+              {categoriesList.map((cat) => {
+                const total = categoryStats[cat.name]?.total || 0;
+                const active = categoryStats[cat.name]?.active || 0;
+                const pct = Math.round((active / maxActive) * 100);
+                const isSelected = selectedCategory === cat.name;
+
+                return (
+                  <motion.div
+                    key={cat.name}
+                    className={`glass-premium border rounded-2xl p-4 flex flex-col justify-between cursor-pointer transition-all duration-300 relative group overflow-hidden ${
+                      isSelected
+                        ? "scale-[1.03] shadow-lg ring-1"
+                        : `border-border/10 ${cat.glowClass} hover:scale-[1.02] active:scale-[0.98] bg-muted/10`
+                    }`}
+                    style={
+                      isSelected
+                        ? {
+                            borderColor: `${cat.color}70`,
+                            backgroundColor: `${cat.color}06`,
+                            boxShadow: `0 0 20px ${cat.color}20`,
+                            color: cat.color,
+                          }
+                        : {}
+                    }
+                    onClick={() => {
+                      if (isSelected) {
+                        setSelectedCategory("all");
+                      } else {
+                        setSelectedCategory(cat.name);
+                      }
+                    }}
+                  >
+                    {/* Glowing Accent Spot */}
+                    <div
+                      className="absolute -right-4 -bottom-4 w-12 h-12 rounded-full filter blur-lg opacity-15 pointer-events-none group-hover:scale-125 transition-transform duration-500 animate-pulse"
+                      style={{ backgroundColor: cat.color }}
+                    />
+
+                    <div className="flex items-start justify-between mb-2 relative z-10">
+                      <div
+                        className={`w-8.5 h-8.5 rounded-xl flex items-center justify-center border transition-all duration-300 group-hover:rotate-12 ${cat.bg}`}
+                        style={{ borderColor: `${cat.color}25` }}
+                      >
+                        <cat.icon className="w-4.5 h-4.5" style={{ color: cat.color }} />
+                      </div>
+                      
+                      <div className="text-right">
+                        <span className="text-lg font-extrabold text-foreground leading-none block">
+                          {active}
+                        </span>
+                        <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider block">
+                          Active
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-3.5 relative z-10">
+                      <h3 className="text-xs font-bold text-foreground/90 group-hover:text-primary transition-colors leading-tight">
+                        {cat.label}
+                      </h3>
+                      <span className="text-[9px] text-muted-foreground font-semibold flex items-center gap-1.5 mt-1">
+                        Total: <strong className="text-foreground/75">{total}</strong>
+                      </span>
+                    </div>
+
+                    {/* Progress Bar relative to maxActive */}
+                    <div className="mt-3.5 w-full bg-border/20 h-1.5 rounded-full overflow-hidden relative z-10">
+                      <motion.div
+                        className="h-full rounded-full"
+                        style={{ backgroundColor: cat.color }}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                      />
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+
           {/* Double Split-Pane Dashboard */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
             {/* Left Column: Complaint Queue & Heatmap (Col 5) */}
@@ -496,7 +646,14 @@ export default function OfficerDashboard() {
                       </div>
                       Grievance Portal
                     </CardTitle>
-                    <Badge variant="outline" className="font-semibold">{filteredComplaints.length} tickets</Badge>
+                    <div className="flex items-center gap-1.5">
+                      <Badge variant="outline" className="font-semibold">{filteredComplaints.length} tickets</Badge>
+                      {selectedCategory !== "all" && (
+                        <Badge className="bg-primary/20 text-primary border-primary/30 font-bold capitalize text-[10px] animate-pulse">
+                          {selectedCategory.split(" / ")[0]}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
 
                   {/* Left Column Tabs Toggle */}
@@ -569,8 +726,22 @@ export default function OfficerDashboard() {
                         className="h-full overflow-y-auto space-y-2.5 pr-1.5 custom-scrollbar flex-1"
                       >
                         {filteredComplaints.length === 0 ? (
-                          <div className="text-center py-12 text-sm text-muted-foreground">
-                            No active grievances match current filter.
+                          <div className="text-center py-12 text-sm text-muted-foreground flex flex-col items-center justify-center gap-3">
+                            <span>No active grievances match current filter.</span>
+                            {(selectedCategory !== "all" || searchQuery !== "" || selectedPriority !== "all") && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-xs h-8 px-3 rounded-xl border-primary/30 text-primary cursor-pointer hover:bg-primary/5 font-bold transition-all active:scale-95"
+                                onClick={() => {
+                                  setSelectedCategory("all");
+                                  setSearchQuery("");
+                                  setSelectedPriority("all");
+                                }}
+                              >
+                                Reset All Filters
+                              </Button>
+                            )}
                           </div>
                         ) : (
                           filteredComplaints.map((c, i) => {

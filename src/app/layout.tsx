@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { Suspense } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DemoTour } from "@/components/landing/DemoTour";
+import { AIAssistantWidget } from "@/components/shared/AIAssistantWidget";
 import "./globals.css";
 
 const inter = Inter({
@@ -40,8 +41,10 @@ export default function RootLayout({
           <Suspense fallback={null}>
             <DemoTour />
           </Suspense>
+          <AIAssistantWidget />
         </TooltipProvider>
       </body>
     </html>
   );
 }
+

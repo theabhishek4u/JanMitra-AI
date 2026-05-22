@@ -2,9 +2,16 @@ import { NextResponse } from "next/server";
 import { classifyComplaint } from "@/lib/ai";
 
 export async function POST(request: Request) {
+  let body: any = {};
   try {
-    const { text, image, imageName } = await request.json();
+    body = await request.json();
+  } catch (e) {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
 
+  const { text, image, imageName } = body;
+
+  try {
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
@@ -115,13 +122,12 @@ Return ONLY valid JSON matching this schema. No extra text, no markdown block wr
 
   } catch (error: any) {
     console.error("Error in API classify route:", error);
-    // If anything fails, fallback to local classifier
+    // If anything fails, fallback to local classifier safely using the parsed text
     try {
-      const body = await request.json().catch(() => ({}));
-      const localResult = classifyComplaint(body.text || "");
+      const localResult = classifyComplaint(text || "");
       return NextResponse.json({ ...localResult, isFallback: true, error: error.message });
-    } catch {
-      return NextResponse.json({ error: "Failed to classify complaint", isFallback: true }, { status: 500 });
+    } catch (innerError: any) {
+      return NextResponse.json({ error: "Failed to classify complaint", isFallback: true, details: innerError.message }, { status: 500 });
     }
   }
 }

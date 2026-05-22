@@ -260,6 +260,10 @@ export function addComplaint(complaintData: Partial<Complaint>): Complaint {
   db.unshift(newComplaint);
   saveDatabase(db);
 
+  if (isClient) {
+    window.dispatchEvent(new CustomEvent("janmitra-db-change"));
+  }
+
   // Trigger Officer Notification
   addOfficerNotification(
     "update",
@@ -338,6 +342,10 @@ export function updateComplaintStatus(
   db[index] = complaint;
   saveDatabase(db);
 
+  if (isClient) {
+    window.dispatchEvent(new CustomEvent("janmitra-db-change"));
+  }
+
   // Trigger Citizen Notification
   let notifMessageEn = `Your grievance ${complaint.id} status has been updated to "${status.replace(/_/g, " ")}" by Officer.`;
   let notifMessageHi = `आपकी शिकायत ${complaint.id} की स्थिति अधिकारी द्वारा "${status}" में अपडेट की गई है।`;
@@ -397,6 +405,11 @@ export function mergeDuplicateComplaint(id: string, parentId: string): Complaint
 
   db[index] = complaint;
   saveDatabase(db);
+
+  if (isClient) {
+    window.dispatchEvent(new CustomEvent("janmitra-db-change"));
+  }
+
   return complaint;
 }
 

@@ -77,9 +77,19 @@ export default function CitizenDashboard() {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  // Load complaints dynamically on mount
+  // Load complaints dynamically on mount and listen to real-time local storage edits
   useEffect(() => {
     setComplaints(getComplaints());
+
+    const handleSync = () => {
+      setComplaints(getComplaints());
+    };
+    window.addEventListener("janmitra-db-change", handleSync);
+    window.addEventListener("storage", handleSync);
+    return () => {
+      window.removeEventListener("janmitra-db-change", handleSync);
+      window.removeEventListener("storage", handleSync);
+    };
   }, []);
 
   // Sync check for url params (e.g. ?demo=true)
