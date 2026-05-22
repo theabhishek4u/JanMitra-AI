@@ -33,7 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} h-full`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col font-sans antialiased">
-        <TooltipProvider delayDuration={200}>
+        <TooltipProvider>
           {children}
         </TooltipProvider>
       </body>

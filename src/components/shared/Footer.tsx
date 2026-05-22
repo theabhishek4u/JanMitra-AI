@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bot, Github, Mail, Phone } from "lucide-react";
+import { Bot, ExternalLink, Mail, Phone } from "lucide-react";
 
 export function Footer() {
   return (
@@ -80,7 +80,7 @@ export function Footer() {
                 <Mail className="w-4 h-4" /> support@janmitra.gov.in
               </li>
               <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Github className="w-4 h-4" /> Open Source
+                <ExternalLink className="w-4 h-4" /> Open Source
               </li>
             </ul>
           </div>

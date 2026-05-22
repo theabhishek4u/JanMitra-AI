@@ -20,7 +20,7 @@ const features = [
   {
     icon: Brain,
     title: "AI Classification Engine",
-    titleHi: "एआई वर्गीकरण इंजन",
+    titleHi: "AI Classification Engine",
     description:
       "Automatically understands complaints in Hindi, English, or Urdu. Detects category, priority, and urgency in milliseconds.",
     color: "#7C3AED",
@@ -29,7 +29,7 @@ const features = [
   {
     icon: Route,
     title: "Smart Department Routing",
-    titleHi: "स्मार्ट विभाग रूटिंग",
+    titleHi: "Smart Department Routing",
     description:
       "AI routes complaints to the correct department — Nagar Nigam, Jal Nigam, PWD, or others — with 94% accuracy.",
     color: "#1D4ED8",
@@ -38,7 +38,7 @@ const features = [
   {
     icon: Languages,
     title: "Multilingual Support",
-    titleHi: "बहुभाषी समर्थन",
+    titleHi: "Multilingual Support",
     description:
       "Submit in Hindi, Hinglish, Urdu, or English. Get updates in your preferred language. Voice input supported.",
     color: "#10B981",
@@ -47,7 +47,7 @@ const features = [
   {
     icon: MapPin,
     title: "Live Complaint Tracking",
-    titleHi: "लाइव शिकायत ट्रैकिंग",
+    titleHi: "Live Complaint Tracking",
     description:
       "Amazon/Swiggy-style tracking timeline. Know exactly where your complaint stands — from submission to resolution.",
     color: "#F59E0B",
@@ -56,7 +56,7 @@ const features = [
   {
     icon: BellRing,
     title: "Autonomous Follow-Ups",
-    titleHi: "स्वचालित फॉलो-अप",
+    titleHi: "Autonomous Follow-Ups",
     description:
       "AI agent automatically reminds departments, escalates overdue complaints, and keeps citizens updated.",
     color: "#EF4444",
@@ -65,7 +65,7 @@ const features = [
   {
     icon: BarChart3,
     title: "Predictive Analytics",
-    titleHi: "भविष्यवाणी विश्लेषण",
+    titleHi: "Predictive Analytics",
     description:
       "Heatmaps, trend analysis, and predictive governance. Know where problems will arise before they happen.",
     color: "#06B6D4",
@@ -128,10 +128,7 @@ export function Features() {
               >
                 <feature.icon className="w-6 h-6" style={{ color: feature.color }} />
               </div>
-              <h3 className="text-lg font-semibold mb-1">{feature.title}</h3>
-              <p className="text-xs text-ai-purple/70 font-medium mb-2">
-                {feature.titleHi}
-              </p>
+              <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 {feature.description}
               </p>

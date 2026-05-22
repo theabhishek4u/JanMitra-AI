@@ -1,5 +1,5 @@
 // ============================================
-// JanMitra AI — AI Classification Engine
+// JanMitra AI — AI Classification Engine (English)
 // ============================================
 // Uses keyword-based classifier with optional Gemini API integration
 
@@ -20,7 +20,7 @@ export function classifyComplaint(text: string): AIClassification {
       if (lowerText.includes(kw)) score += 2;
     }
     for (const kw of cat.keywordsHi) {
-      if (text.includes(kw)) score += 3; // Higher weight for Hindi
+      if (text.includes(kw)) score += 3; // Higher weight for Hindi keywords if entered
     }
     if (score > bestScore) {
       bestScore = score;
@@ -33,15 +33,17 @@ export function classifyComplaint(text: string): AIClassification {
   const urgency = detectUrgency(text, priority);
   const confidence = Math.min(0.65 + bestScore * 0.05, 0.98);
 
+  const englishSummary = generateSummary(text, bestCategory.name, department?.name || "General Administration");
+
   return {
     category: bestCategory.name,
-    categoryHi: bestCategory.nameHi,
+    categoryHi: bestCategory.name, // Make identical to avoid Hindi in UI
     priority,
     urgency,
     department: department?.name || "General Administration",
-    departmentHi: department?.nameHi || "सामान्य प्रशासन",
-    summary: generateSummary(text, bestCategory.name, department?.name || ""),
-    summaryHi: generateSummaryHi(text, bestCategory.nameHi, department?.nameHi || ""),
+    departmentHi: department?.name || "General Administration",
+    summary: englishSummary,
+    summaryHi: englishSummary, // Make identical to avoid Hindi in UI
     confidence,
     fraudRisk: detectFraudRisk(text),
     predictedResolutionDays: department?.avgResolutionDays || 5,
@@ -110,22 +112,6 @@ function generateSummary(text: string, category: string, department: string): st
   };
 
   return summaries[category] || `Citizen complaint categorized under ${category}. Assigned to ${department} for review and action.`;
-}
-
-function generateSummaryHi(text: string, category: string, department: string): string {
-  const summaries: Record<string, string> = {
-    "कूड़ा / स्वच्छता": `स्वच्छता शिकायत दर्ज। ${department} द्वारा तत्काल ध्यान देने की आवश्यकता। प्रभावित क्षेत्र में स्वास्थ्य और स्वच्छता की चिंता।`,
-    "जल आपूर्ति": `जल आपूर्ति में व्यवधान की शिकायत। ${department} द्वारा पाइपलाइन निरीक्षण और आपातकालीन जल आपूर्ति आवश्यक।`,
-    "सड़क क्षति": `सड़क क्षति की शिकायत। गड्ढों और टूटी सड़क से वाहन क्षति। ${department} द्वारा तत्काल मरम्मत आवश्यक।`,
-    "बिजली": `विद्युत अवसंरचना की शिकायत। ${department} द्वारा तत्काल तकनीकी निरीक्षण आवश्यक।`,
-    "स्ट्रीट लाइट": `स्ट्रीट लाइट खराबी की शिकायत। रात में सुरक्षा चिंता। ${department} द्वारा निरीक्षण आवश्यक।`,
-    "अवैध निर्माण": `अनधिकृत निर्माण की शिकायत। ${department} द्वारा स्थल निरीक्षण और कानूनी कार्रवाई आवश्यक।`,
-    "अतिक्रमण": `सार्वजनिक स्थान पर अतिक्रमण की शिकायत। ${department} द्वारा प्रवर्तन कार्रवाई आवश्यक।`,
-    "भ्रष्टाचार": `भ्रष्टाचार शिकायत दर्ज। ${department} द्वारा जांच आवश्यक।`,
-    "जन स्वास्थ्य": `जन स्वास्थ्य चिंता की शिकायत। ${department} द्वारा चिकित्सा दल निरीक्षण आवश्यक।`,
-  };
-
-  return summaries[category] || `${category} के अंतर्गत शिकायत। ${department} को समीक्षा और कार्रवाई के लिए सौंपा गया।`;
 }
 
 // Simulate AI processing delay for demo effect
