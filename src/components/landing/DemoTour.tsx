@@ -42,26 +42,7 @@ export function DemoTour() {
   }, [pathname]);
 
   if (!isDemo) {
-    // Show a floating "Try AI Demo" pulsing badge to invite the judge to explore
-    return (
-      <div className="fixed bottom-6 right-6 z-50">
-        <motion.button
-          onClick={() => router.push("/citizen?demo=true")}
-          className="flex items-center gap-2.5 px-4 py-2.5 bg-gradient-to-r from-gov-blue via-ai-purple to-gov-blue-light border border-primary/40 rounded-full text-white font-extrabold text-xs tracking-wider uppercase shadow-[0_0_20px_rgba(124,58,237,0.35)] cursor-pointer hover:scale-105 active:scale-95 transition-all duration-300 group"
-          animate={{
-            boxShadow: [
-              "0 0 15px rgba(124,58,237,0.3)",
-              "0 0 25px rgba(124,58,237,0.6)",
-              "0 0 15px rgba(124,58,237,0.3)"
-            ]
-          }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <Sparkles className="w-4 h-4 text-white animate-spin-slow group-hover:rotate-12 transition-transform" />
-          <span>Interactive AI Tour</span>
-        </motion.button>
-      </div>
-    );
+    return null;
   }
 
   if (!isVisible) return null;

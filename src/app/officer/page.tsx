@@ -143,6 +143,24 @@ export default function OfficerDashboard() {
 
   // Load complaints and stats and listen to real-time local storage edits
   useEffect(() => {
+    // Client-side secure route guard
+    const authSession = localStorage.getItem("janmitra_auth");
+    if (!authSession) {
+      window.location.href = "/login?role=officer";
+      return;
+    }
+    try {
+      const parsed = JSON.parse(authSession);
+      if (parsed.role !== "officer") {
+        window.location.href = "/login?role=officer";
+        return;
+      }
+    } catch (e) {
+      localStorage.removeItem("janmitra_auth");
+      window.location.href = "/login?role=officer";
+      return;
+    }
+
     setMounted(true);
     setComplaints(getComplaints());
     setStats(getStats());

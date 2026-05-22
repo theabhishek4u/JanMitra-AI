@@ -53,6 +53,9 @@ export function AIAssistantWidget() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioAnimationRef = useRef<number | null>(null);
   const recognitionRef = useRef<any>(null);
+  const voiceTimeout1Ref = useRef<NodeJS.Timeout | null>(null);
+  const voiceTimeout2Ref = useRef<NodeJS.Timeout | null>(null);
+  const previousInputRef = useRef<string>("");
 
   const isHi = language === "hi";
 
@@ -78,6 +81,8 @@ export function AIAssistantWidget() {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
+      if (voiceTimeout1Ref.current) clearTimeout(voiceTimeout1Ref.current);
+      if (voiceTimeout2Ref.current) clearTimeout(voiceTimeout2Ref.current);
     };
   }, []);
 
@@ -401,6 +406,7 @@ export function AIAssistantWidget() {
   };
 
   const startVoiceRecording = () => {
+    previousInputRef.current = inputValue;
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (SpeechRecognition) {
@@ -456,15 +462,16 @@ export function AIAssistantWidget() {
       setIsRecording(true);
       setVoiceText(isHi ? "सुन रहा हूँ..." : "Listening...");
 
-      setTimeout(() => {
+      voiceTimeout1Ref.current = setTimeout(() => {
         const partialText = isHi
           ? "हजरतगंज मेन रोड पर बिजली का खंभा क्षतिग्रस्त हो गया है..."
           : "Hazratganj main road pe electrical pole damage ho gaya hai...";
         setVoiceText(partialText);
         setInputValue(partialText);
+        voiceTimeout1Ref.current = null;
       }, 1500);
 
-      setTimeout(() => {
+      voiceTimeout2Ref.current = setTimeout(() => {
         const finalTranscript = isHi
           ? "हजरतगंज मेन रोड पर बिजली का खंभा क्षतिग्रस्त हो गया है, कृपया ठीक करें।"
           : "Hazratganj main road pe electrical pole damage ho gaya hai, please repair karvao.";
@@ -475,15 +482,30 @@ export function AIAssistantWidget() {
         if (audioFeedback) {
           playBeepSuccess();
         }
+        voiceTimeout2Ref.current = null;
       }, 3200);
     }
   };
 
   const stopVoiceRecording = () => {
     if (recognitionRef.current) {
-      recognitionRef.current.stop();
+      recognitionRef.current.onend = null;
+      recognitionRef.current.onerror = null;
+      try {
+        recognitionRef.current.abort();
+      } catch (e) {}
       recognitionRef.current = null;
     }
+    if (voiceTimeout1Ref.current) {
+      clearTimeout(voiceTimeout1Ref.current);
+      voiceTimeout1Ref.current = null;
+    }
+    if (voiceTimeout2Ref.current) {
+      clearTimeout(voiceTimeout2Ref.current);
+      voiceTimeout2Ref.current = null;
+    }
+    // Discard any intermediate speech and restore the previous input
+    setInputValue(previousInputRef.current);
     setIsRecording(false);
   };
 

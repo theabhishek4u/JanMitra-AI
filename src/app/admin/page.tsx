@@ -61,6 +61,24 @@ export default function AdminDashboard() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
 
   useEffect(() => {
+    // Client-side secure route guard
+    const authSession = localStorage.getItem("janmitra_auth");
+    if (!authSession) {
+      window.location.href = "/login?role=admin";
+      return;
+    }
+    try {
+      const parsed = JSON.parse(authSession);
+      if (parsed.role !== "admin") {
+        window.location.href = "/login?role=admin";
+        return;
+      }
+    } catch (e) {
+      localStorage.removeItem("janmitra_auth");
+      window.location.href = "/login?role=admin";
+      return;
+    }
+
     setMounted(true);
     setStats(getStats());
     setAnalytics(getAnalytics());

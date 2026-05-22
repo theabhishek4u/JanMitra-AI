@@ -63,6 +63,7 @@ export function ComplaintForm({
   const [isTranscribing, setIsTranscribing] = useState(false);
   const recognitionRef = useRef<any>(null);
   const textRef = useRef(text);
+  const fallbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     textRef.current = text;
@@ -120,6 +121,9 @@ export function ComplaintForm({
       }
       if (audioStreamRef.current) {
         audioStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+      if (fallbackTimeoutRef.current) {
+        clearTimeout(fallbackTimeoutRef.current);
       }
       window.removeEventListener("janmitra-autofill", handleAutofill);
     };
@@ -371,7 +375,7 @@ export function ComplaintForm({
 
     function runMockFallback() {
       setIsRecording(true);
-      setTimeout(() => {
+      fallbackTimeoutRef.current = setTimeout(() => {
         setIsRecording(false);
         const baseText = textRef.current.trim();
         if (isHi) {
@@ -381,17 +385,30 @@ export function ComplaintForm({
           const mock = "Deep potholes have formed on the road near Mithai Chauraha in Gomti Nagar. Vehicles are facing severe inconvenience and there is a constant risk of accidents. Please repair it immediately.";
           setText(() => (baseText ? baseText + " " + mock : mock));
         }
+        fallbackTimeoutRef.current = null;
       }, 3000);
     }
   }, [isHi]);
 
   const stopVoiceRecording = useCallback(() => {
     if (recognitionRef.current) {
-      recognitionRef.current.stop();
+      recognitionRef.current.onend = null;
+      recognitionRef.current.onerror = null;
+      try {
+        recognitionRef.current.abort();
+      } catch (e) {}
       recognitionRef.current = null;
     }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
+    }
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach((track) => track.stop());
+      audioStreamRef.current = null;
+    }
+    if (fallbackTimeoutRef.current) {
+      clearTimeout(fallbackTimeoutRef.current);
+      fallbackTimeoutRef.current = null;
     }
     setIsRecording(false);
   }, []);
