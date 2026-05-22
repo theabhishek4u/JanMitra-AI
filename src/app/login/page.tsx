@@ -267,7 +267,7 @@ export default function LoginPage() {
                     >
                       <div className="block group">
                         <Card
-                          className={`h-full glass-premium border relative overflow-hidden transition-all duration-300 hover:scale-[1.03] text-left cursor-pointer flex flex-col justify-between ${
+                          className={`h-full glass-premium border relative overflow-hidden transition-all duration-300 hover:scale-[1.03] text-left cursor-pointer flex flex-col justify-between bg-transparent ${
                             isActiveSession
                               ? role.id === "officer"
                                 ? "shadow-[0_0_20px_-3px_rgba(245,158,11,0.5)] border-warning-amber/80"

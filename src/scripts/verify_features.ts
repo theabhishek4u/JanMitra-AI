@@ -13,7 +13,12 @@ const mockLocalStorage = {
 };
 
 // Set up mock client environment
-(global as any).window = {};
+(global as any).window = {
+  dispatchEvent: () => {}
+};
+(global as any).CustomEvent = class {
+  constructor(type: string, options?: any) {}
+};
 (global as any).localStorage = mockLocalStorage;
 
 async function runVerification() {

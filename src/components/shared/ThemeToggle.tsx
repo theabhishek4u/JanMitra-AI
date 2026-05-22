@@ -5,18 +5,19 @@ import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function ThemeToggle() {
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(true);
 
   useEffect(() => {
     const saved = localStorage.getItem("janmitra-theme");
-    const isDark = saved === "dark" || (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches);
-    if (isDark) {
+    // Only switch to light if user explicitly chose 'light'
+    if (saved === "light") {
+      document.documentElement.classList.remove("dark");
+      setDark(false);
+    } else {
+      // Ensure dark class is present (default)
       document.documentElement.classList.add("dark");
+      setDark(true);
     }
-    const timer = setTimeout(() => {
-      setDark(isDark);
-    }, 0);
-    return () => clearTimeout(timer);
   }, []);
 
   function toggle() {
