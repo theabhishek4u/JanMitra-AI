@@ -244,21 +244,21 @@ npm install
 npm run dev
 ```
 
-<<<<<<< HEAD
 Open [http://localhost:3000](http://localhost:3000) inside your browser. Navigate using the Navbar links or directly view protected pathways to experience the secure redirects.
 
-### 5. Verify Feature Suite
-Run the pre-configured feature validation test suite to verify the spatial clustering, priority promotions, notification dispatches, and resolved hotspot shrinkage operations:
-```bash
-npx tsx src/scripts/verify_features.ts
-```
-=======
-Open [[http://localhost:3000](https://jan-mitra-ai-opal.vercel.app/)](https://jan-mitra-ai-opal.vercel.app) with your browser to experience the landing page, and visit the distinct routes:
+Alternatively, you can visit the live application at [https://jan-mitra-ai-opal.vercel.app/](https://jan-mitra-ai-opal.vercel.app/).
+
+### 5. Key Routes & Pathways
 *   **Landing Page:** `/`
 *   **Citizen Dashboard:** `/citizen`
 *   **Officer Portal:** `/officer`
 *   **Admin Console:** `/admin`
->>>>>>> e1be45055187c2a0bb8fa9d59b0ba31175400673
+
+### 6. Verify Feature Suite
+Run the pre-configured feature validation test suite to verify the spatial clustering, priority promotions, notification dispatches, and resolved hotspot shrinkage operations:
+```bash
+npx tsx src/scripts/verify_features.ts
+```
 
 ---
 
