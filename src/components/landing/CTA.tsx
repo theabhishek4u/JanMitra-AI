@@ -9,7 +9,7 @@ export function CTA() {
   return (
     <section className="py-24 relative overflow-hidden">
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-gov-blue via-gov-blue-dark to-ai-purple-dark opacity-95" />
+      <div className="absolute inset-0 bg-linear-to-br from-gov-blue via-gov-blue-dark to-ai-purple-dark opacity-95" />
       <div className="absolute inset-0">
         <div className="absolute inset-0 opacity-10" style={{
           backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 1px)`,

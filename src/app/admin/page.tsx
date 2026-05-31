@@ -65,7 +65,6 @@ export default function AdminDashboard() {
     // Client-side secure route guard
     const checkAuth = () => {
       const session = getAuthSession();
-<<<<<<< HEAD
       if (!session) {
         window.location.href = "/login?role=admin";
         return false;
@@ -75,13 +74,6 @@ export default function AdminDashboard() {
         window.location.href = session.role === "officer" ? "/officer" : "/login?role=admin";
         return false;
       }
-=======
-      if (!session || session.role !== "admin") {
-        clearAuthSession();
-        window.location.href = "/login?role=admin";
-        return false;
-      }
->>>>>>> d366770eb77e12ef1638d9130502c2b60ee5c41c
       return true;
     };
 
@@ -107,7 +99,7 @@ export default function AdminDashboard() {
   if (!mounted || !stats || !analytics) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center text-muted-foreground">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-ai-purple/20 via-primary/10 to-gov-blue/20 border border-ai-purple/30 flex items-center justify-center shadow-lg animate-spin">
+        <div className="w-12 h-12 rounded-xl bg-linear-to-br from-ai-purple/20 via-primary/10 to-gov-blue/20 border border-ai-purple/30 flex items-center justify-center shadow-lg animate-spin">
           <Sparkles className="w-6 h-6 text-ai-purple" />
         </div>
         <span className="text-sm font-bold mt-4 tracking-wider">LOADING ADMIN INSIGHTS PORTAL...</span>
@@ -137,7 +129,7 @@ export default function AdminDashboard() {
             animate={{ opacity: 1, y: 0 }}
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-ai-purple to-ai-purple flex items-center justify-center shadow-md shadow-ai-purple/20">
+              <div className="w-10 h-10 rounded-xl bg-linear-to-br from-ai-purple to-ai-purple flex items-center justify-center shadow-md shadow-ai-purple/20">
                 <BarChart3 className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -236,11 +228,11 @@ export default function AdminDashboard() {
                       {/* Multi-segmented custom progress bar track */}
                       <div className="flex gap-1 h-2 w-full bg-muted/60 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-trust-green to-trust-green-light rounded-l-full transition-all duration-500"
+                          className="h-full bg-linear-to-r from-trust-green to-trust-green-light rounded-l-full transition-all duration-500"
                           style={{ width: `${pctResolved || 5}%` }}
                         />
                         <div
-                          className="h-full bg-gradient-to-r from-warning-amber to-warning-amber-light rounded-r-full transition-all duration-500"
+                          className="h-full bg-linear-to-r from-warning-amber to-warning-amber-light rounded-r-full transition-all duration-500"
                           style={{ width: `${pctPending || 5}%` }}
                         />
                       </div>
@@ -252,10 +244,10 @@ export default function AdminDashboard() {
 
             {/* Predictive Insights */}
             <Card className="glass-premium border border-ai-purple/20 neon-glow-ai relative overflow-hidden shadow-xl shadow-black/5 scanning-laser-container">
-              <div className="absolute right-0 top-0 w-24 h-24 bg-gradient-to-bl from-ai-purple/10 to-transparent pointer-events-none rounded-bl-full" />
+              <div className="absolute right-0 top-0 w-24 h-24 bg-linear-to-bl from-ai-purple/10 to-transparent pointer-events-none rounded-bl-full" />
               <CardHeader className="pb-3 relative z-10">
                 <CardTitle className="text-lg flex items-center gap-2 font-bold text-foreground/90">
-                  <div className="w-7 h-7 rounded-lg bg-ai-purple/10 flex items-center justify-center flex-shrink-0 animate-pulse">
+                  <div className="w-7 h-7 rounded-lg bg-ai-purple/10 flex items-center justify-center shrink-0 animate-pulse">
                     <Sparkles className="w-4 h-4 text-ai-purple" />
                   </div>
                   Predictive Civic Analytics
@@ -269,8 +261,8 @@ export default function AdminDashboard() {
                       key={p.area}
                       className={`p-4 rounded-xl border transition-all duration-300 shadow-sm group hover:scale-[1.01] ${
                         isHigh
-                          ? "bg-danger-red/[0.02] border-danger-red/15 hover:border-danger-red/40 hover:shadow-[0_0_15px_-4px_rgba(239,68,68,0.25)]"
-                          : "bg-warning-amber/[0.02] border-warning-amber/15 hover:border-warning-amber/40 hover:shadow-[0_0_15px_-4px_rgba(245,158,11,0.25)]"
+                          ? "bg-danger-red/2 border-danger-red/15 hover:border-danger-red/40 hover:shadow-[0_0_15px_-4px_rgba(239,68,68,0.25)]"
+                          : "bg-warning-amber/2 border-warning-amber/15 hover:border-warning-amber/40 hover:shadow-[0_0_15px_-4px_rgba(245,158,11,0.25)]"
                       }`}
                       initial={{ opacity: 0, x: 15 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -295,7 +287,7 @@ export default function AdminDashboard() {
                         <div className="h-1.5 flex-1 bg-muted rounded-full overflow-hidden flex items-center">
                           <div
                             className={`h-full rounded-full transition-all duration-500 ${
-                              isHigh ? "bg-gradient-to-r from-danger-red to-warning-amber" : "bg-gradient-to-r from-warning-amber to-trust-green"
+                              isHigh ? "bg-linear-to-r from-danger-red to-warning-amber" : "bg-linear-to-r from-warning-amber to-trust-green"
                             }`}
                             style={{ width: `${p.confidence}%` }}
                           />

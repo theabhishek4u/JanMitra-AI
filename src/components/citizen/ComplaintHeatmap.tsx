@@ -138,7 +138,7 @@ export default function ComplaintHeatmap({
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-[10px] bg-white/[0.03] p-2.5 rounded-xl border border-white/5">
+                  <div className="grid grid-cols-2 gap-2 text-[10px] bg-white/3 p-2.5 rounded-xl border border-white/5">
                     <div>
                       <span className="text-gray-400 block font-bold tracking-wider">DEPARTMENT</span>
                       <span className="font-extrabold flex items-center gap-0.5 mt-0.5 text-gray-200">
@@ -156,7 +156,7 @@ export default function ComplaintHeatmap({
 
                   {c.aiSummary && (
                     <p className="text-[10px] text-gray-400 leading-relaxed italic border-t border-white/5 pt-2 flex items-start gap-1">
-                      <Zap className="w-3.5 h-3.5 text-ai-purple flex-shrink-0 mt-0.5 animate-pulse" />
+                      <Zap className="w-3.5 h-3.5 text-ai-purple shrink-0 mt-0.5 animate-pulse" />
                       <span>{c.aiSummary}</span>
                     </p>
                   )}
@@ -165,7 +165,7 @@ export default function ComplaintHeatmap({
                     <Button
                       size="sm"
                       onClick={() => onSelectComplaint(c.id)}
-                      className="w-full text-xs h-8.5 rounded-xl bg-gradient-to-r from-gov-blue via-primary to-ai-purple text-white font-extrabold cursor-pointer border-0 shadow-md shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all mt-1"
+                      className="w-full text-xs h-8.5 rounded-xl bg-linear-to-r from-gov-blue via-primary to-ai-purple text-white font-extrabold cursor-pointer border-0 shadow-md shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all mt-1"
                     >
                       <Sparkles className="w-3.5 h-3.5 mr-1" />
                       Inspect Detail
@@ -187,7 +187,7 @@ export default function ComplaintHeatmap({
               placeholder="Search Gomti Nagar, ID, issue..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9.5 pr-8 h-9 border border-white/10 rounded-xl bg-white/[0.04] text-xs focus-visible:ring-offset-0 focus-visible:ring-1 focus-visible:ring-primary/45 placeholder:text-muted-foreground/60 text-white font-semibold"
+              className="pl-9.5 pr-8 h-9 border border-white/10 rounded-xl bg-white/4 text-xs focus-visible:ring-offset-0 focus-visible:ring-1 focus-visible:ring-primary/45 placeholder:text-muted-foreground/60 text-white font-semibold"
             />
             {search && (
               <button
@@ -207,7 +207,7 @@ export default function ComplaintHeatmap({
               className={`flex-1 text-[11px] h-8 rounded-xl font-bold transition-all border cursor-pointer ${
                 showFilters || selectedCategory !== "all" || selectedPriority !== "all"
                   ? "bg-primary/20 text-primary border-primary/40"
-                  : "bg-white/[0.02] border-white/10 text-gray-300 hover:text-white"
+                  : "bg-white/2 border-white/10 text-gray-300 hover:text-white"
               }`}
             >
               <SlidersHorizontal className="w-3.5 h-3.5 mr-1.5" />
@@ -226,7 +226,7 @@ export default function ComplaintHeatmap({
                   setSelectedPriority("all");
                   setSearch("");
                 }}
-                className="text-[11px] h-8 px-2.5 rounded-xl border border-white/10 bg-white/[0.01] hover:bg-white/[0.05] text-muted-foreground hover:text-white cursor-pointer font-semibold transition-all"
+                className="text-[11px] h-8 px-2.5 rounded-xl border border-white/10 bg-white/1 hover:bg-white/5 text-muted-foreground hover:text-white cursor-pointer font-semibold transition-all"
               >
                 Reset
               </Button>
@@ -273,7 +273,7 @@ export default function ComplaintHeatmap({
                             : p.value === "low"
                             ? "bg-trust-green/10 border-trust-green/40 text-trust-green shadow-sm shadow-trust-green/10"
                             : "bg-primary/10 border-primary/45 text-primary"
-                          : "bg-white/[0.01] border-white/5 text-gray-400 hover:text-white"
+                          : "bg-white/1 border-white/5 text-gray-400 hover:text-white"
                       }`}
                     >
                       {p.label}
@@ -300,7 +300,7 @@ export default function ComplaintHeatmap({
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-center">
-            <div className="bg-white/[0.02] border border-white/5 rounded-xl p-1.5">
+            <div className="bg-white/2 border border-white/5 rounded-xl p-1.5">
               <span className="text-lg font-black text-white leading-none block">
                 {activeCount}
               </span>
@@ -309,7 +309,7 @@ export default function ComplaintHeatmap({
               </span>
             </div>
 
-            <div className="bg-white/[0.02] border border-white/5 rounded-xl p-1.5">
+            <div className="bg-white/2 border border-white/5 rounded-xl p-1.5">
               <span className={`text-lg font-black leading-none block ${highPriorityCount > 0 ? "text-danger-red" : "text-white"}`}>
                 {highPriorityCount}
               </span>
@@ -321,7 +321,7 @@ export default function ComplaintHeatmap({
 
           {hotspotCount > 0 && (
             <div className="bg-danger-red/10 border border-danger-red/20 rounded-xl p-1.5 flex items-center gap-2 animate-pulse">
-              <AlertTriangle className="w-4 h-4 text-danger-red flex-shrink-0" />
+              <AlertTriangle className="w-4 h-4 text-danger-red shrink-0" />
               <div className="text-left">
                 <span className="text-[9px] font-black text-danger-red uppercase tracking-wider block">HOTSPOT ALERTS</span>
                 <span className="text-[8px] font-bold text-gray-300 block">{hotspotCount} zones active</span>
@@ -346,7 +346,7 @@ export default function ComplaintHeatmap({
 
 function LoaderComponent() {
   return (
-    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-ai-purple/20 via-primary/10 to-gov-blue/20 border border-ai-purple/30 flex items-center justify-center shadow-lg animate-spin">
+    <div className="w-12 h-12 rounded-xl bg-linear-to-br from-ai-purple/20 via-primary/10 to-gov-blue/20 border border-ai-purple/30 flex items-center justify-center shadow-lg animate-spin">
       <Sparkles className="w-6 h-6 text-ai-purple" />
     </div>
   );

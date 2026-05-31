@@ -160,7 +160,6 @@ export default function OfficerDashboard() {
     // Client-side secure route guard
     const checkAuth = () => {
       const session = getAuthSession();
-<<<<<<< HEAD
       if (!session) {
         window.location.href = "/login?role=officer";
         return false;
@@ -170,13 +169,6 @@ export default function OfficerDashboard() {
         window.location.href = session.role === "admin" ? "/admin" : "/login?role=officer";
         return false;
       }
-=======
-      if (!session || session.role !== "officer") {
-        clearAuthSession();
-        window.location.href = "/login?role=officer";
-        return false;
-      }
->>>>>>> d366770eb77e12ef1638d9130502c2b60ee5c41c
       return true;
     };
 
@@ -252,7 +244,7 @@ export default function OfficerDashboard() {
   if (!mounted || !stats) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center text-muted-foreground">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gov-blue/20 via-primary/10 to-ai-purple/20 border border-ai-purple/30 flex items-center justify-center shadow-lg animate-spin">
+        <div className="w-12 h-12 rounded-xl bg-linear-to-br from-gov-blue/20 via-primary/10 to-ai-purple/20 border border-ai-purple/30 flex items-center justify-center shadow-lg animate-spin">
           <Sparkles className="w-6 h-6 text-ai-purple" />
         </div>
         <span className="text-sm font-bold mt-4 tracking-wider">LOADING COMMAND CONSOLE...</span>
@@ -453,7 +445,7 @@ export default function OfficerDashboard() {
             animate={{ opacity: 1, y: 0 }}
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gov-blue to-gov-blue-light flex items-center justify-center shadow-md shadow-gov-blue/15">
+              <div className="w-10 h-10 rounded-xl bg-linear-to-br from-gov-blue to-gov-blue-light flex items-center justify-center shadow-md shadow-gov-blue/15">
                 <LayoutDashboard className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -529,7 +521,7 @@ export default function OfficerDashboard() {
                               className={`p-3 rounded-xl border transition-all cursor-pointer flex flex-col gap-1.5 ${
                                 n.read
                                   ? "bg-muted/20 border-border/20 hover:bg-muted/40"
-                                  : "bg-primary/[0.04] border-primary/25 hover:bg-primary/[0.07] shadow-sm active-glow-primary hover:border-primary/45"
+                                  : "bg-primary/4 border-primary/25 hover:bg-primary/[0.07] shadow-sm active-glow-primary hover:border-primary/45"
                               }`}
                             >
                               <div className="flex items-start justify-between gap-1.5">
@@ -757,7 +749,7 @@ export default function OfficerDashboard() {
                   transition={{ duration: 0.3 }}
                 >
                   {suspiciousComplaints.length === 0 ? (
-                    <Card className="glass-premium border border-trust-green/20 bg-trust-green/[0.02]">
+                    <Card className="glass-premium border border-trust-green/20 bg-trust-green/2">
                       <CardContent className="p-6 flex items-center justify-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-trust-green/10 border border-trust-green/25 flex items-center justify-center">
                           <ShieldCheck className="w-5 h-5 text-trust-green" />
@@ -899,9 +891,9 @@ export default function OfficerDashboard() {
             {/* Left Column: Complaint Queue & Heatmap (Col 5) */}
             <div className={`lg:col-span-5 flex flex-col h-[700px] lg:h-[780px] w-full ${selectedComplaintId ? "hidden lg:flex" : "flex"}`}>
               <Card className="glass-premium border border-border/30 h-full relative overflow-hidden flex flex-col shadow-xl shadow-black/5">
-                <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+                <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent" />
                 
-                <CardHeader className="pb-3 relative z-10 flex-shrink-0">
+                <CardHeader className="pb-3 relative z-10 shrink-0">
                   <div className="flex items-center justify-between mb-3">
                     <CardTitle className="text-lg flex items-center gap-2 font-extrabold text-foreground/90">
                       <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -963,9 +955,9 @@ export default function OfficerDashboard() {
                             key={p}
                             variant={selectedPriority === p ? "default" : "outline"}
                             size="sm"
-                            className={`text-xs h-8 px-2.5 capitalize transition-all duration-300 flex-shrink-0 cursor-pointer ${
+                            className={`text-xs h-8 px-2.5 capitalize transition-all duration-300 shrink-0 cursor-pointer ${
                               selectedPriority === p
-                                ? "bg-gradient-to-r from-gov-blue via-primary to-ai-purple border-0 text-white font-bold shadow-md shadow-primary/20"
+                                ? "bg-linear-to-r from-gov-blue via-primary to-ai-purple border-0 text-white font-bold shadow-md shadow-primary/20"
                                 : "glass-premium hover:bg-muted/60 border-border/40 text-muted-foreground hover:text-foreground"
                             }`}
                             onClick={() => setSelectedPriority(p)}
@@ -1014,8 +1006,8 @@ export default function OfficerDashboard() {
                                 key={c.id}
                                 className={`flex items-center gap-3.5 p-3.5 rounded-2xl cursor-pointer border transition-all duration-300 group ${
                                   isSelected
-                                    ? "bg-primary/[0.04] border-primary/45 active-glow-primary scale-[1.01]"
-                                    : "bg-muted/15 border-border/10 hover:border-primary/25 hover:bg-primary/[0.01]"
+                                    ? "bg-primary/4 border-primary/45 active-glow-primary scale-[1.01]"
+                                    : "bg-muted/15 border-border/10 hover:border-primary/25 hover:bg-primary/1"
                                 }`}
                                 onClick={() => setSelectedComplaintId(c.id)}
                                 initial={{ opacity: 0, y: 10 }}
@@ -1023,7 +1015,7 @@ export default function OfficerDashboard() {
                                 transition={{ delay: Math.min(i * 0.03, 0.3), ease: "easeOut" }}
                               >
                                 <div
-                                  className="w-2.5 h-2.5 rounded-full flex-shrink-0 animate-pulse"
+                                  className="w-2.5 h-2.5 rounded-full shrink-0 animate-pulse"
                                   style={{
                                     backgroundColor:
                                       c.priority === "high"
@@ -1105,12 +1097,12 @@ export default function OfficerDashboard() {
             <div className={`lg:col-span-7 flex flex-col h-[700px] lg:h-[780px] w-full ${!selectedComplaintId ? "hidden lg:flex" : "flex"}`}>
               <Card className="glass-premium border border-border/30 h-full overflow-hidden flex flex-col shadow-xl shadow-black/5 relative">
                 {/* Visual Scanner laser track boundary */}
-                <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
+                <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-linear-to-r from-transparent via-cyan-400 to-transparent" />
                 
                 {selectedComplaint ? (
                   <div className="h-full flex flex-col overflow-hidden">
                     {/* Header bar */}
-                    <div className="p-4 border-b border-border/25 bg-muted/10 flex-shrink-0 flex items-center justify-between">
+                    <div className="p-4 border-b border-border/25 bg-muted/10 shrink-0 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         {/* Mobile Back Button */}
                         <Button
@@ -1142,11 +1134,11 @@ export default function OfficerDashboard() {
                       {/* Hotspot Warning Banner */}
                       {selectedComplaint.isHotspot && (
                         <motion.div
-                          className="bg-gradient-to-r from-red-500/15 via-red-500/5 to-transparent border border-red-500/25 rounded-2xl p-4.5 flex items-start gap-3.5 shadow-md hover:shadow-red-500/5 transition-all active-glow-danger"
+                          className="bg-linear-to-r from-red-500/15 via-red-500/5 to-transparent border border-red-500/25 rounded-2xl p-4.5 flex items-start gap-3.5 shadow-md hover:shadow-red-500/5 transition-all active-glow-danger"
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
                         >
-                          <div className="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/35 flex items-center justify-center flex-shrink-0 animate-pulse">
+                          <div className="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/35 flex items-center justify-center shrink-0 animate-pulse">
                             <AlertTriangle className="w-5.5 h-5.5 text-red-500" />
                           </div>
                           <div className="space-y-1">
@@ -1193,7 +1185,7 @@ export default function OfficerDashboard() {
                               </div>
                               <div className="h-1.5 bg-trust-green/10 rounded-full overflow-hidden flex">
                                 <div
-                                  className="h-full bg-gradient-to-r from-trust-green to-trust-green-light rounded-full transition-all duration-300"
+                                  className="h-full bg-linear-to-r from-trust-green to-trust-green-light rounded-full transition-all duration-300"
                                   style={{ width: `${selectedComplaint.aiConfidence * 100}%` }}
                                 />
                               </div>
@@ -1207,7 +1199,7 @@ export default function OfficerDashboard() {
                               </div>
                               <div className="h-1.5 bg-danger-red/10 rounded-full overflow-hidden flex">
                                 <div
-                                  className="h-full bg-gradient-to-r from-danger-red to-danger-red-light rounded-full transition-all duration-300"
+                                  className="h-full bg-linear-to-r from-danger-red to-danger-red-light rounded-full transition-all duration-300"
                                   style={{ width: `${(1 - selectedComplaint.aiConfidence) * 100}%` }}
                                 />
                               </div>
@@ -1247,10 +1239,10 @@ export default function OfficerDashboard() {
                         <motion.div
                           className={`border rounded-2xl p-4.5 space-y-3 ${
                             selectedComplaint.trustAnalysis.trustLevel === "high"
-                              ? "border-trust-green/20 bg-trust-green/[0.02]"
+                              ? "border-trust-green/20 bg-trust-green/2"
                               : selectedComplaint.trustAnalysis.trustLevel === "medium"
-                              ? "border-warning-amber/20 bg-warning-amber/[0.02]"
-                              : "border-danger-red/25 bg-danger-red/[0.02] suspicious-section-glow"
+                              ? "border-warning-amber/20 bg-warning-amber/2"
+                              : "border-danger-red/25 bg-danger-red/2 suspicious-section-glow"
                           }`}
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
@@ -1304,7 +1296,7 @@ export default function OfficerDashboard() {
                               <div className="space-y-1.5">
                                 {selectedComplaint.trustAnalysis.reasons.map((reason, idx) => (
                                   <p key={idx} className="text-[11px] text-foreground/80 font-semibold leading-normal flex items-start gap-1.5">
-                                    <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: getTrustLevelConfig(selectedComplaint.trustAnalysis!.trustLevel).color }} />
+                                    <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" style={{ color: getTrustLevelConfig(selectedComplaint.trustAnalysis!.trustLevel).color }} />
                                     {reason}
                                   </p>
                                 ))}
@@ -1409,7 +1401,7 @@ export default function OfficerDashboard() {
                             )}
 
                             {selectedComplaint.voiceUrl && (
-                              <div className="rounded-2xl border border-primary/20 bg-primary/[0.02] p-4 flex flex-col justify-center h-44 relative group">
+                              <div className="rounded-2xl border border-primary/20 bg-primary/2 p-4 flex flex-col justify-center h-44 relative group">
                                 <div className="flex items-center justify-between mb-2">
                                   <span className="text-[10px] text-primary uppercase font-bold tracking-wider animate-pulse flex items-center gap-1">
                                     <MessageSquare className="w-3.5 h-3.5" />
@@ -1432,7 +1424,7 @@ export default function OfficerDashboard() {
                                   {[...Array(15)].map((_, i) => (
                                     <motion.span
                                       key={i}
-                                      className="w-1 bg-gradient-to-t from-primary to-ai-purple rounded-full"
+                                      className="w-1 bg-linear-to-t from-primary to-ai-purple rounded-full"
                                       animate={{ height: isAudioPlaying ? [6, 38, 6] : 6 }}
                                       transition={{ duration: 0.7 + i * 0.04, repeat: Infinity, ease: "easeInOut" }}
                                       style={{ height: 12 }}
@@ -1449,7 +1441,7 @@ export default function OfficerDashboard() {
                       )}
 
                       {/* AI Summary Synopsis */}
-                      <div className="bg-ai-purple/[0.02] border border-ai-purple/15 p-4 rounded-2xl relative">
+                      <div className="bg-ai-purple/2 border border-ai-purple/15 p-4 rounded-2xl relative">
                         <div className="flex items-center gap-1.5 mb-2.5">
                           <Brain className="w-4 h-4 text-ai-purple animate-pulse" />
                           <span className="text-xs font-extrabold text-foreground">AI Predictive Summary</span>
@@ -1582,7 +1574,7 @@ export default function OfficerDashboard() {
                             <>
                               <Button
                                 size="sm"
-                                className="flex-1 text-xs h-10 rounded-xl bg-gradient-to-r from-gov-blue via-primary to-ai-purple text-white font-extrabold shadow-md cursor-pointer hover:shadow-primary/30"
+                                className="flex-1 text-xs h-10 rounded-xl bg-linear-to-r from-gov-blue via-primary to-ai-purple text-white font-extrabold shadow-md cursor-pointer hover:shadow-primary/30"
                                 onClick={handleAdvanceStatus}
                               >
                                 <Zap className="w-3.5 h-3.5 mr-1.5 animate-pulse" />
@@ -1632,7 +1624,7 @@ export default function OfficerDashboard() {
 
                       {/* Duplicate mitigation joined console */}
                       {duplicateComplaints.length > 0 && (
-                        <div className="border border-warning-amber/15 bg-warning-amber/[0.02] rounded-2xl p-4.5 space-y-3">
+                        <div className="border border-warning-amber/15 bg-warning-amber/2 rounded-2xl p-4.5 space-y-3">
                           <div className="flex items-center gap-1.5 text-warning-amber font-extrabold text-xs">
                             <AlertTriangle className="w-4 h-4 animate-bounce" />
                             <span>{duplicateComplaints.length} Nearby Match Grievances (Potential Duplicates)</span>
@@ -1660,7 +1652,7 @@ export default function OfficerDashboard() {
                                 </div>
                                 <Button
                                   size="xs"
-                                  className="bg-warning-amber hover:bg-warning-amber/90 text-black font-extrabold text-[10px] h-7 px-3 rounded-lg flex-shrink-0 cursor-pointer shadow-sm shadow-warning-amber/20"
+                                  className="bg-warning-amber hover:bg-warning-amber/90 text-black font-extrabold text-[10px] h-7 px-3 rounded-lg shrink-0 cursor-pointer shadow-sm shadow-warning-amber/20"
                                   onClick={() => handleJoinDuplicate(dup.id)}
                                 >
                                   <Layers className="w-3 h-3 mr-1" />
@@ -1680,7 +1672,7 @@ export default function OfficerDashboard() {
                             <div key={event.id} className="relative pl-4 flex flex-col gap-0.5">
                               {/* Glowing timeline node bullet */}
                               <div
-                                className={`absolute left-0 -translate-x-[22.5px] top-1.5 w-3 h-3 rounded-full border border-card ${
+                                className={`absolute left-0 translate-x-[-22.5px] top-1.5 w-3 h-3 rounded-full border border-card ${
                                   event.isActive
                                     ? "bg-primary shadow-[0_0_8px_var(--primary)] animate-pulse"
                                     : "bg-muted-foreground/60"
@@ -1704,7 +1696,7 @@ export default function OfficerDashboard() {
                 ) : (
                   <div className="flex-1 flex flex-col h-full overflow-hidden">
                     {/* Right Panel Heatmap Header */}
-                    <div className="p-4 border-b border-border/25 bg-muted/10 flex-shrink-0 flex items-center justify-between">
+                    <div className="p-4 border-b border-border/25 bg-muted/10 shrink-0 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
                           <MapPin className="w-4 h-4 text-primary" />
@@ -1725,7 +1717,7 @@ export default function OfficerDashboard() {
                         }}
                       />
                     </div>
-                    <div className="px-4 pb-3 pt-1 flex-shrink-0">
+                    <div className="px-4 pb-3 pt-1 shrink-0">
                       <p className="text-[10px] text-muted-foreground font-semibold text-center leading-normal">
                         Click any marker on the map to inspect the grievance details • Select a complaint from the left panel for full analysis
                       </p>
