@@ -14,6 +14,7 @@ import {
   Bell,
   Trash2,
   Inbox,
+  Coins,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ import {
   markNotificationAsRead,
   clearNotifications,
 } from "@/lib/complaints";
+import { getTokenState } from "@/lib/tokenSystem";
 import type { Complaint, Notification } from "@/types";
 
 const priorityIcon = {
@@ -45,6 +47,17 @@ export default function CitizenDashboard() {
   // Notification State
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+
+  // Token System State
+  const [tokenState, setTokenState] = useState(() => getTokenState());
+
+  useEffect(() => {
+    const handleTokenChange = () => {
+      setTokenState(getTokenState());
+    };
+    window.addEventListener("janmitra-token-change", handleTokenChange);
+    return () => window.removeEventListener("janmitra-token-change", handleTokenChange);
+  }, []);
 
   const isHi = language === "hi";
 
@@ -198,6 +211,26 @@ export default function CitizenDashboard() {
 
             {/* Header Interactive Controls */}
             <div className="flex items-center gap-3 relative">
+              {/* Sleek Token Tracker Pill */}
+              <div className="flex items-center gap-2 bg-gradient-to-r from-amber-500/10 to-amber-600/5 border border-amber-500/20 px-3.5 py-1.5 rounded-xl shadow-inner shadow-amber-500/5 transition-all duration-300 hover:border-amber-500/35">
+                <Coins className="w-4 h-4 text-amber-500 animate-pulse flex-shrink-0" />
+                <div className="flex flex-col text-left">
+                  <span className="text-[9px] uppercase tracking-wider font-extrabold text-amber-500/90 leading-none">
+                    {isHi ? "दैनिक कोटा" : "Daily Tokens"}
+                  </span>
+                  <span className="text-xs font-black text-amber-200 mt-0.5 leading-none">
+                    {tokenState.tokensRemaining} / {tokenState.maxTokens}
+                  </span>
+                </div>
+                {/* Visual tiny progress bar */}
+                <div className="w-10 h-1 bg-muted rounded-full overflow-hidden ml-1 border border-amber-500/10 hidden sm:block">
+                  <div 
+                    className="h-full bg-amber-500 rounded-full transition-all duration-300"
+                    style={{ width: `${(tokenState.tokensRemaining / tokenState.maxTokens) * 100}%` }}
+                  />
+                </div>
+              </div>
+
               {/* Premium Notification Bell Component */}
               <div className="relative">
                 <button
@@ -315,13 +348,19 @@ export default function CitizenDashboard() {
           </motion.div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="bg-muted/50 border border-border/50 p-1">
-              <TabsTrigger value="new" className="gap-2 data-[state=active]:bg-background">
-                <Plus className="w-4 h-4" />
+            <TabsList className="bg-muted/40 border border-border/50 p-1.5 rounded-2xl h-auto gap-1.5 backdrop-blur-sm shadow-lg shadow-black/10">
+              <TabsTrigger
+                value="new"
+                className="gap-2.5 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 cursor-pointer data-[state=active]:bg-background data-active:bg-gradient-to-r data-active:from-gov-blue data-active:to-ai-purple data-active:text-white data-active:shadow-md data-active:shadow-primary/25 hover:bg-muted/70"
+              >
+                <Plus className="w-4.5 h-4.5" />
                 {dict.newComplaint}
               </TabsTrigger>
-              <TabsTrigger value="track" className="gap-2 data-[state=active]:bg-background">
-                <Search className="w-4 h-4" />
+              <TabsTrigger
+                value="track"
+                className="gap-2.5 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 cursor-pointer data-[state=active]:bg-background data-active:bg-gradient-to-r data-active:from-gov-blue data-active:to-ai-purple data-active:text-white data-active:shadow-md data-active:shadow-primary/25 hover:bg-muted/70"
+              >
+                <Search className="w-4.5 h-4.5" />
                 {dict.myComplaints}
               </TabsTrigger>
             </TabsList>

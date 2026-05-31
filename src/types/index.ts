@@ -156,3 +156,22 @@ export interface Notification {
   timestamp: string;
   read: boolean;
 }
+
+// ============================================
+// Daily Complaint Token System Types
+// ============================================
+export interface TokenState {
+  tokensRemaining: number;
+  maxTokens: number;
+  lastResetTimestamp: string;
+  emergencyBypassCount: number;
+  totalComplaintsToday: number;
+}
+
+export interface TokenConsumeResult {
+  allowed: boolean;
+  reason: string;
+  reasonHi: string;
+  isEmergencyBypass: boolean;
+  tokensRemaining: number;
+}

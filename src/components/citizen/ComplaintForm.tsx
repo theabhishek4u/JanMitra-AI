@@ -20,6 +20,8 @@ import {
   X,
   User,
   Phone,
+  Coins,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { classifyComplaintAI } from "@/lib/ai";
 import { addComplaint } from "@/lib/complaints";
+import { getTokenState, consumeToken, isEmergencyComplaint } from "@/lib/tokenSystem";
 import type { AIClassification, Complaint } from "@/types";
 
 export function ComplaintForm({ 
@@ -55,6 +58,19 @@ export function ComplaintForm({
   // Image Diagnostic Scan states
   const [isScanningImage, setIsScanningImage] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
+
+  // Token System States
+  const [tokenState, setTokenState] = useState(() => getTokenState());
+  const [tokenAlert, setTokenAlert] = useState<string | null>(null);
+  const [isEmergencyBypass, setIsEmergencyBypass] = useState(false);
+
+  useEffect(() => {
+    const handleTokenChange = () => {
+      setTokenState(getTokenState());
+    };
+    window.addEventListener("janmitra-token-change", handleTokenChange);
+    return () => window.removeEventListener("janmitra-token-change", handleTokenChange);
+  }, []);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -424,8 +440,18 @@ export function ComplaintForm({
   const handleSubmit = async () => {
     if (!text.trim()) return;
 
+    const currentTokenState = getTokenState();
+    const isEmergency = isEmergencyComplaint(text);
+
+    // If 0 tokens remaining and it is not an emergency, block it immediately
+    if (currentTokenState.tokensRemaining <= 0 && !isEmergency) {
+      setTokenAlert(isHi ? "दैनिक शिकायत सीमा पूरी हो गई है। कृपया कल पुनः प्रयास करें या आपातकालीन शिकायत दर्ज करें।" : "Daily complaint limit reached. Please try again tomorrow or report an emergency for priority bypass.");
+      return;
+    }
+
     setStep("processing");
     setProcessingStep(0);
+    setTokenAlert(null);
 
     // Call real Gemini proxy route and start visual steps
     const apiResultPromise = classifyComplaintAI(text, photo);
@@ -445,6 +471,15 @@ export function ComplaintForm({
 
     try {
       const result = await apiResultPromise;
+
+      // Deduct token now that we have classified and confirmed
+      const tokenResult = consumeToken(text, result.category);
+      
+      if (!tokenResult.allowed) {
+        setStep("input");
+        setTokenAlert(isHi ? tokenResult.reasonHi : tokenResult.reason);
+        return;
+      }
 
       // Add to dynamic localStorage Database Store
       const newComplaint = addComplaint({
@@ -470,6 +505,7 @@ export function ComplaintForm({
 
       setClassification(result);
       setCreatedComplaintId(newComplaint.id);
+      setIsEmergencyBypass(tokenResult.isEmergencyBypass);
       setStep("result");
 
       // Notify parent Citizen dashboard
@@ -530,6 +566,27 @@ export function ComplaintForm({
                 <FileText className="w-5 h-5 text-primary" />
                 <h3 className="font-bold text-base text-foreground/90">{dict.describeTitle}</h3>
                 <span className="text-xs text-muted-foreground/80">{isHi ? "(अंग्रेजी भी समर्थित)" : "(Hindi Supported)"}</span>
+              </div>
+
+              {/* Dynamic Token Tracker UI */}
+              <div className="flex items-center justify-between pb-3 border-b border-border/20">
+                <div className="flex items-center gap-2">
+                  <Coins className="w-4 h-4 text-amber-500 animate-pulse" />
+                  <span className="text-xs font-bold text-muted-foreground">
+                    {isHi ? "दैनिक शिकायत कोटा:" : "Daily Complaint Quota:"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-black text-amber-400">
+                    {tokenState.tokensRemaining}/{tokenState.maxTokens}
+                  </span>
+                  <div className="w-16 h-1.5 bg-muted/60 rounded-full overflow-hidden border border-amber-500/10">
+                    <div 
+                      className="h-full bg-amber-500 rounded-full transition-all duration-300"
+                      style={{ width: `${(tokenState.tokensRemaining / tokenState.maxTokens) * 100}%` }}
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className={`relative rounded-xl transition-all duration-500 p-[1.5px] ${isFocused ? "bg-gradient-to-r from-gov-blue via-ai-purple to-trust-green shadow-[0_0_20px_rgba(124,58,237,0.25)] scale-[1.002]" : "bg-border/40"}`}>
@@ -710,12 +767,65 @@ export function ComplaintForm({
               </div>
             </div>
 
+            {/* Token alerts and bypass indicators */}
+            {tokenState.tokensRemaining <= 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`p-4 rounded-xl border flex items-start gap-3 ${
+                  isEmergencyComplaint(text)
+                    ? "bg-amber-500/10 border-amber-500/30 text-amber-200"
+                    : "bg-red-500/10 border-red-500/30 text-red-200"
+                }`}
+              >
+                {isEmergencyComplaint(text) ? (
+                  <>
+                    <Zap className="w-5 h-5 text-amber-400 animate-bounce flex-shrink-0" />
+                    <div>
+                      <p className="text-xs font-bold text-amber-300">
+                        {isHi ? "आपातकालीन शिकायत का पता चला" : "Emergency Complaint Detected"}
+                      </p>
+                      <p className="text-[11px] text-amber-400/90 font-medium leading-relaxed">
+                        {isHi 
+                          ? "प्राथमिकता पहुँच प्रदान की गई — आप इस शिकायत को जमा कर सकते हैं।" 
+                          : "Priority access granted — you can submit this complaint despite the limit."}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 animate-pulse" />
+                    <div>
+                      <p className="text-xs font-bold text-red-300">
+                        {isHi ? "दैनिक शिकायत सीमा पूरी हो गई है" : "Daily Complaint Limit Reached"}
+                      </p>
+                      <p className="text-[11px] text-red-400/90 font-medium leading-relaxed">
+                        {isHi 
+                          ? "कृपया कल पुनः प्रयास करें या आपातकालीन शिकायत (जैसे: आग, पानी रिसाव, बिजली का खतरा) दर्ज करें।" 
+                          : "Please try again tomorrow or report an emergency (e.g. fire, water leak, electric danger) for bypass."}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </motion.div>
+            )}
+
+            {tokenAlert && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-3 bg-red-500/10 border border-red-500/20 text-red-300 rounded-xl text-xs font-bold text-center"
+              >
+                {tokenAlert}
+              </motion.div>
+            )}
+
             {/* Submit */}
             <Button
               type="button"
               onClick={handleSubmit}
-              disabled={!text.trim()}
-              className="w-full h-12 rounded-xl bg-gradient-to-r from-gov-blue via-ai-purple to-gov-blue-light bg-[length:200%_auto] hover:bg-right text-white shadow-xl shadow-gov-blue/25 hover:shadow-gov-blue/45 hover:scale-[1.01] active:scale-[0.99] transition-all duration-500 text-base font-extrabold group cursor-pointer"
+              disabled={!text.trim() || (tokenState.tokensRemaining <= 0 && !isEmergencyComplaint(text))}
+              className="w-full h-12 rounded-xl bg-gradient-to-r from-gov-blue via-ai-purple to-gov-blue-light bg-[length:200%_auto] hover:bg-right text-white shadow-xl shadow-gov-blue/25 hover:shadow-gov-blue/45 hover:scale-[1.01] active:scale-[0.99] transition-all duration-500 text-base font-extrabold group cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <div className="flex items-center justify-center gap-2">
                 <Sparkles className="w-5 h-5 animate-spin-slow text-white" />
@@ -827,6 +937,29 @@ export function ComplaintForm({
                 </div>
               </div>
             </motion.div>
+
+            {/* Emergency bypass success banner */}
+            {isEmergencyBypass && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="glass-premium rounded-2xl p-5 border-l-4 border-l-amber-500 neon-glow-warning bg-amber-500/5"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                    <Zap className="w-5 h-5 text-amber-500 animate-pulse" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-amber-400">
+                      {isHi ? "आपातकालीन शिकायत स्वीकृत" : "Emergency Complaint Accepted"}
+                    </h4>
+                    <p className="text-xs text-amber-300/90 font-medium">
+                      {isHi ? "आपातकालीन शिकायत का पता चला — प्राथमिकता पहुँच प्रदान की गई।" : "Emergency complaint detected — priority access granted."}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
             {/* Photo Attachment receipt */}
             {photo && (

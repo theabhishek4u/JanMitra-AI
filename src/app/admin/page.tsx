@@ -14,11 +14,16 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Sparkles,
+  Coins,
+  Zap,
+  Sliders,
+  Plus,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/shared/Navbar";
 import { getStats, getAnalytics } from "@/lib/complaints";
+import { getAdminTokenConfig, setAdminTokenConfig, grantExtraTokens, getCitizenFrequencyReport } from "@/lib/tokenSystem";
 import type { DashboardStats, AnalyticsData } from "@/types";
 
 // Dynamic import to avoid SSR issues with recharts
@@ -61,6 +66,29 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
 
+  // Token System states
+  const [maxTokens, setMaxTokens] = useState(3);
+  const [report, setReport] = useState({
+    totalComplaintsToday: 0,
+    emergencyBypassesToday: 0,
+    tokensRemaining: 3,
+    maxTokens: 3,
+    lastReset: new Date().toISOString(),
+    hoursUntilReset: 24,
+  });
+
+  const handleLimitChange = (newVal: number) => {
+    const clamped = Math.max(1, Math.min(10, newVal));
+    setAdminTokenConfig(clamped);
+    setMaxTokens(clamped);
+    setReport(getCitizenFrequencyReport());
+  };
+
+  const handleGrantTokens = (amount: number) => {
+    grantExtraTokens(amount);
+    setReport(getCitizenFrequencyReport());
+  };
+
   useEffect(() => {
     // Client-side secure route guard
     const checkAuth = () => {
@@ -82,6 +110,8 @@ export default function AdminDashboard() {
     setMounted(true);
     setStats(getStats());
     setAnalytics(getAnalytics());
+    setMaxTokens(getAdminTokenConfig());
+    setReport(getCitizenFrequencyReport());
 
     const handleTabSync = () => {
       checkAuth();
@@ -305,6 +335,114 @@ export default function AdminDashboard() {
                     <Brain className="w-3.5 h-3.5" />
                     Predictions based on real-time spatial trends & AI telemetry
                   </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Daily Complaint Token System Controls */}
+          <div className="mt-8">
+            <Card className="glass-premium border border-amber-500/20 relative overflow-hidden shadow-xl shadow-black/5 hover:shadow-amber-500/[0.03] transition-all duration-300">
+              <div className="absolute right-0 top-0 w-32 h-32 bg-linear-to-bl from-amber-500/5 to-transparent pointer-events-none rounded-bl-full" />
+              <CardHeader className="pb-3 border-b border-border/10">
+                <CardTitle className="text-lg flex items-center gap-2.5 font-bold text-foreground/90">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
+                    <Coins className="w-4.5 h-4.5 text-amber-500 animate-bounce" />
+                  </div>
+                  <div>
+                    <span>Daily Complaint Token System Controls</span>
+                    <p className="text-[11px] font-medium text-muted-foreground/80 mt-0.5">
+                      Prevent spam and fake complaints while ensuring fair citizen access
+                    </p>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Column 1: Config Limit */}
+                  <div className="space-y-4 bg-muted/20 border border-border/20 p-5 rounded-2xl">
+                    <div className="flex items-center gap-2 text-sm font-bold text-foreground/80 mb-1">
+                      <Sliders className="w-4 h-4 text-gov-blue" />
+                      <span>Adjust Daily Token Limit</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Configure the maximum number of complaints a standard citizen can submit per 24 hours.
+                    </p>
+                    <div className="flex items-center gap-4 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => handleLimitChange(maxTokens - 1)}
+                        disabled={maxTokens <= 1}
+                        className="w-10 h-10 rounded-xl bg-card border border-border/40 hover:bg-muted/80 disabled:opacity-40 text-lg font-bold flex items-center justify-center transition-all cursor-pointer"
+                      >
+                        -
+                      </button>
+                      <div className="flex-1 text-center bg-card border border-border/40 py-2 rounded-xl">
+                        <span className="text-2xl font-black text-foreground">{maxTokens}</span>
+                        <span className="text-[10px] text-muted-foreground block font-bold">TOKENS / DAY</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleLimitChange(maxTokens + 1)}
+                        disabled={maxTokens >= 10}
+                        className="w-10 h-10 rounded-xl bg-card border border-border/40 hover:bg-muted/80 disabled:opacity-40 text-lg font-bold flex items-center justify-center transition-all cursor-pointer"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Column 2: Grant Tokens */}
+                  <div className="space-y-4 bg-muted/20 border border-border/20 p-5 rounded-2xl">
+                    <div className="flex items-center gap-2 text-sm font-bold text-foreground/80 mb-1">
+                      <Plus className="w-4 h-4 text-trust-green" />
+                      <span>Grant Extra Tokens</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Instantly credit the active citizen session with extra complaint tokens for diagnostic testing or high-volume submission.
+                    </p>
+                    <div className="grid grid-cols-3 gap-2.5 pt-2">
+                      {[1, 3, 5].map((amount) => (
+                        <button
+                          key={amount}
+                          type="button"
+                          onClick={() => handleGrantTokens(amount)}
+                          className="bg-gradient-to-br from-card to-muted hover:from-amber-500/10 hover:to-amber-500/20 border border-border/40 hover:border-amber-500/30 py-3 rounded-xl text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center gap-1 group"
+                        >
+                          <span className="text-sm font-black text-foreground group-hover:text-amber-300">+{amount}</span>
+                          <span className="text-[9px] font-bold text-muted-foreground group-hover:text-amber-400 uppercase tracking-wider">Tokens</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Column 3: Live Frequency Report */}
+                  <div className="space-y-4 bg-muted/20 border border-border/20 p-5 rounded-2xl md:col-span-1">
+                    <div className="flex items-center gap-2 text-sm font-bold text-foreground/80 mb-1">
+                      <TrendingUp className="w-4 h-4 text-ai-purple" />
+                      <span>Live Citizen Usage Report</span>
+                    </div>
+                    <div className="space-y-3 pt-1">
+                      <div className="flex items-center justify-between text-xs border-b border-border/10 pb-1.5">
+                        <span className="font-semibold text-muted-foreground">Total Submissions Today:</span>
+                        <span className="font-extrabold text-foreground">{report.totalComplaintsToday} complaints</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs border-b border-border/10 pb-1.5">
+                        <span className="font-semibold text-muted-foreground">Emergency Bypasses Triggered:</span>
+                        <span className="font-extrabold text-amber-400 flex items-center gap-1">
+                          <Zap className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+                          {report.emergencyBypassesToday} used
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs pb-0.5">
+                        <span className="font-semibold text-muted-foreground">Active User Token Balance:</span>
+                        <span className="font-extrabold text-trust-green">{report.tokensRemaining} / {report.maxTokens}</span>
+                      </div>
+                      <div className="text-[10px] text-muted-foreground/80 font-medium text-center pt-2">
+                        Automatic token refresh in: <span className="font-extrabold text-foreground">{report.hoursUntilReset} hours</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
