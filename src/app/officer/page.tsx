@@ -160,6 +160,7 @@ export default function OfficerDashboard() {
     // Client-side secure route guard
     const checkAuth = () => {
       const session = getAuthSession();
+<<<<<<< HEAD
       if (!session) {
         window.location.href = "/login?role=officer";
         return false;
@@ -169,6 +170,13 @@ export default function OfficerDashboard() {
         window.location.href = session.role === "admin" ? "/admin" : "/login?role=officer";
         return false;
       }
+=======
+      if (!session || session.role !== "officer") {
+        clearAuthSession();
+        window.location.href = "/login?role=officer";
+        return false;
+      }
+>>>>>>> d366770eb77e12ef1638d9130502c2b60ee5c41c
       return true;
     };
 

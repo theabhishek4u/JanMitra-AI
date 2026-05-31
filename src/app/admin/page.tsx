@@ -65,6 +65,7 @@ export default function AdminDashboard() {
     // Client-side secure route guard
     const checkAuth = () => {
       const session = getAuthSession();
+<<<<<<< HEAD
       if (!session) {
         window.location.href = "/login?role=admin";
         return false;
@@ -74,6 +75,13 @@ export default function AdminDashboard() {
         window.location.href = session.role === "officer" ? "/officer" : "/login?role=admin";
         return false;
       }
+=======
+      if (!session || session.role !== "admin") {
+        clearAuthSession();
+        window.location.href = "/login?role=admin";
+        return false;
+      }
+>>>>>>> d366770eb77e12ef1638d9130502c2b60ee5c41c
       return true;
     };
 
