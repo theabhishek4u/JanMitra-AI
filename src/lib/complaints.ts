@@ -7,6 +7,7 @@
 import { Complaint, ComplaintStatus, DashboardStats, AnalyticsData, Priority, Notification } from "@/types";
 import { mockComplaints } from "@/data/complaints";
 import { getDepartmentById, getDepartmentForCategory } from "@/data/departments";
+import { analyzeComplaintTrust } from "@/lib/fakeDetection";
 
 const LOCAL_STORAGE_KEY = "janmitra_complaints_db";
 const CITIZEN_NOTIF_KEY = "janmitra_citizen_notifications";
@@ -257,6 +258,10 @@ export function addComplaint(complaintData: Partial<Complaint>): Complaint {
     assignedOfficer: dept?.officerName || "Shri Rajesh Kumar",
   };
 
+  // Run AI Fake Complaint Detection before saving
+  const trustAnalysis = analyzeComplaintTrust(newComplaint, db);
+  newComplaint.trustAnalysis = trustAnalysis;
+
   db.unshift(newComplaint);
   saveDatabase(db);
 
@@ -271,6 +276,17 @@ export function addComplaint(complaintData: Partial<Complaint>): Complaint {
     `नई शिकायत दर्ज: ${newComplaint.id} - ${newComplaint.titleHi} (${newComplaint.area}) में`,
     newComplaint.id
   );
+
+  // If complaint is suspicious, send an extra alert to the officer
+  if (trustAnalysis.trustLevel !== "high") {
+    const levelLabel = trustAnalysis.trustLevel === "low" ? "🚨 HIGH RISK" : "⚠️ MEDIUM RISK";
+    addOfficerNotification(
+      "escalation",
+      `${levelLabel}: Complaint ${newComplaint.id} flagged — ${trustAnalysis.reasons[0] || "Suspicious activity detected"}`,
+      `${levelLabel}: शिकायत ${newComplaint.id} संदिग्ध — ${trustAnalysis.reasons[0] || "संदिग्ध गतिविधि पाई गई"}`,
+      newComplaint.id
+    );
+  }
 
   return newComplaint;
 }
@@ -562,3 +578,54 @@ export function getAnalytics(): AnalyticsData {
     priorityBreakdown,
   };
 }
+
+// 10. Update officer verdict on a flagged complaint (Fake Detection)
+export function updateComplaintVerdict(
+  id: string,
+  verdict: "safe" | "spam"
+): Complaint | undefined {
+  const db = getComplaints();
+  const index = db.findIndex((c) => c.id === id);
+  if (index === -1) return undefined;
+
+  const complaint = db[index];
+  if (complaint.trustAnalysis) {
+    complaint.trustAnalysis = {
+      ...complaint.trustAnalysis,
+      reviewedByOfficer: true,
+      officerVerdict: verdict,
+    };
+    complaint.updatedAt = new Date().toISOString();
+
+    db[index] = complaint;
+    saveDatabase(db);
+
+    if (isClient) {
+      window.dispatchEvent(new CustomEvent("janmitra-db-change"));
+    }
+
+    // Notify the citizen about the review
+    if (verdict === "safe") {
+      addCitizenNotification(
+        "update",
+        `Your grievance ${complaint.id} has been verified as legitimate by the reviewing officer.`,
+        `आपकी शिकायत ${complaint.id} की समीक्षा करने वाले अधिकारी द्वारा वैध पाई गई है।`,
+        complaint.id
+      );
+    }
+  }
+
+  return complaint;
+}
+
+// 11. Get all suspicious (flagged) complaints for officer review
+export function getSuspiciousComplaints(): Complaint[] {
+  const db = getComplaints();
+  return db.filter(
+    (c) =>
+      c.trustAnalysis &&
+      c.trustAnalysis.trustLevel !== "high" &&
+      !c.trustAnalysis.reviewedByOfficer
+  );
+}
+

@@ -20,6 +20,9 @@ import {
   ArrowDownRight,
   Zap,
   Shield,
+  ShieldAlert,
+  ShieldCheck,
+  ShieldX,
   FileText,
   MessageSquare,
   Activity,
@@ -30,6 +33,9 @@ import {
   Inbox,
   Droplet,
   X,
+  Eye,
+  Ban,
+  Fingerprint,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,8 +52,10 @@ import {
   getOfficerNotifications,
   markNotificationAsRead,
   clearNotifications,
+  getSuspiciousComplaints,
+  updateComplaintVerdict,
 } from "@/lib/complaints";
-import type { Complaint, ComplaintStatus, DashboardStats, Notification } from "@/types";
+import type { Complaint, ComplaintStatus, DashboardStats, Notification, TrustLevel } from "@/types";
 
 // Dynamically import Leaflet heatmap to avoid SSR error
 const ComplaintHeatmap = dynamic(
@@ -72,6 +80,10 @@ export default function OfficerDashboard() {
   // Notification State
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+
+  // Suspicious complaint detection state
+  const [suspiciousComplaints, setSuspiciousComplaints] = useState<Complaint[]>([]);
+  const [showSuspiciousSection, setShowSuspiciousSection] = useState(true);
   const [directiveLang, setDirectiveLang] = useState<"en" | "hi">("en");
 
   // Interactive scanner state overrides
@@ -81,6 +93,7 @@ export default function OfficerDashboard() {
   // Sync notifications whenever complaints update
   useEffect(() => {
     setNotifications(getOfficerNotifications());
+    setSuspiciousComplaints(getSuspiciousComplaints());
   }, [complaints]);
 
   const handleClearAllNotifications = (e: React.MouseEvent) => {
@@ -147,9 +160,13 @@ export default function OfficerDashboard() {
     // Client-side secure route guard
     const checkAuth = () => {
       const session = getAuthSession();
-      if (!session || session.role !== "officer") {
-        clearAuthSession();
+      if (!session) {
         window.location.href = "/login?role=officer";
+        return false;
+      }
+      if (session.role !== "officer") {
+        // Safely redirect to their active matching dashboard rather than clearing the session
+        window.location.href = session.role === "admin" ? "/admin" : "/login?role=officer";
         return false;
       }
       return true;
@@ -187,7 +204,41 @@ export default function OfficerDashboard() {
     const freshComplaints = getComplaints();
     setComplaints(freshComplaints);
     setStats(getStats());
-    // Keep selection or reset if deleted (though they're never deleted)
+    setSuspiciousComplaints(getSuspiciousComplaints());
+  };
+
+  // Fake Detection verdict handlers
+  const handleMarkSafe = (id: string) => {
+    updateComplaintVerdict(id, "safe");
+    refreshData();
+  };
+
+  const handleConfirmSpam = (id: string) => {
+    updateComplaintVerdict(id, "spam");
+    refreshData();
+  };
+
+  const getTrustLevelConfig = (level: TrustLevel) => {
+    switch (level) {
+      case "high":
+        return { label: "High Trust", emoji: "✅", color: "#10B981", bgClass: "trust-badge-high", icon: ShieldCheck };
+      case "medium":
+        return { label: "Medium Risk", emoji: "⚠️", color: "#F59E0B", bgClass: "trust-badge-medium", icon: ShieldAlert };
+      case "low":
+        return { label: "Potential Spam", emoji: "🚨", color: "#EF4444", bgClass: "trust-badge-low", icon: ShieldX };
+    }
+  };
+
+  const getFlagLabel = (flag: string): string => {
+    switch (flag) {
+      case "duplicate": return "Duplicate Suspected";
+      case "rapid_submission": return "Rapid Submission";
+      case "spam_text": return "Spam Text";
+      case "low_confidence": return "Low Confidence";
+      case "abuse_irrelevant": return "Abusive Content";
+      case "similar_text": return "Similar Text";
+      default: return flag;
+    }
   };
 
   if (!mounted || !stats) {
@@ -655,6 +706,186 @@ export default function OfficerDashboard() {
             </div>
           </motion.div>
 
+          {/* ============================================ */}
+          {/* AI Fraud Detection — Suspicious Complaints   */}
+          {/* ============================================ */}
+          <motion.div
+            className="mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-4 bg-danger-red rounded-full" />
+                <h2 className="text-sm font-bold tracking-wider text-muted-foreground uppercase flex items-center gap-2">
+                  <Fingerprint className="w-4 h-4 text-danger-red" />
+                  AI Fraud Detection — Suspicious Complaints
+                </h2>
+                {suspiciousComplaints.length > 0 && (
+                  <Badge className="bg-danger-red/15 text-danger-red border-danger-red/30 font-extrabold text-[10px] animate-pulse">
+                    {suspiciousComplaints.length} flagged
+                  </Badge>
+                )}
+              </div>
+              {suspiciousComplaints.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowSuspiciousSection(!showSuspiciousSection)}
+                  className="text-[11px] font-bold text-muted-foreground hover:text-foreground transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  {showSuspiciousSection ? "Collapse" : "Expand"}
+                  <ChevronRight className={`w-3.5 h-3.5 transition-transform duration-200 ${showSuspiciousSection ? "rotate-90" : ""}`} />
+                </button>
+              )}
+            </div>
+
+            <AnimatePresence>
+              {showSuspiciousSection && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {suspiciousComplaints.length === 0 ? (
+                    <Card className="glass-premium border border-trust-green/20 bg-trust-green/[0.02]">
+                      <CardContent className="p-6 flex items-center justify-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-trust-green/10 border border-trust-green/25 flex items-center justify-center">
+                          <ShieldCheck className="w-5 h-5 text-trust-green" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-trust-green">All Clear — No Suspicious Complaints</h4>
+                          <p className="text-xs text-muted-foreground font-semibold mt-0.5">
+                            AI fraud detection engine is actively monitoring all incoming complaints.
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {suspiciousComplaints.map((sc, i) => {
+                        const trust = sc.trustAnalysis!;
+                        const config = getTrustLevelConfig(trust.trustLevel);
+                        const TrustIcon = config.icon;
+
+                        return (
+                          <motion.div
+                            key={sc.id}
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.06, ease: "easeOut" }}
+                          >
+                            <Card className={`glass-premium border overflow-hidden transition-all duration-300 hover:scale-[1.01] group relative suspicious-section-glow ${
+                              trust.trustLevel === "low"
+                                ? "border-danger-red/30 hover:border-danger-red/50"
+                                : "border-warning-amber/30 hover:border-warning-amber/50"
+                            }`}>
+                              {/* Top colored accent strip */}
+                              <div
+                                className="h-[2px] w-full"
+                                style={{ background: `linear-gradient(90deg, transparent, ${config.color}, transparent)` }}
+                              />
+
+                              <CardContent className="p-4 space-y-3">
+                                {/* Header: ID + Trust Badge */}
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-mono text-[10px] font-bold text-muted-foreground bg-muted/50 border border-border/20 px-1.5 py-0.5 rounded">
+                                      {sc.id}
+                                    </span>
+                                    <Badge className={`${config.bgClass} text-[9px] font-extrabold uppercase px-2 py-0.5 flex items-center gap-1`}>
+                                      <TrustIcon className="w-3 h-3" />
+                                      {config.emoji} {config.label}
+                                    </Badge>
+                                  </div>
+                                </div>
+
+                                {/* Trust Score Bar */}
+                                <div className="space-y-1">
+                                  <div className="flex justify-between text-[10px] font-bold">
+                                    <span className="text-muted-foreground">Trust Score</span>
+                                    <span style={{ color: config.color }}>{trust.trustScore}/100</span>
+                                  </div>
+                                  <div className="h-1.5 bg-border/20 rounded-full overflow-hidden">
+                                    <motion.div
+                                      className="h-full rounded-full"
+                                      style={{ backgroundColor: config.color }}
+                                      initial={{ width: 0 }}
+                                      animate={{ width: `${trust.trustScore}%` }}
+                                      transition={{ duration: 0.8, ease: "easeOut" }}
+                                    />
+                                  </div>
+                                </div>
+
+                                {/* Flag Badges */}
+                                <div className="flex flex-wrap gap-1">
+                                  {trust.flags.map((flag) => (
+                                    <span
+                                      key={flag}
+                                      className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border bg-muted/30 border-border/20 text-muted-foreground"
+                                    >
+                                      {getFlagLabel(flag)}
+                                    </span>
+                                  ))}
+                                </div>
+
+                                {/* Primary Reason */}
+                                <p className="text-[11px] text-foreground/80 font-semibold leading-normal line-clamp-2">
+                                  {trust.reasons[0] || "Suspicious activity detected"}
+                                </p>
+
+                                {/* Meta: Time + Category */}
+                                <div className="flex items-center gap-2 text-[9px] text-muted-foreground font-semibold">
+                                  <Clock className="w-3 h-3" />
+                                  <span>{new Date(sc.createdAt).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" })}</span>
+                                  <span className="text-muted-foreground/30">•</span>
+                                  <span className="truncate">{sc.category}</span>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex items-center gap-2 pt-1 border-t border-border/10">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="flex-1 text-[10px] h-8 rounded-lg border-primary/30 text-primary hover:bg-primary/5 font-bold cursor-pointer flex items-center justify-center gap-1 active:scale-95 transition-all"
+                                    onClick={() => {
+                                      setSelectedComplaintId(sc.id);
+                                      setActiveSubTab("queue");
+                                    }}
+                                  >
+                                    <Eye className="w-3 h-3" />
+                                    Review
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    className="flex-1 text-[10px] h-8 rounded-lg bg-trust-green/10 text-trust-green border border-trust-green/25 hover:bg-trust-green/20 font-bold cursor-pointer flex items-center justify-center gap-1 active:scale-95 transition-all"
+                                    onClick={() => handleMarkSafe(sc.id)}
+                                  >
+                                    <ShieldCheck className="w-3 h-3" />
+                                    Mark Safe
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    className="flex-1 text-[10px] h-8 rounded-lg bg-danger-red/10 text-danger-red border border-danger-red/25 hover:bg-danger-red/20 font-bold cursor-pointer flex items-center justify-center gap-1 active:scale-95 transition-all"
+                                    onClick={() => handleConfirmSpam(sc.id)}
+                                  >
+                                    <Ban className="w-3 h-3" />
+                                    Spam
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+
           {/* Double Split-Pane Dashboard */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
             {/* Left Column: Complaint Queue & Heatmap (Col 5) */}
@@ -808,6 +1039,15 @@ export default function OfficerDashboard() {
                                     {c.isHotspot && (
                                       <span className="bg-red-500/10 border border-red-500/25 text-red-500 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase animate-pulse flex items-center gap-0.5">
                                         🔥 HOTSPOT
+                                      </span>
+                                    )}
+                                    {c.trustAnalysis && c.trustAnalysis.trustLevel !== "high" && (
+                                      <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase flex items-center gap-0.5 ${
+                                        c.trustAnalysis.trustLevel === "low"
+                                          ? "bg-danger-red/10 border border-danger-red/25 text-danger-red animate-pulse"
+                                          : "bg-warning-amber/10 border border-warning-amber/25 text-warning-amber"
+                                      }`}>
+                                        {c.trustAnalysis.trustLevel === "low" ? "🚨" : "⚠️"} {c.trustAnalysis.trustLevel === "low" ? "FLAGGED" : "RISK"}
                                       </span>
                                     )}
                                     <span className="text-[9px] font-bold text-muted-foreground ml-auto capitalize bg-muted/50 border border-border/10 px-1.5 py-0.2 rounded">
@@ -993,6 +1233,113 @@ export default function OfficerDashboard() {
                           </div>
                         </Card>
                       </div>
+
+                      {/* Complaint Trust Score Analysis (Fake Detection) */}
+                      {selectedComplaint.trustAnalysis && (
+                        <motion.div
+                          className={`border rounded-2xl p-4.5 space-y-3 ${
+                            selectedComplaint.trustAnalysis.trustLevel === "high"
+                              ? "border-trust-green/20 bg-trust-green/[0.02]"
+                              : selectedComplaint.trustAnalysis.trustLevel === "medium"
+                              ? "border-warning-amber/20 bg-warning-amber/[0.02]"
+                              : "border-danger-red/25 bg-danger-red/[0.02] suspicious-section-glow"
+                          }`}
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Fingerprint className="w-4 h-4" style={{ color: getTrustLevelConfig(selectedComplaint.trustAnalysis.trustLevel).color }} />
+                              <span className="text-xs font-extrabold text-foreground">Complaint Trust Score</span>
+                            </div>
+                            <Badge className={`${getTrustLevelConfig(selectedComplaint.trustAnalysis.trustLevel).bgClass} text-[9px] font-extrabold uppercase px-2 py-0.5 flex items-center gap-1`}>
+                              {getTrustLevelConfig(selectedComplaint.trustAnalysis.trustLevel).emoji} {getTrustLevelConfig(selectedComplaint.trustAnalysis.trustLevel).label}
+                            </Badge>
+                          </div>
+
+                          {/* Score Bar */}
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-[11px] font-bold">
+                              <span className="text-muted-foreground">Trust Score</span>
+                              <span style={{ color: getTrustLevelConfig(selectedComplaint.trustAnalysis.trustLevel).color }}>
+                                {selectedComplaint.trustAnalysis.trustScore}/100
+                              </span>
+                            </div>
+                            <div className="h-2 bg-border/20 rounded-full overflow-hidden">
+                              <motion.div
+                                className="h-full rounded-full"
+                                style={{ backgroundColor: getTrustLevelConfig(selectedComplaint.trustAnalysis.trustLevel).color }}
+                                initial={{ width: 0 }}
+                                animate={{ width: `${selectedComplaint.trustAnalysis.trustScore}%` }}
+                                transition={{ duration: 1, ease: "easeOut" }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Flags & Reasons */}
+                          {selectedComplaint.trustAnalysis.flags.length > 0 && (
+                            <div className="space-y-2">
+                              <div className="flex flex-wrap gap-1">
+                                {selectedComplaint.trustAnalysis.flags.map((flag) => (
+                                  <span
+                                    key={flag}
+                                    className={`text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${
+                                      selectedComplaint.trustAnalysis!.trustLevel === "low"
+                                        ? "bg-danger-red/10 border-danger-red/20 text-danger-red"
+                                        : "bg-warning-amber/10 border-warning-amber/20 text-warning-amber"
+                                    }`}
+                                  >
+                                    {getFlagLabel(flag)}
+                                  </span>
+                                ))}
+                              </div>
+                              <div className="space-y-1.5">
+                                {selectedComplaint.trustAnalysis.reasons.map((reason, idx) => (
+                                  <p key={idx} className="text-[11px] text-foreground/80 font-semibold leading-normal flex items-start gap-1.5">
+                                    <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: getTrustLevelConfig(selectedComplaint.trustAnalysis!.trustLevel).color }} />
+                                    {reason}
+                                  </p>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Officer Verdict Actions */}
+                          {selectedComplaint.trustAnalysis.trustLevel !== "high" && !selectedComplaint.trustAnalysis.reviewedByOfficer && (
+                            <div className="flex items-center gap-2 pt-2 border-t border-border/15">
+                              <Button
+                                size="sm"
+                                className="flex-1 text-[10px] h-8 rounded-lg bg-trust-green/10 text-trust-green border border-trust-green/25 hover:bg-trust-green/20 font-bold cursor-pointer flex items-center justify-center gap-1 active:scale-95 transition-all"
+                                onClick={() => handleMarkSafe(selectedComplaint.id)}
+                              >
+                                <ShieldCheck className="w-3 h-3" />
+                                Mark as Verified Safe ✅
+                              </Button>
+                              <Button
+                                size="sm"
+                                className="flex-1 text-[10px] h-8 rounded-lg bg-danger-red/10 text-danger-red border border-danger-red/25 hover:bg-danger-red/20 font-bold cursor-pointer flex items-center justify-center gap-1 active:scale-95 transition-all"
+                                onClick={() => handleConfirmSpam(selectedComplaint.id)}
+                              >
+                                <Ban className="w-3 h-3" />
+                                Confirm Spam 🚫
+                              </Button>
+                            </div>
+                          )}
+
+                          {/* Show verdict if already reviewed */}
+                          {selectedComplaint.trustAnalysis.reviewedByOfficer && (
+                            <div className={`flex items-center gap-2 pt-2 border-t border-border/15 text-xs font-bold ${
+                              selectedComplaint.trustAnalysis.officerVerdict === "safe" ? "text-trust-green" : "text-danger-red"
+                            }`}>
+                              {selectedComplaint.trustAnalysis.officerVerdict === "safe" ? (
+                                <><ShieldCheck className="w-4 h-4" /> Officer verified: Legitimate complaint</>
+                              ) : (
+                                <><ShieldX className="w-4 h-4" /> Officer confirmed: Spam / Fake complaint</>
+                              )}
+                            </div>
+                          )}
+                        </motion.div>
+                      )}
 
                       {/* Multimodal evidence scanner (Image/Audio laser scanner HUD) */}
                       {(selectedComplaint.imageUrl || selectedComplaint.voiceUrl) && (
@@ -1347,14 +1694,34 @@ export default function OfficerDashboard() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center p-12 text-center h-full">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/10 to-ai-purple/10 border border-primary/20 flex items-center justify-center mb-5 animate-pulse shadow-md">
-                      <Shield className="w-8 h-8 text-primary" />
+                  <div className="flex-1 flex flex-col h-full overflow-hidden">
+                    {/* Right Panel Heatmap Header */}
+                    <div className="p-4 border-b border-border/25 bg-muted/10 flex-shrink-0 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <MapPin className="w-4 h-4 text-primary" />
+                        </div>
+                        <span className="text-sm font-extrabold text-foreground/90">Lucknow Grievance Heatmap</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <span className="w-1.5 h-1.5 bg-trust-green rounded-full animate-pulse" />
+                        Live Tracking
+                      </div>
                     </div>
-                    <h3 className="font-extrabold text-lg mb-2 text-foreground/80">Awaiting Grievance Selection</h3>
-                    <p className="text-sm text-muted-foreground max-w-sm font-semibold leading-relaxed">
-                      Select an active citizen grievance ticket from the left panel to begin hazard scanning, spatial tracking, and advanced department routing overrides.
-                    </p>
+                    {/* Heatmap fills the right panel */}
+                    <div className="flex-1 overflow-hidden p-3">
+                      <ComplaintHeatmap
+                        onSelectComplaint={(id) => {
+                          setSelectedComplaintId(id);
+                          setActiveSubTab("queue");
+                        }}
+                      />
+                    </div>
+                    <div className="px-4 pb-3 pt-1 flex-shrink-0">
+                      <p className="text-[10px] text-muted-foreground font-semibold text-center leading-normal">
+                        Click any marker on the map to inspect the grievance details • Select a complaint from the left panel for full analysis
+                      </p>
+                    </div>
                   </div>
                 )}
               </Card>

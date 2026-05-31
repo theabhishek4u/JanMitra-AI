@@ -65,9 +65,13 @@ export default function AdminDashboard() {
     // Client-side secure route guard
     const checkAuth = () => {
       const session = getAuthSession();
-      if (!session || session.role !== "admin") {
-        clearAuthSession();
+      if (!session) {
         window.location.href = "/login?role=admin";
+        return false;
+      }
+      if (session.role !== "admin") {
+        // Safely redirect to their active matching dashboard rather than clearing the session
+        window.location.href = session.role === "officer" ? "/officer" : "/login?role=admin";
         return false;
       }
       return true;

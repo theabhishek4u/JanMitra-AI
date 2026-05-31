@@ -2,6 +2,27 @@
 // JanMitra AI — TypeScript Type Definitions
 // ============================================
 
+// Trust Score & Fake Detection Types
+export type TrustLevel = "high" | "medium" | "low";
+
+export type FlagReason =
+  | "duplicate"
+  | "rapid_submission"
+  | "spam_text"
+  | "low_confidence"
+  | "abuse_irrelevant"
+  | "similar_text";
+
+export interface ComplaintTrustAnalysis {
+  trustLevel: TrustLevel;
+  trustScore: number; // 0-100
+  flags: FlagReason[];
+  reasons: string[];
+  analyzedAt: string;
+  reviewedByOfficer: boolean;
+  officerVerdict?: "safe" | "spam";
+}
+
 export type ComplaintStatus =
   | "submitted"
   | "ai_analyzing"
@@ -103,6 +124,7 @@ export interface Complaint {
   assignedOfficer?: string;
   isHotspot?: boolean;
   hotspotCount?: number;
+  trustAnalysis?: ComplaintTrustAnalysis;
 }
 
 export interface DashboardStats {

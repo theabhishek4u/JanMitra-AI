@@ -680,3 +680,114 @@
 .active-glowing-card-amber {
   animation: border-glow-pulse-amber 3s ease-in-out infinite;
 }
+
+/* ============================================
+   Trust Score Badge Styles (Fake Detection)
+   ============================================ */
+.trust-badge-high {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+.dark .trust-badge-high {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6EE7B7;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.trust-badge-medium {
+  background: rgba(245, 158, 11, 0.12);
+  color: #D97706;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+.dark .trust-badge-medium {
+  background: rgba(245, 158, 11, 0.15);
+  color: #FCD34D;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.trust-badge-low {
+  background: rgba(239, 68, 68, 0.12);
+  color: #DC2626;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  animation: trust-pulse-red 2s ease-in-out infinite;
+}
+.dark .trust-badge-low {
+  background: rgba(239, 68, 68, 0.18);
+  color: #FCA5A5;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+@keyframes trust-pulse-red {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(239, 68, 68, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.35);
+  }
+}
+
+/* Suspicious Complaints Section Card Glow */
+.suspicious-section-glow {
+  position: relative;
+}
+
+.suspicious-section-glow::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(245, 158, 11, 0.3), rgba(239, 68, 68, 0.3));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: suspicious-border-sweep 3s ease-in-out infinite;
+}
+
+@keyframes suspicious-border-sweep {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ============================================
+   Custom Premium Leaflet Popups
+   ============================================ */
+.custom-leaflet-popup .leaflet-popup-content-wrapper {
+  background: rgba(8, 13, 28, 0.85) !important;
+  backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 0 15px -3px rgba(124, 58, 237, 0.15) !important;
+  border-radius: 1rem !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.custom-leaflet-popup .leaflet-popup-content {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: auto !important;
+}
+
+.custom-leaflet-popup .leaflet-popup-tip {
+  background: rgba(8, 13, 28, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: none !important;
+}
+
+/* Radar Pulse Marker Animation */
+@keyframes map-marker-ping {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
