@@ -124,7 +124,7 @@ export function DemoTour() {
   const config = getStepConfig();
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] max-w-sm w-full px-4 sm:px-0">
+    <div className="fixed bottom-0 left-0 right-0 sm:bottom-6 sm:right-6 sm:left-auto z-[9999] sm:max-w-sm w-full px-4 pb-4 sm:px-0 sm:pb-0">
       <AnimatePresence>
         {minimized ? (
           <motion.button

@@ -94,9 +94,9 @@ function StatCard({
         style={{ backgroundColor: color }}
       />
 
-      <div className="text-4xl sm:text-5xl font-extrabold mb-2 font-mono flex items-center justify-center tracking-tight" style={{ color }}>
+      <div className="text-2xl sm:text-4xl lg:text-5xl font-extrabold mb-2 font-mono flex items-center justify-center tracking-tight" style={{ color }}>
         {count.toLocaleString()}
-        <span className="text-2xl font-bold ml-0.5">{suffix}</span>
+        <span className="text-[0.6em] font-bold ml-0.5">{suffix}</span>
       </div>
       <div className="text-xs sm:text-sm text-muted-foreground font-semibold uppercase tracking-wider">{label}</div>
     </motion.div>

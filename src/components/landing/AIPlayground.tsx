@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
 import {
@@ -91,9 +91,12 @@ export function AIPlayground() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [step, setStep] = useState(0);
   const [result, setResult] = useState<PresetComplaint | null>(null);
+  const [isAutoplay, setIsAutoplay] = useState(true);
+  const [autoplayIndex, setAutoplayIndex] = useState(0);
 
   // Handle preset selection
   const handlePresetSelect = (preset: PresetComplaint) => {
+    setIsAutoplay(false); // Stop autoplay when user manually selects
     setInputText(preset.text);
     setCustomText(preset.text);
     setResult(null);
@@ -103,13 +106,15 @@ export function AIPlayground() {
 
   // Run simulated AI analysis
   const runAnalysis = () => {
-    if (!inputText && !customText) return;
+    setIsAutoplay(false); // Stop autoplay when user manually triggers
+    const currentText = inputText || customText;
+    if (!currentText) return;
     
     // Fallback if custom text was typed
-    let matchedResult = presets.find((p) => p.text === (inputText || customText));
+    let matchedResult = presets.find((p) => p.text === currentText);
     if (!matchedResult) {
       // Generate a mock dynamic response based on custom text
-      const lower = (inputText || customText).toLowerCase();
+      const lower = currentText.toLowerCase();
       let category = "General Grievance";
       let priority: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" = "MEDIUM";
       let dept = "Lucknow District Administration";
@@ -149,7 +154,7 @@ export function AIPlayground() {
       }
 
       matchedResult = {
-        text: inputText || customText,
+        text: currentText,
         lang: lower.match(/[\u0900-\u097F]/) ? "Hindi / Devanagari" : "English / Mixed",
         category,
         priority,
@@ -180,6 +185,48 @@ export function AIPlayground() {
     };
   };
 
+  // Autoplay loop controller
+  useEffect(() => {
+    if (!isAutoplay) return;
+
+    let timer: NodeJS.Timeout;
+
+    if (step === 0) {
+      // Wait 2.5 seconds before starting the next preset analysis
+      timer = setTimeout(() => {
+        const nextPreset = presets[autoplayIndex];
+        setInputText(nextPreset.text);
+        setCustomText(nextPreset.text);
+        
+        // Start simulation
+        setIsAnalyzing(true);
+        setStep(1);
+      }, 2500);
+    } else if (step === 1) {
+      timer = setTimeout(() => setStep(2), 1000);
+    } else if (step === 2) {
+      timer = setTimeout(() => setStep(3), 1200);
+    } else if (step === 3) {
+      timer = setTimeout(() => {
+        setIsAnalyzing(false);
+        const currentPreset = presets[autoplayIndex];
+        setResult(currentPreset);
+        setStep(4);
+      }, 1300);
+    } else if (step === 4) {
+      // Show results for 6 seconds, then reset and advance to next preset
+      timer = setTimeout(() => {
+        setResult(null);
+        setStep(0);
+        setInputText("");
+        setCustomText("");
+        setAutoplayIndex((prev) => (prev + 1) % presets.length);
+      }, 6000);
+    }
+
+    return () => clearTimeout(timer);
+  }, [isAutoplay, step, autoplayIndex]);
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "CRITICAL": return "text-danger-red bg-danger-red/10 border-danger-red/25";
@@ -194,12 +241,26 @@ export function AIPlayground() {
       {/* Background decoration */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-ai-purple/5 blur-[120px] pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:6 lg:px-8 relative z-10">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-ai-purple/10 border border-ai-purple/20 text-xs font-bold text-ai-purple uppercase tracking-wider mb-4 animate-pulse">
-            <Sparkles className="w-3.5 h-3.5" />
-            Interactive Simulation
-          </span>
+          <div className="flex justify-center items-center gap-3 mb-4">
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-ai-purple/10 border border-ai-purple/20 text-xs font-bold text-ai-purple uppercase tracking-wider animate-pulse">
+              <Sparkles className="w-3.5 h-3.5" />
+              Interactive Simulation
+            </span>
+            <button
+              onClick={() => setIsAutoplay(!isAutoplay)}
+              className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 border cursor-pointer ${
+                isAutoplay
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.1)]"
+                  : "bg-slate-800/40 border-slate-700/60 text-slate-400 hover:text-slate-300"
+              }`}
+              title={isAutoplay ? "Click to pause autoplay" : "Click to resume autoplay"}
+            >
+              <span className={`w-2 h-2 rounded-full ${isAutoplay ? "bg-emerald-400 animate-ping shadow-[0_0_8px_#10b981]" : "bg-slate-500"}`} />
+              Autoplay: {isAutoplay ? "ON" : "OFF"}
+            </button>
+          </div>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
             Test the <span className="gradient-text">JanMitra AI Engine</span> Live
           </h2>
@@ -266,6 +327,7 @@ export function AIPlayground() {
                   } ${customText ? "ai-active-glow" : ""}`}
                   value={customText}
                   onChange={(e) => {
+                    setIsAutoplay(false); // Stop autoplay when user manually writes
                     setCustomText(e.target.value);
                     setInputText(e.target.value);
                   }}
@@ -282,7 +344,7 @@ export function AIPlayground() {
 
               <div className="mt-5">
                 <Button
-                  className="w-full bg-gradient-to-r from-gov-blue to-ai-purple text-white shadow-lg shadow-gov-blue/20 hover:shadow-gov-blue/40 h-12 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2"
+                  className="w-full bg-gradient-to-r from-gov-blue to-ai-purple text-white shadow-lg shadow-gov-blue/20 h-12 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2"
                   disabled={isAnalyzing || (!inputText && !customText)}
                   onClick={runAnalysis}
                 >
@@ -292,31 +354,11 @@ export function AIPlayground() {
                 </Button>
               </div>
             </div>
-
-            {/* AI stats badge */}
-            <div className="glass-card rounded-2xl p-4 flex items-center justify-between border-border/40">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-trust-green/10 flex items-center justify-center text-trust-green">
-                  <CheckCircle className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground">NLP Engine Accuracy</div>
-                  <div className="text-sm font-bold">98.4% Precision Score</div>
-                </div>
-              </div>
-              <div className="text-xs text-right">
-                <span className="font-mono text-ai-purple font-bold">ResNet-101 / BERT</span>
-                <div className="text-[10px] text-muted-foreground">75 UP Districts Active</div>
-              </div>
-            </div>
           </div>
 
           {/* Results Diagnostic Terminal */}
           <div className="lg:col-span-7">
-            <div className="glass-card rounded-2xl p-6 min-h-[460px] flex flex-col justify-between premium-glow-border scanning-laser-container relative overflow-hidden bg-slate-950/20">
-              {/* Laser beam scan active during analysis */}
-              {isAnalyzing && <div className="holo-scanline" />}
-
+            <div className="glass-card rounded-2xl p-6 min-h-[460px] flex flex-col justify-between premium-glow-border relative overflow-hidden bg-slate-950/20">
               {/* Terminal top control bar */}
               <div className="flex items-center justify-between border-b border-border/50 pb-4 mb-6">
                 <div className="flex items-center gap-2">
@@ -357,7 +399,8 @@ export function AIPlayground() {
                 <div className="flex-1 flex flex-col justify-center space-y-8 py-8">
                   {/* Text pulse indicator */}
                   <div className="space-y-2 text-center">
-                    <div className="text-xs font-mono text-ai-purple uppercase tracking-widest font-bold">
+                    <div className="text-xs font-mono text-ai-purple uppercase tracking-widest font-bold flex items-center justify-center gap-1.5 animate-pulse">
+                      <span className="w-1.5 h-1.5 rounded-full bg-ai-purple animate-ping" />
                       Neural Analysis in Progress
                     </div>
                     <p className="text-sm font-semibold max-w-md mx-auto line-clamp-1 italic text-muted-foreground">
@@ -366,82 +409,118 @@ export function AIPlayground() {
                   </div>
 
                   {/* Analysis Timeline simulation */}
-                  <div className="max-w-md mx-auto w-full space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-colors ${
-                        step >= 1 ? "bg-ai-purple border-ai-purple text-white shadow-lg shadow-ai-purple/30" : "border-border text-muted-foreground"
+                  <div className="max-w-md mx-auto w-full space-y-6">
+                    {/* Step 1 */}
+                    <div className="flex items-start gap-4">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center border transition-all duration-300 ${
+                        step >= 1
+                          ? "bg-ai-purple/20 border-ai-purple text-ai-purple-light shadow-[0_0_12px_rgba(124,58,237,0.25)] animate-pulse"
+                          : "bg-slate-900/40 border-slate-800 text-slate-500"
                       }`}>
-                        1
+                        <Sparkles className="w-4.5 h-4.5" />
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-center">
-                          <span className={`text-xs font-semibold ${step >= 1 ? "text-foreground" : "text-muted-foreground"}`}>
+                          <span className={`text-xs sm:text-sm font-semibold transition-colors duration-300 ${step >= 1 ? "text-slate-100" : "text-slate-500"}`}>
                             Language Parsing & Sentiment
                           </span>
-                          {step === 1 && <span className="text-[10px] font-mono text-ai-purple animate-pulse">Running...</span>}
+                          {step === 1 ? (
+                            <span className="text-[9px] font-mono text-ai-purple-light animate-pulse font-bold">ACTIVE</span>
+                          ) : step > 1 ? (
+                            <span className="text-[9px] font-mono text-trust-green font-bold flex items-center gap-0.5">✓ READY</span>
+                          ) : (
+                            <span className="text-[9px] font-mono text-slate-600 font-bold">QUEUED</span>
+                          )}
                         </div>
-                        <div className="h-1 bg-border rounded-full mt-1 overflow-hidden">
+                        <div className="h-1.5 bg-slate-900/60 border border-slate-800/40 rounded-full mt-1.5 overflow-hidden">
                           {step >= 1 && (
                             <motion.div 
-                              className="h-full bg-ai-purple" 
+                              className="h-full bg-gradient-to-r from-ai-purple to-violet-500 shadow-[0_0_8px_#7c3aed]" 
                               initial={{ width: 0 }} 
-                              animate={{ width: step === 1 ? "60%" : "100%" }}
+                              animate={{ width: step === 1 ? "65%" : "100%" }}
                               transition={{ duration: 1 }}
                             />
                           )}
                         </div>
+                        <span className="text-[10px] text-slate-500 mt-1 block font-mono">
+                          {step === 1 ? "Extracting semantic structure and vocabulary NLP tokens..." : step > 1 ? "Parsed successfully (Confidence: 99.4%)" : "Awaiting thread trigger..."}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-colors ${
-                        step >= 2 ? "bg-gov-blue border-gov-blue text-white shadow-lg shadow-gov-blue/30" : "border-border text-muted-foreground"
+                    {/* Step 2 */}
+                    <div className="flex items-start gap-4">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center border transition-all duration-300 ${
+                        step >= 2
+                          ? "bg-gov-blue/20 border-gov-blue text-gov-blue-light shadow-[0_0_12px_rgba(29,78,216,0.25)] animate-pulse"
+                          : "bg-slate-900/40 border-slate-800 text-slate-500"
                       }`}>
-                        2
+                        <Brain className="w-4.5 h-4.5" />
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-center">
-                          <span className={`text-xs font-semibold ${step >= 2 ? "text-foreground" : "text-muted-foreground"}`}>
+                          <span className={`text-xs sm:text-sm font-semibold transition-colors duration-300 ${step >= 2 ? "text-slate-100" : "text-slate-500"}`}>
                             Grievance Categorization & Urgency Analysis
                           </span>
-                          {step === 2 && <span className="text-[10px] font-mono text-gov-blue animate-pulse">Running...</span>}
+                          {step === 2 ? (
+                            <span className="text-[9px] font-mono text-gov-blue-light animate-pulse font-bold">ACTIVE</span>
+                          ) : step > 2 ? (
+                            <span className="text-[9px] font-mono text-trust-green font-bold flex items-center gap-0.5">✓ READY</span>
+                          ) : (
+                            <span className="text-[9px] font-mono text-slate-600 font-bold">QUEUED</span>
+                          )}
                         </div>
-                        <div className="h-1 bg-border rounded-full mt-1 overflow-hidden">
+                        <div className="h-1.5 bg-slate-900/60 border border-slate-800/40 rounded-full mt-1.5 overflow-hidden">
                           {step >= 2 && (
                             <motion.div 
-                              className="h-full bg-gov-blue" 
+                              className="h-full bg-gradient-to-r from-gov-blue to-blue-500 shadow-[0_0_8px_#1d4ed8]" 
                               initial={{ width: 0 }} 
                               animate={{ width: step === 2 ? "65%" : "100%" }}
                               transition={{ duration: 1.2 }}
                             />
                           )}
                         </div>
+                        <span className="text-[10px] text-slate-500 mt-1 block font-mono">
+                          {step === 2 ? "Evaluating threat levels, incident severity, and intent category..." : step > 2 ? "Categorized and classified successfully" : "Awaiting predecessor completion..."}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-colors ${
-                        step >= 3 ? "bg-trust-green border-trust-green text-white shadow-lg shadow-trust-green/30" : "border-border text-muted-foreground"
+                    {/* Step 3 */}
+                    <div className="flex items-start gap-4">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center border transition-all duration-300 ${
+                        step >= 3
+                          ? "bg-trust-green/20 border-trust-green text-trust-green-light shadow-[0_0_12px_rgba(16,185,129,0.25)] animate-pulse"
+                          : "bg-slate-900/40 border-slate-800 text-slate-500"
                       }`}>
-                        3
+                        <Building className="w-4.5 h-4.5" />
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-center">
-                          <span className={`text-xs font-semibold ${step >= 3 ? "text-foreground" : "text-muted-foreground"}`}>
+                          <span className={`text-xs sm:text-sm font-semibold transition-colors duration-300 ${step >= 3 ? "text-slate-100" : "text-slate-500"}`}>
                             Smart Department Jurisdiction Matching
                           </span>
-                          {step === 3 && <span className="text-[10px] font-mono text-trust-green animate-pulse">Routing...</span>}
+                          {step === 3 ? (
+                            <span className="text-[9px] font-mono text-trust-green-light animate-pulse font-bold">ACTIVE</span>
+                          ) : step > 3 ? (
+                            <span className="text-[9px] font-mono text-trust-green font-bold flex items-center gap-0.5">✓ READY</span>
+                          ) : (
+                            <span className="text-[9px] font-mono text-slate-600 font-bold">QUEUED</span>
+                          )}
                         </div>
-                        <div className="h-1 bg-border rounded-full mt-1 overflow-hidden">
+                        <div className="h-1.5 bg-slate-900/60 border border-slate-800/40 rounded-full mt-1.5 overflow-hidden">
                           {step >= 3 && (
                             <motion.div 
-                              className="h-full bg-trust-green" 
+                              className="h-full bg-gradient-to-r from-trust-green to-emerald-500 shadow-[0_0_8px_#10b981]" 
                               initial={{ width: 0 }} 
                               animate={{ width: step === 3 ? "70%" : "100%" }}
                               transition={{ duration: 1.3 }}
                             />
                           )}
                         </div>
+                        <span className="text-[10px] text-slate-500 mt-1 block font-mono">
+                          {step === 3 ? "Performing geodesic database routing and mapping officers..." : step > 3 ? "Nodal officer dispatch route successfully built" : "Awaiting predecessor completion..."}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -450,111 +529,100 @@ export function AIPlayground() {
 
               {/* State 3: Result Showcase */}
               {!isAnalyzing && result && (
-                <div className="flex-1 flex flex-col justify-between space-y-6">
-                  {/* Top diagnostics layout */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Left details */}
-                    <div className="space-y-4">
-                      <div>
-                        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5">
-                          Detected Category
-                        </div>
-                        <div className="text-sm font-bold flex items-center gap-1.5">
-                          <Building className="w-4 h-4 text-ai-purple" />
-                          {result.category}
-                        </div>
+                <div className="flex-1 flex flex-col justify-between space-y-6 animate-scale-in">
+                  {/* High-Tech Diagnostic Verdict Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {/* Card 1: Classification & Severity */}
+                    <div className="glass-premium border border-slate-200 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40 rounded-xl p-3.5 flex flex-col justify-between space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">DIAGNOSTIC CATEGORY</span>
+                        <Brain className="w-3.5 h-3.5 text-ai-purple animate-pulse" />
                       </div>
-
-                      <div>
-                        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5">
-                          Smart-Routed Jurisdiction
-                        </div>
-                        <div className="text-sm font-semibold flex items-center gap-1.5 text-foreground/90">
-                          <MapPin className="w-4 h-4 text-gov-blue" />
-                          {result.dept}
-                        </div>
+                      <div className="space-y-1.5">
+                        <div className="text-xs font-black text-slate-850 dark:text-white line-clamp-1">{result.category}</div>
+                        <Badge 
+                          className={`font-black border text-[9px] px-2 py-0.5 ${getPriorityColor(result.priority)}`}
+                          variant="outline"
+                        >
+                          <ShieldAlert className="w-3 h-3 mr-1" />
+                          {result.priority} SEVERITY
+                        </Badge>
                       </div>
+                    </div>
 
-                      <div>
-                        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5">
-                          Assigned Nodal Officer
-                        </div>
-                        <div className="text-sm font-semibold flex items-center gap-1.5 text-foreground/90">
-                          <UserCheck className="w-4 h-4 text-trust-green" />
-                          {result.officer}
+                    {/* Card 2: Jurisdiction & Nodal Officer */}
+                    <div className="glass-premium border border-slate-200 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40 rounded-xl p-3.5 flex flex-col justify-between space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">ROUTING JURISDICTION</span>
+                        <MapPin className="w-3.5 h-3.5 text-gov-blue" />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-xs font-black text-slate-850 dark:text-white line-clamp-1">{result.dept}</div>
+                        <div className="text-[10px] text-slate-600 dark:text-slate-400 font-mono flex items-center gap-1">
+                          <UserCheck className="w-3 h-3 text-trust-green" />
+                          {result.officer.split(" (")[0]}
                         </div>
                       </div>
                     </div>
 
-                    {/* Right details */}
-                    <div className="space-y-4">
-                      <div>
-                        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5">
-                          Threat Level / Severity
-                        </div>
-                        <Badge 
-                          className={`font-semibold border text-xs px-2.5 py-1 ${getPriorityColor(result.priority)}`}
-                          variant="outline"
-                        >
-                          <ShieldAlert className="w-3.5 h-3.5 mr-1" />
-                          {result.priority} SEVERITY
-                        </Badge>
+                    {/* Card 3: NLP Telemetry & Accuracy */}
+                    <div className="glass-premium border border-slate-200 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40 rounded-xl p-3.5 flex flex-col justify-between space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">ENGINE METRICS</span>
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
                       </div>
-
-                      <div>
-                        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5">
-                          Detected Language
-                        </div>
-                        <div className="text-xs font-mono bg-muted/60 border border-border/50 rounded-lg px-2.5 py-1 inline-block font-semibold">
-                          {result.lang}
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5">
-                          AI Diagnostics Score
-                        </div>
-                        <div className="text-xs font-mono text-trust-green font-bold">
-                          ✓ 99.1% Categorization Match Accuracy
+                      <div className="space-y-1">
+                        <div className="text-xs font-black text-slate-700 dark:text-slate-300 font-mono">Accuracy: 99.1%</div>
+                        <div className="text-[9px] text-slate-600 dark:text-slate-400 font-mono flex items-center gap-1.5">
+                          <span className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800">{result.lang}</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Summary / Translations */}
-                  <div className="border-t border-border/40 pt-4 space-y-3.5">
-                    <div>
-                      <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 flex justify-between">
-                        <span>AI Grievance Abstract (English)</span>
-                        <span className="text-[9px] font-mono text-ai-purple font-semibold">Automatic Translation</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground bg-muted/30 border border-border/30 rounded-lg p-2.5 font-sans leading-relaxed">
-                        {result.summaryEn}
-                      </p>
+                  {/* Multi-language Abstract & Translation */}
+                  <div className="border-t border-slate-200 dark:border-slate-800/60 pt-4 space-y-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">AI Grievance Abstract (Dual-Language Summary)</span>
+                      <span className="text-[9px] font-mono text-ai-purple dark:text-ai-purple-light font-black border border-ai-purple/20 bg-ai-purple/5 px-2 py-0.5 rounded">NATURAL LANGUAGE NLP</span>
                     </div>
 
-                    <div>
-                      <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 flex justify-between">
-                        <span>AI शिकायत संक्षेप (Hindi)</span>
-                        <span className="text-[9px] font-mono text-ai-purple font-semibold">स्वचालित संक्षेपण</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="bg-slate-100/70 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-900 rounded-xl p-3">
+                        <div className="text-[9.5px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider mb-1.5 flex justify-between items-center">
+                          <span>English Translation</span>
+                          <span className="text-[8px] font-mono text-slate-500">ISO-EN</span>
+                        </div>
+                        <p className="text-xs text-slate-700 dark:text-slate-300 font-sans leading-relaxed italic">
+                          &ldquo;{result.summaryEn}&rdquo;
+                        </p>
                       </div>
-                      <p className="text-xs text-muted-foreground bg-muted/30 border border-border/30 rounded-lg p-2.5 font-sans leading-relaxed">
-                        {result.summaryHi}
-                      </p>
+
+                      <div className="bg-slate-100/70 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-900 rounded-xl p-3">
+                        <div className="text-[9.5px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-wider mb-1.5 flex justify-between items-center">
+                          <span>हिंदी सारांश (Hindi Summary)</span>
+                          <span className="text-[8px] font-mono text-slate-500">ISO-HI</span>
+                        </div>
+                        <p className="text-xs text-slate-700 dark:text-slate-300 font-sans leading-relaxed italic">
+                          &ldquo;{result.summaryHi}&rdquo;
+                        </p>
+                      </div>
                     </div>
                   </div>
 
                   {/* AI Action Execution Checklist */}
-                  <div className="border-t border-border/40 pt-4">
-                    <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                  <div className="border-t border-slate-200 dark:border-slate-800/60 pt-4">
+                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5 text-warning-amber" />
                       AI Autonomous Execution Sequence
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       {result.actions.map((act, i) => (
-                        <div key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground/80 leading-normal">
-                          <CheckCircle className="w-3.5 h-3.5 text-trust-green mt-0.5 flex-shrink-0" />
-                          <span>{act}</span>
+                        <div key={i} className="flex items-center gap-2.5 bg-slate-100/70 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-900/60 px-3.5 py-2 rounded-xl text-xs text-slate-700 dark:text-slate-300 transition-all hover:bg-slate-200/50 dark:hover:bg-slate-900/25">
+                          <div className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0 font-bold border border-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.15)] text-[9px] font-mono">
+                            0{i + 1}
+                          </div>
+                          <span className="line-clamp-1 text-slate-700 dark:text-slate-300">{act}</span>
                         </div>
                       ))}
                     </div>

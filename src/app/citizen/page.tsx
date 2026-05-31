@@ -187,32 +187,33 @@ export default function CitizenDashboard() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen pt-24 md:pt-28 pb-12 bg-background">
+      <main className="min-h-screen pt-28 md:pt-32 pb-12 bg-[#05070f] text-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
+          
+          {/* Top Info Banner & Telemetry Quick Stats (Floating Row) */}
           <motion.div
-            className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-            initial={{ opacity: 0, y: 20 }}
+            className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-2xl bg-[#090d16]/40 border border-[#1f2937]/30 backdrop-blur-md"
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gov-blue to-ai-purple flex items-center justify-center">
-                <Bot className="w-5 h-5 text-white" />
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-gov-blue to-ai-purple flex items-center justify-center shadow-lg shadow-gov-blue/20">
+                <Bot className="w-4.5 h-4.5 text-white" />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold">
-                  {isHi ? "नागरिक शिकायत पोर्टल" : "Citizen Portal"}
+              <div className="text-left">
+                <h1 className="text-lg font-black tracking-tight text-white">
+                  {isHi ? "नागरिक शिकायत पोर्टल" : "CITIZEN PORTAL"}
                 </h1>
-                <p className="text-sm text-muted-foreground">
-                  {isHi ? "अपनी शिकायतें दर्ज करें और ट्रैक करें" : "File and track your complaints"}
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                  {isHi ? "अपनी शिकायतें दर्ज करें और ट्रैक करें" : "File & track your complaints"}
                 </p>
               </div>
             </div>
 
-            {/* Header Interactive Controls */}
-            <div className="flex items-center gap-3 relative">
-              {/* Sleek Token Tracker Pill */}
-              <div className="flex items-center gap-2 bg-gradient-to-r from-amber-500/10 to-amber-600/5 border border-amber-500/20 px-3.5 py-1.5 rounded-xl shadow-inner shadow-amber-500/5 transition-all duration-300 hover:border-amber-500/35">
+            {/* Interactive controls */}
+            <div className="flex items-center gap-3 relative justify-end">
+              {/* Token Tracker Pill */}
+              <div className="flex items-center gap-2 bg-[#090d16] border border-amber-500/20 px-3.5 py-1.5 rounded-xl shadow-inner transition-all duration-300 hover:border-amber-500/35">
                 <Coins className="w-4 h-4 text-amber-500 animate-pulse flex-shrink-0" />
                 <div className="flex flex-col text-left">
                   <span className="text-[9px] uppercase tracking-wider font-extrabold text-amber-500/90 leading-none">
@@ -223,7 +224,7 @@ export default function CitizenDashboard() {
                   </span>
                 </div>
                 {/* Visual tiny progress bar */}
-                <div className="w-10 h-1 bg-muted rounded-full overflow-hidden ml-1 border border-amber-500/10 hidden sm:block">
+                <div className="w-10 h-1 bg-slate-900 rounded-full overflow-hidden ml-1 border border-amber-500/10 hidden sm:block">
                   <div 
                     className="h-full bg-amber-500 rounded-full transition-all duration-300"
                     style={{ width: `${(tokenState.tokensRemaining / tokenState.maxTokens) * 100}%` }}
@@ -231,21 +232,21 @@ export default function CitizenDashboard() {
                 </div>
               </div>
 
-              {/* Premium Notification Bell Component */}
+              {/* Notification Bell Component */}
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setShowNotifications(!showNotifications)}
-                  className={`relative p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-center active:scale-95 ${
+                  className={`relative p-2 rounded-xl border transition-all cursor-pointer flex items-center justify-center active:scale-95 h-9 w-9 ${
                     showNotifications 
                       ? "bg-primary/10 text-primary border-primary/30" 
-                      : "bg-muted/60 border-border/40 hover:bg-muted/85 hover:text-foreground text-muted-foreground"
+                      : "bg-[#090d16] border-[#1f2937]/60 hover:bg-slate-900 hover:text-white text-gray-400"
                   }`}
                   aria-label="Notifications"
                 >
-                  <Bell className="w-5 h-5" />
+                  <Bell className="w-4.5 h-4.5" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-[10px] font-bold text-white rounded-full flex items-center justify-center border-2 border-background animate-pulse shadow-md">
+                    <span className="absolute -top-1 -right-1 w-4.5 h-4.5 bg-red-500 text-[9px] font-black text-white rounded-full flex items-center justify-center border border-background animate-pulse shadow-md">
                       {unreadCount}
                     </span>
                   )}
@@ -258,16 +259,16 @@ export default function CitizenDashboard() {
                       className="fixed inset-0 z-40 cursor-default" 
                       onClick={() => setShowNotifications(false)} 
                     />
-                    <div className="absolute right-0 mt-3 w-80 max-h-[420px] overflow-y-auto z-50 glass-card rounded-2xl p-4 shadow-xl border border-border/50 bg-background/95 backdrop-blur-md animate-in fade-in slide-in-from-top-3 duration-200">
-                      <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-3">
-                        <h4 className="font-bold text-sm text-foreground">
+                    <div className="absolute right-0 mt-3 w-80 max-h-[420px] overflow-y-auto z-50 rounded-2xl p-4 shadow-xl border border-[#1f2937]/80 bg-[#090d16] backdrop-blur-md animate-in fade-in slide-in-from-top-3 duration-200">
+                      <div className="flex items-center justify-between border-b border-[#1f2937]/50 pb-3 mb-3">
+                        <h4 className="font-bold text-xs text-white">
                           {isHi ? "सूचनाएं" : "Notifications"}
                         </h4>
                         {notifications.length > 0 && (
                           <button
                             type="button"
                             onClick={handleClearAllNotifications}
-                            className="text-[11px] font-semibold text-red-500 hover:text-red-600 transition-colors flex items-center gap-1 cursor-pointer"
+                            className="text-[10px] font-black text-red-500 hover:text-red-400 transition-colors flex items-center gap-1 cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                             {isHi ? "साफ़ करें" : "Clear All"}
@@ -276,8 +277,8 @@ export default function CitizenDashboard() {
                       </div>
 
                       {notifications.length === 0 ? (
-                        <div className="py-8 flex flex-col items-center justify-center text-center text-muted-foreground gap-2">
-                          <Inbox className="w-8 h-8 opacity-40 animate-bounce" />
+                        <div className="py-8 flex flex-col items-center justify-center text-center text-gray-500 gap-2">
+                          <Inbox className="w-8 h-8 opacity-40" />
                           <p className="text-xs font-semibold">
                             {isHi ? "कोई नई सूचना नहीं" : "No new notifications"}
                           </p>
@@ -288,25 +289,25 @@ export default function CitizenDashboard() {
                             <div
                               key={n.id}
                               onClick={() => handleNotificationClick(n)}
-                              className={`p-3 rounded-xl border transition-all cursor-pointer flex flex-col gap-1.5 ${
+                              className={`p-3 rounded-xl border transition-all cursor-pointer flex flex-col gap-1.5 text-left ${
                                 n.read
-                                  ? "bg-muted/20 border-border/20 hover:bg-muted/40"
-                                  : "bg-primary/[0.04] border-primary/25 hover:bg-primary/[0.07] shadow-sm active-glow-primary hover:border-primary/45"
+                                  ? "bg-slate-950/40 border-[#1f2937]/50 hover:bg-slate-900/30"
+                                  : "bg-indigo-500/5 border-indigo-500/25 hover:bg-indigo-500/10 shadow-sm active-glow-primary hover:border-indigo-500/45"
                               }`}
                             >
                               <div className="flex items-start justify-between gap-1.5">
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground uppercase tracking-wider font-mono">
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-900 text-gray-400 uppercase tracking-wider font-mono">
                                   {n.complaintId}
                                 </span>
-                                <span className="text-[9px] text-muted-foreground font-semibold">
+                                <span className="text-[9px] text-gray-500 font-semibold">
                                   {formatTime(n.timestamp)}
                                 </span>
                               </div>
-                              <p className="text-xs font-semibold text-foreground/90 leading-normal">
+                              <p className="text-xs font-bold text-gray-300 leading-normal">
                                 {isHi ? n.messageHi : n.message}
                               </p>
                               {!n.read && (
-                                <span className="text-[10px] font-bold text-primary self-end animate-pulse">
+                                <span className="text-[9px] font-black text-indigo-400 self-end animate-pulse">
                                   {isHi ? "● नया" : "● New"}
                                 </span>
                               )}
@@ -319,26 +320,26 @@ export default function CitizenDashboard() {
                 )}
               </div>
 
-              {/* Premium Language Toggler */}
-              <div className="flex items-center gap-1 bg-muted/60 border border-border/40 p-1 rounded-xl shadow-inner w-fit">
+              {/* Language Toggler */}
+              <div className="flex items-center gap-1 bg-[#090d16] border border-[#1f2937]/60 p-1 rounded-xl shadow-inner w-fit h-9">
                 <button
                   type="button"
                   onClick={() => setLanguage("en")}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                  className={`px-3.5 h-7 text-[10px] font-black rounded transition-all cursor-pointer ${
                     language === "en"
-                      ? "bg-primary text-white shadow-md shadow-primary/25"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-[#111827] text-white border border-[#1f2937]/80"
+                      : "text-gray-400 hover:text-white"
                   }`}
                 >
-                  English
+                  EN
                 </button>
                 <button
                   type="button"
                   onClick={() => setLanguage("hi")}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                  className={`px-3.5 h-7 text-[10px] font-black rounded transition-all cursor-pointer ${
                     language === "hi"
-                      ? "bg-primary text-white shadow-md shadow-primary/25"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-[#111827] text-white border border-[#1f2937]/80"
+                      : "text-gray-400 hover:text-white"
                   }`}
                 >
                   हिन्दी
@@ -347,23 +348,117 @@ export default function CitizenDashboard() {
             </div>
           </motion.div>
 
+          {/* Redesigned Hero and Civic Stats Card Section */}
+          <motion.div
+            className="w-full bg-[#090d16]/30 border border-[#1f2937]/45 rounded-3xl p-6 sm:p-8 mb-8 relative overflow-hidden text-left shadow-lg shadow-black/20"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            {/* Soft decorative background glows inside card */}
+            <div className="absolute -right-24 -top-24 w-80 h-80 bg-indigo-600/10 rounded-full filter blur-[100px] pointer-events-none" />
+            <div className="absolute -left-24 -bottom-24 w-80 h-80 bg-emerald-600/5 rounded-full filter blur-[100px] pointer-events-none" />
+
+            {/* Pill badge */}
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full border border-indigo-500/20 bg-indigo-500/5 text-[10px] font-black tracking-wider text-indigo-400 uppercase mb-5">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+              AI-Powered Citizen Governance
+            </div>
+
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-2 leading-tight">
+              Report Civic Issues Instantly
+            </h2>
+            <p className="text-sm text-gray-400 max-w-2xl font-semibold leading-relaxed mb-6">
+              Powered by AI to automatically classify, prioritize, and route complaints to the correct department in real-time.
+            </p>
+
+            {/* AI-Powered Civic Stats Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mt-8 w-full">
+              {/* Stat 1: Green Clock Card */}
+              <div className="relative overflow-hidden rounded-2xl border border-emerald-500/10 bg-[#090f19]/70 p-5 shadow-[0_0_15px_rgba(16,185,129,0.02)] hover:shadow-[0_0_25px_rgba(16,185,129,0.08)] hover:border-emerald-500/30 transition-all duration-300 group text-left">
+                <div className="flex items-center justify-between mb-5">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]">
+                    <Clock className="w-4.5 h-4.5 text-emerald-400 animate-pulse" />
+                  </div>
+                  <span className="flex items-center gap-1 text-[10px] font-black text-emerald-400 tracking-wider">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    LIVE
+                  </span>
+                </div>
+                <div className="text-2xl font-black text-white group-hover:scale-[1.01] transition-transform duration-300">36 Hours</div>
+                <div className="text-xs font-bold text-gray-200 mt-1">Avg Resolution Time</div>
+                <div className="text-[10px] text-gray-500 font-semibold mt-0.5">Municipal Standard</div>
+              </div>
+
+              {/* Stat 2: Blue Checkmark Card */}
+              <div className="relative overflow-hidden rounded-2xl border border-blue-500/10 bg-[#090f19]/70 p-5 shadow-[0_0_15px_rgba(59,130,246,0.02)] hover:shadow-[0_0_25px_rgba(59,130,246,0.08)] hover:border-blue-500/30 transition-all duration-300 group text-left">
+                <div className="flex items-center justify-between mb-5">
+                  <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.1)]">
+                    <CheckCircle2 className="w-4.5 h-4.5 text-blue-400" />
+                  </div>
+                  <span className="flex items-center gap-1 text-[10px] font-black text-blue-400 tracking-wider">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                    LIVE
+                  </span>
+                </div>
+                <div className="text-2xl font-black text-white group-hover:scale-[1.01] transition-transform duration-300">12,400+</div>
+                <div className="text-xs font-bold text-gray-200 mt-1">Complaints Resolved</div>
+                <div className="text-[10px] text-gray-500 font-semibold mt-0.5">This Month</div>
+              </div>
+
+              {/* Stat 3: Purple Target Card */}
+              <div className="relative overflow-hidden rounded-2xl border border-purple-500/10 bg-[#090f19]/70 p-5 shadow-[0_0_15px_rgba(168,85,247,0.02)] hover:shadow-[0_0_25px_rgba(168,85,247,0.08)] hover:border-purple-500/30 transition-all duration-300 group text-left">
+                <div className="flex items-center justify-between mb-5">
+                  <div className="w-9 h-9 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20 shadow-[0_0_10px_rgba(168,85,247,0.1)]">
+                    <Search className="w-4.5 h-4.5 text-purple-400" />
+                  </div>
+                  <span className="flex items-center gap-1 text-[10px] font-black text-purple-400 tracking-wider">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                    LIVE
+                  </span>
+                </div>
+                <div className="text-2xl font-black text-white group-hover:scale-[1.01] transition-transform duration-300">95.8%</div>
+                <div className="text-xs font-bold text-gray-200 mt-1">AI Routing Accuracy</div>
+                <div className="text-[10px] text-gray-500 font-semibold mt-0.5">Automated Dispatch</div>
+              </div>
+
+              {/* Stat 4: Orange Building Card */}
+              <div className="relative overflow-hidden rounded-2xl border border-amber-500/10 bg-[#090f19]/70 p-5 shadow-[0_0_15px_rgba(245,158,11,0.02)] hover:shadow-[0_0_25px_rgba(245,158,11,0.08)] hover:border-amber-500/30 transition-all duration-300 group text-left">
+                <div className="flex items-center justify-between mb-5">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.1)]">
+                    <AlertTriangle className="w-4.5 h-4.5 text-amber-400" />
+                  </div>
+                  <span className="flex items-center gap-1 text-[10px] font-black text-amber-400 tracking-wider">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                    LIVE
+                  </span>
+                </div>
+                <div className="text-2xl font-black text-white group-hover:scale-[1.01] transition-transform duration-300">8 Nodal</div>
+                <div className="text-xs font-bold text-gray-200 mt-1">Active Departments</div>
+                <div className="text-[10px] text-gray-500 font-semibold mt-0.5">Resolution Partners</div>
+              </div>
+            </div>
+          </motion.div>
+
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="bg-muted/40 border border-border/50 p-1.5 rounded-2xl h-auto gap-1.5 backdrop-blur-sm shadow-lg shadow-black/10">
-              <TabsTrigger
-                value="new"
-                className="gap-2.5 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 cursor-pointer data-[state=active]:bg-background data-active:bg-gradient-to-r data-active:from-gov-blue data-active:to-ai-purple data-active:text-white data-active:shadow-md data-active:shadow-primary/25 hover:bg-muted/70"
-              >
-                <Plus className="w-4.5 h-4.5" />
-                {dict.newComplaint}
-              </TabsTrigger>
-              <TabsTrigger
-                value="track"
-                className="gap-2.5 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 cursor-pointer data-[state=active]:bg-background data-active:bg-gradient-to-r data-active:from-gov-blue data-active:to-ai-purple data-active:text-white data-active:shadow-md data-active:shadow-primary/25 hover:bg-muted/70"
-              >
-                <Search className="w-4.5 h-4.5" />
-                {dict.myComplaints}
-              </TabsTrigger>
-            </TabsList>
+            <div className="flex items-center justify-start border-b border-[#1f2937]/30 pb-2">
+              <TabsList className="bg-[#090d16] border border-[#1f2937]/45 p-1 rounded-xl h-11 gap-1.5 shadow-lg shadow-black/10">
+                <TabsTrigger
+                  value="new"
+                  className="gap-2 px-4 h-8.5 rounded-lg text-xs font-black transition-all duration-200 cursor-pointer data-[state=active]:bg-[#111827] data-[state=active]:text-white data-[state=active]:border data-[state=active]:border-[#1f2937]/80 hover:bg-slate-900/60 text-gray-400"
+                >
+                  <Plus className="w-4 h-4" />
+                  {dict.newComplaint.toUpperCase()}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="track"
+                  className="gap-2 px-4 h-8.5 rounded-lg text-xs font-black transition-all duration-200 cursor-pointer data-[state=active]:bg-[#111827] data-[state=active]:text-white data-[state=active]:border data-[state=active]:border-[#1f2937]/80 hover:bg-slate-900/60 text-gray-400"
+                >
+                  <Search className="w-4 h-4" />
+                  {dict.myComplaints.toUpperCase()}
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             {/* New Complaint Tab */}
             <TabsContent value="new">

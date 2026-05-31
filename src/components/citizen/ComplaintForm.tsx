@@ -558,21 +558,21 @@ export function ComplaintForm({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="space-y-6"
+            className="space-y-6 text-left"
           >
             {/* Complaint text */}
-            <div className="glass-card premium-glow-border rounded-2xl p-6 sm:p-8 space-y-4">
+            <div className="bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-6 sm:p-7 space-y-4">
               <div className="flex items-center gap-2 mb-1">
-                <FileText className="w-5 h-5 text-primary" />
-                <h3 className="font-bold text-base text-foreground/90">{dict.describeTitle}</h3>
-                <span className="text-xs text-muted-foreground/80">{isHi ? "(अंग्रेजी भी समर्थित)" : "(Hindi Supported)"}</span>
+                <FileText className="w-5 h-5 text-[#7c3aed]" />
+                <h3 className="font-extrabold text-sm uppercase tracking-wider text-white">{dict.describeTitle}</h3>
+                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{isHi ? "(अंग्रेजी भी समर्थित)" : "(Hindi Supported)"}</span>
               </div>
 
               {/* Dynamic Token Tracker UI */}
-              <div className="flex items-center justify-between pb-3 border-b border-border/20">
+              <div className="flex items-center justify-between pb-3 border-b border-[#1f2937]/40">
                 <div className="flex items-center gap-2">
                   <Coins className="w-4 h-4 text-amber-500 animate-pulse" />
-                  <span className="text-xs font-bold text-muted-foreground">
+                  <span className="text-xs font-bold text-gray-400">
                     {isHi ? "दैनिक शिकायत कोटा:" : "Daily Complaint Quota:"}
                   </span>
                 </div>
@@ -580,7 +580,7 @@ export function ComplaintForm({
                   <span className="text-xs font-black text-amber-400">
                     {tokenState.tokensRemaining}/{tokenState.maxTokens}
                   </span>
-                  <div className="w-16 h-1.5 bg-muted/60 rounded-full overflow-hidden border border-amber-500/10">
+                  <div className="w-16 h-1.5 bg-slate-900 rounded-full overflow-hidden border border-amber-500/10">
                     <div 
                       className="h-full bg-amber-500 rounded-full transition-all duration-300"
                       style={{ width: `${(tokenState.tokensRemaining / tokenState.maxTokens) * 100}%` }}
@@ -589,14 +589,14 @@ export function ComplaintForm({
                 </div>
               </div>
 
-              <div className={`relative rounded-xl transition-all duration-500 p-[1.5px] ${isFocused ? "bg-gradient-to-r from-gov-blue via-ai-purple to-trust-green shadow-[0_0_20px_rgba(124,58,237,0.25)] scale-[1.002]" : "bg-border/40"}`}>
+              <div className={`relative rounded-xl transition-all duration-500 p-[1.5px] ${isFocused ? "bg-gradient-to-r from-gov-blue via-ai-purple to-trust-green shadow-[0_0_20px_rgba(124,58,237,0.25)] scale-[1.002]" : "bg-[#1f2937]/60"}`}>
                 <Textarea
                   value={text}
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
                   onChange={(e) => setText(e.target.value)}
                   placeholder={dict.placeholderText}
-                  className="min-h-[140px] text-base resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-4 py-3 bg-card/95 w-full rounded-[10.5px] transition-all duration-300 placeholder:text-muted-foreground/60"
+                  className="min-h-[140px] text-sm resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-4 py-3 bg-[#070b13] text-gray-100 w-full rounded-[10.5px] transition-all duration-300 placeholder:text-gray-600"
                 />
               </div>
 
@@ -616,10 +616,10 @@ export function ComplaintForm({
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   className={`flex items-center gap-3.5 p-2.5 pr-4 bg-ai-purple/[0.03] border rounded-2xl w-fit relative overflow-hidden transition-all duration-300 ${
-                    isScanningImage ? "border-ai-purple shadow-[0_0_15px_rgba(124,58,237,0.2)] bg-ai-purple/[0.05]" : "border-ai-purple/20"
+                    isScanningImage ? "border-ai-purple shadow-[0_0_15px_rgba(124,58,237,0.2)] bg-ai-purple/[0.05]" : "border-[#1f2937]"
                   }`}
                 >
-                  <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-ai-purple/30 bg-black/5 flex-shrink-0">
+                  <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-[#1f2937] bg-black/5 flex-shrink-0">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={photo} alt="Preview" className="w-full h-full object-cover" />
                     
@@ -627,7 +627,7 @@ export function ComplaintForm({
                     {isScanningImage && <div className="holo-scanline" />}
                   </div>
                   <div className="flex-1 min-w-[150px] max-w-[320px]">
-                    <p className="text-xs font-bold text-foreground/90 truncate">{photoName}</p>
+                    <p className="text-xs font-bold text-gray-200 truncate">{photoName}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <span className={`w-1.5 h-1.5 rounded-full ${isScanningImage ? "bg-ai-purple animate-ping" : "bg-trust-green animate-pulse"}`} />
                       <p className={`text-[10px] font-bold uppercase tracking-wider ${isScanningImage ? "text-ai-purple" : "text-trust-green"}`}>
@@ -640,7 +640,7 @@ export function ComplaintForm({
                   <button
                     type="button"
                     onClick={removePhoto}
-                    className="p-1.5 rounded-lg hover:bg-danger-red/10 text-muted-foreground hover:text-danger-red transition-all cursor-pointer relative z-10 active:scale-90"
+                    className="p-1.5 rounded-lg hover:bg-danger-red/10 text-gray-400 hover:text-danger-red transition-all cursor-pointer relative z-10 active:scale-90"
                     aria-label="Remove photo"
                   >
                     <X className="w-4 h-4" />
@@ -656,21 +656,21 @@ export function ComplaintForm({
                   size="sm"
                   onClick={toggleRecording}
                   disabled={isTranscribing}
-                  className="gap-2 rounded-xl transition-all font-semibold active:scale-95 cursor-pointer relative overflow-hidden"
+                  className={`gap-2 rounded-xl transition-all font-black text-xs uppercase cursor-pointer relative overflow-hidden bg-[#0c101f] border border-[#1f2937] text-gray-300 hover:text-white hover:bg-slate-900 h-9 px-4`}
                 >
                   {isRecording ? (
                     <>
-                      <MicOff className="w-4 h-4 text-white z-10" />
+                      <MicOff className="w-3.5 h-3.5 text-white z-10 animate-pulse" />
                       <span className="animate-pulse text-white z-10">{dict.voiceRecording}</span>
                     </>
                   ) : isTranscribing ? (
                     <>
-                      <Loader2 className="w-4 h-4 text-primary animate-spin" />
-                      <span>{isHi ? "AI विश्लेषण हो रहा है..." : "AI Transcribing..."}</span>
+                      <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
+                      <span>{isHi ? "AI विश्लेषण..." : "AI Transcribing..."}</span>
                     </>
                   ) : (
                     <>
-                      <Mic className="w-4 h-4 text-primary" />
+                      <Mic className="w-3.5 h-3.5 text-indigo-400" />
                       {dict.voiceInput}
                     </>
                   )}
@@ -689,11 +689,9 @@ export function ComplaintForm({
                   variant={photo ? "secondary" : "outline"} 
                   size="sm" 
                   onClick={handlePhotoUploadClick}
-                  className={`gap-2 rounded-xl font-semibold transition-all active:scale-95 cursor-pointer ${
-                    photo ? "border-primary/45 bg-primary/10 text-primary hover:bg-primary/15" : ""
-                  }`}
+                  className={`gap-2 rounded-xl font-black text-xs uppercase transition-all active:scale-95 cursor-pointer bg-[#0c101f] border border-[#1f2937] text-gray-300 hover:text-white hover:bg-slate-900 h-9 px-4`}
                 >
-                  <Upload className={`w-4 h-4 ${photo ? "text-primary animate-pulse" : "text-muted-foreground"}`} />
+                  <Upload className={`w-3.5 h-3.5 ${photo ? "text-indigo-400 animate-pulse" : "text-gray-400"}`} />
                   {photo ? dict.photoAttached : dict.uploadPhoto}
                 </Button>
 
@@ -701,10 +699,10 @@ export function ComplaintForm({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="gap-2 ml-auto rounded-xl font-semibold transition-all hover:bg-primary/5 active:scale-95 cursor-pointer"
+                  className="gap-2 ml-auto rounded-xl font-black text-xs uppercase transition-all hover:bg-slate-900 bg-[#0c101f] border border-[#1f2937] text-gray-300 hover:text-white active:scale-95 cursor-pointer h-9 px-4"
                   onClick={detectLocation}
                 >
-                  <MapPin className="w-4 h-4 text-primary" />
+                  <MapPin className="w-3.5 h-3.5 text-indigo-400" />
                   {location ? location.area : dict.detectLocation}
                 </Button>
               </div>
@@ -717,21 +715,21 @@ export function ComplaintForm({
                 >
                   <div className="absolute -left-6 -bottom-6 w-16 h-16 bg-trust-green/5 rounded-full filter blur-lg pointer-events-none" />
                   
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 text-left">
                     <div className="w-6 h-6 rounded-full bg-trust-green/20 flex items-center justify-center flex-shrink-0 relative">
                       <div className="w-2.5 h-2.5 rounded-full bg-trust-green radar-glow relative" />
                     </div>
                     <div>
-                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">{dict.pinnedArea}</span>
-                      <span className="text-sm font-bold text-foreground/90">{location.area}</span>
+                      <span className="text-[9px] text-gray-500 uppercase font-black tracking-wider block">{dict.pinnedArea}</span>
+                      <span className="text-xs font-bold text-gray-200">{location.area}</span>
                     </div>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                    <Badge variant="outline" className="font-mono text-[10px] border-trust-green/30 text-trust-green bg-trust-green/5 font-bold px-2 py-0.5">
+                    <Badge variant="outline" className="font-mono text-[9px] border-trust-green/30 text-trust-green bg-trust-green/5 font-bold px-2 py-0.5">
                       LAT: {location.lat.toFixed(4)}
                     </Badge>
-                    <Badge variant="outline" className="font-mono text-[10px] border-trust-green/30 text-trust-green bg-trust-green/5 font-bold px-2 py-0.5">
+                    <Badge variant="outline" className="font-mono text-[9px] border-trust-green/30 text-trust-green bg-trust-green/5 font-bold px-2 py-0.5">
                       LNG: {location.lng.toFixed(4)}
                     </Badge>
                   </div>
@@ -740,28 +738,28 @@ export function ComplaintForm({
             </div>
 
             {/* Personal details */}
-            <div className="glass-card rounded-2xl p-6 sm:p-7 space-y-4">
-              <h3 className="font-bold text-base text-foreground/90 flex items-center gap-2">
-                <User className="w-5 h-5 text-primary" />
+            <div className="bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-6 sm:p-7 space-y-4">
+              <h3 className="font-extrabold text-sm uppercase tracking-wider text-white flex items-center gap-2">
+                <User className="w-5 h-5 text-[#7c3aed]" />
                 {dict.yourDetails}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="relative group">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
+                <div className="relative group text-left">
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors z-10" />
                   <Input
                     placeholder={dict.namePlaceholder}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="pl-10 border border-border/40 focus:border-primary/60 focus:ring-1 focus:ring-primary/40 rounded-xl bg-background/30 h-11 transition-all duration-300 focus:scale-[1.005]"
+                    className="pl-10 border border-[#1f2937]/80 focus:border-[#7c3aed]/60 focus:ring-1 focus:ring-[#7c3aed]/40 rounded-xl bg-[#070b13] text-gray-200 h-11 transition-all duration-300 focus:scale-[1.005]"
                   />
                 </div>
-                <div className="relative group">
-                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
+                <div className="relative group text-left">
+                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors z-10" />
                   <Input
                     placeholder={dict.phonePlaceholder}
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="pl-10 border border-border/40 focus:border-primary/60 focus:ring-1 focus:ring-primary/40 rounded-xl bg-background/30 h-11 transition-all duration-300 focus:scale-[1.005]"
+                    className="pl-10 border border-[#1f2937]/80 focus:border-[#7c3aed]/60 focus:ring-1 focus:ring-[#7c3aed]/40 rounded-xl bg-[#070b13] text-gray-200 h-11 transition-all duration-300 focus:scale-[1.005]"
                   />
                 </div>
               </div>
@@ -772,7 +770,7 @@ export function ComplaintForm({
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`p-4 rounded-xl border flex items-start gap-3 ${
+                className={`p-4 rounded-xl border flex items-start gap-3 text-left ${
                   isEmergencyComplaint(text)
                     ? "bg-amber-500/10 border-amber-500/30 text-amber-200"
                     : "bg-red-500/10 border-red-500/30 text-red-200"
@@ -825,11 +823,11 @@ export function ComplaintForm({
               type="button"
               onClick={handleSubmit}
               disabled={!text.trim() || (tokenState.tokensRemaining <= 0 && !isEmergencyComplaint(text))}
-              className="w-full h-12 rounded-xl bg-gradient-to-r from-gov-blue via-ai-purple to-gov-blue-light bg-[length:200%_auto] hover:bg-right text-white shadow-xl shadow-gov-blue/25 hover:shadow-gov-blue/45 hover:scale-[1.01] active:scale-[0.99] transition-all duration-500 text-base font-extrabold group cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full h-12 rounded-xl bg-gradient-to-r from-[#4f46e5] via-[#7c3aed] to-[#db2777] hover:bg-right text-white shadow-xl shadow-[#7c3aed]/25 hover:shadow-[#7c3aed]/45 hover:scale-[1.01] active:scale-[0.99] transition-all duration-500 text-base font-extrabold group cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <div className="flex items-center justify-center gap-2">
-                <Sparkles className="w-5 h-5 animate-spin-slow text-white" />
-                <span>{dict.submitBtn}</span>
+              <div className="flex items-center justify-center gap-2 uppercase tracking-wider text-xs font-black">
+                <Sparkles className="w-4.5 h-4.5 text-white" />
+                <span>Submit & Analyze with AI</span>
                 <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
             </Button>

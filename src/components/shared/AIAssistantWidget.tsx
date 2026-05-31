@@ -18,6 +18,14 @@ import {
   Clock,
   Volume2,
   VolumeX,
+  HelpCircle,
+  BarChart3,
+  Building2,
+  Phone,
+  Trash2,
+  FileText,
+  Shield,
+  Zap,
 } from "lucide-react";
 import {
   getComplaints,
@@ -27,16 +35,216 @@ import {
   getStats,
   addCitizenNotification,
 } from "@/lib/complaints";
-import type { Complaint, TimelineEvent } from "@/types";
+import type { Complaint, TimelineEvent, DashboardStats } from "@/types";
 
 interface Message {
   id: string;
   sender: "user" | "ai";
   text: string;
   isCustomCard?: boolean;
-  cardType?: "timeline" | "hotspots" | "filing_success" | "admin_override" | "greeting";
+  cardType?: "timeline" | "hotspots" | "filing_success" | "admin_override" | "greeting" | "stats" | "help" | "department_info" | "recent_list";
   cardData?: any;
   timestamp: Date;
+}
+
+// Department directory data
+const DEPARTMENTS = [
+  { name: "Lucknow Nagar Nigam", nameHi: "लखनऊ नगर निगम", handles: "Garbage, Sanitation, Parks", handlesHi: "कचरा, स्वच्छता, पार्क", helpline: "0522-2638340" },
+  { name: "Jal Nigam", nameHi: "जल निगम", handles: "Water Supply, Drainage, Sewage", handlesHi: "जल आपूर्ति, नाला, सीवर", helpline: "0522-2614925" },
+  { name: "Public Works Dept (PWD)", nameHi: "लोक निर्माण विभाग", handles: "Roads, Bridges, Highways", handlesHi: "सड़क, पुल, राजमार्ग", helpline: "0522-2237582" },
+  { name: "UPPCL (Power Dept)", nameHi: "विद्युत विभाग (UPPCL)", handles: "Electricity, Street Lights, Transformers", handlesHi: "बिजली, स्ट्रीट लाइट, ट्रांसफार्मर", helpline: "1912" },
+  { name: "Traffic Police", nameHi: "यातायात पुलिस", handles: "Traffic, Parking, Signals", handlesHi: "यातायात, पार्किंग, सिग्नल", helpline: "0522-2620173" },
+  { name: "Health Department", nameHi: "स्वास्थ्य विभाग", handles: "Public Health, Dengue, Mosquitoes", handlesHi: "जन स्वास्थ्य, डेंगू, मच्छर", helpline: "108" },
+  { name: "Anti-Corruption Bureau", nameHi: "भ्रष्टाचार निरोधक ब्यूरो", handles: "Corruption, Bribery Reports", handlesHi: "भ्रष्टाचार, रिश्वत शिकायत", helpline: "1064" },
+  { name: "Animal Control", nameHi: "पशु नियंत्रण", handles: "Stray Animals, Cattle, Dogs", handlesHi: "आवारा पशु, गाय, कुत्ते", helpline: "0522-2627844" },
+];
+
+// Expanded Lucknow area map
+const AREA_MAP: Record<string, { name: string; lat: number; lng: number }> = {
+  "gomti nagar": { name: "Gomti Nagar, Lucknow", lat: 26.8643, lng: 80.9576 },
+  "alambagh": { name: "Alambagh, Lucknow", lat: 26.8028, lng: 80.9022 },
+  "rajajipuram": { name: "Rajajipuram, Lucknow", lat: 26.8373, lng: 80.8926 },
+  "hazratganj": { name: "Hazratganj, Lucknow", lat: 26.8496, lng: 80.9467 },
+  "aminabad": { name: "Aminabad, Lucknow", lat: 26.8512, lng: 80.9334 },
+  "indira nagar": { name: "Indira Nagar, Lucknow", lat: 26.8746, lng: 80.9929 },
+  "aliganj": { name: "Aliganj, Lucknow", lat: 26.8946, lng: 80.9400 },
+  "mahanagar": { name: "Mahanagar, Lucknow", lat: 26.8740, lng: 80.9200 },
+  "chinhat": { name: "Chinhat, Lucknow", lat: 26.8890, lng: 81.0200 },
+  "vikas nagar": { name: "Vikas Nagar, Lucknow", lat: 26.8510, lng: 80.9110 },
+  "jankipuram": { name: "Jankipuram, Lucknow", lat: 26.9160, lng: 80.9450 },
+  "ashiyana": { name: "Ashiyana, Lucknow", lat: 26.7950, lng: 80.9330 },
+  "chowk": { name: "Chowk, Lucknow", lat: 26.8540, lng: 80.9170 },
+  "kaiserbagh": { name: "Kaiserbagh, Lucknow", lat: 26.8460, lng: 80.9380 },
+  "amausi": { name: "Amausi, Lucknow", lat: 26.7610, lng: 80.8840 },
+  "charbagh": { name: "Charbagh, Lucknow", lat: 26.8330, lng: 80.9220 },
+  "telibagh": { name: "Telibagh, Lucknow", lat: 26.7830, lng: 80.9420 },
+  "banthra": { name: "Banthra, Lucknow", lat: 26.7450, lng: 80.9100 },
+  "sitapur road": { name: "Sitapur Road, Lucknow", lat: 26.9050, lng: 80.9600 },
+  "faizabad road": { name: "Faizabad Road, Lucknow", lat: 26.8800, lng: 81.0000 },
+  "vrindavan yojana": { name: "Vrindavan Yojana, Lucknow", lat: 26.8010, lng: 80.9580 },
+  "sushant golf city": { name: "Sushant Golf City, Lucknow", lat: 26.7910, lng: 80.9810 },
+  "husainganj": { name: "Husainganj, Lucknow", lat: 26.8580, lng: 80.9360 },
+  "lalbagh": { name: "Lalbagh, Lucknow", lat: 26.8620, lng: 80.9270 },
+};
+
+// Expanded category keywords
+const CATEGORY_KEYWORDS = [
+  { name: "Garbage / Sanitation", nameHi: "कचरा / स्वच्छता", keys: ["garbage", "kachra", "dirty", "gandagi", "dustbin", "waste", "कचरा", "गंदगी", "सफाई", "safai", "jhadu", "sweeping", "smell", "badbu", "बदबू"] },
+  { name: "Water Supply", nameHi: "जल आपूर्ति", keys: ["water", "leak", "pipe", "pani", "waterlogging", "leakage", "पानी", "पाइप", "लीक", "jal", "boring", "tanker", "supply", "tap", "nalka", "नल"] },
+  { name: "Road Damage", nameHi: "सड़क मरम्मत", keys: ["road", "pothole", "asphalt", "sadak", "gaddha", "damage", "सड़क", "गड्ढा", "टूटी सड़क", "crack", "tar", "highway", "footpath", "divider"] },
+  { name: "Electricity", nameHi: "बिजली", keys: ["electricity", "bijli", "power", "transformer", "wire", "current", "बिजली", "करंट", "ट्रांसफार्मर", "voltage", "outage", "blackout", "load shedding", "meter"] },
+  { name: "Street Light", nameHi: "स्ट्रीट लाइट", keys: ["street light", "streetlight", "light", "andhera", "darkness", "pole", "रोशनी", "स्ट्रीट लाइट", "अंधेरा", "lamp", "bulb", "led"] },
+  { name: "Illegal Construction", nameHi: "अवैध निर्माण", keys: ["construction", "illegal", "encroachment", "kabza", "building", "अवैध निर्माण", "कब्जा", "atikraman", "demolition"] },
+  { name: "Corruption", nameHi: "भ्रष्टाचार", keys: ["corruption", "bribe", "ghoos", "money", "demand", "रिश्वत", "घूस", "भ्रष्टाचार", "rishwat", "paisa maang"] },
+  { name: "Drainage / Sewage", nameHi: "नाला / सीवर", keys: ["drain", "drainage", "sewer", "sewage", "nala", "gutter", "नाला", "सीवर", "गटर", "naali", "overflow", "clogged", "blocked drain"] },
+  { name: "Stray Animals", nameHi: "आवारा पशु", keys: ["stray", "dog", "animal", "cattle", "cow", "monkey", "kutte", "कुत्ता", "आवारा", "पशु", "गाय", "बंदर", "janwar", "bite", "attack"] },
+  { name: "Noise Pollution", nameHi: "ध्वनि प्रदूषण", keys: ["noise", "loud", "speaker", "shor", "pollution", "शोर", "ध्वनि", "प्रदूषण", "dj", "music", "horn", "loudspeaker"] },
+  { name: "Traffic", nameHi: "यातायात", keys: ["traffic", "jam", "signal", "parking", "challan", "ट्रैफिक", "यातायात", "सिग्नल", "पार्किंग", "wrong side", "accident"] },
+  { name: "Public Health", nameHi: "जन स्वास्थ्य", keys: ["health", "hospital", "dengue", "malaria", "mosquito", "machar", "स्वास्थ्य", "मच्छर", "डेंगू", "बीमारी", "clinic", "dirty water", "epidemic"] },
+  { name: "Park / Garden", nameHi: "पार्क / उद्यान", keys: ["park", "garden", "tree", "green", "playground", "पार्क", "बगीचा", "पेड़", "udyan", "grass", "broken bench", "swing"] },
+];
+
+interface AnimatedBotFaceProps {
+  className?: string;
+}
+
+function AnimatedBotFace({ className = "w-9 h-9" }: AnimatedBotFaceProps) {
+  return (
+    <motion.div
+      className={`relative flex items-center justify-center ${className}`}
+      animate={{
+        y: [0, -3, 0],
+      }}
+      transition={{
+        duration: 3,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+    >
+      <svg
+        viewBox="0 0 36 36"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-full h-full text-violet-400 filter drop-shadow-[0_0_8px_rgba(139,92,246,0.5)]"
+      >
+        {/* Glowing Head Background Halo */}
+        <circle cx="18" cy="20" r="12" fill="url(#botHalo)" opacity="0.15" />
+        
+        {/* Antenna */}
+        <path d="M18 10V4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+        <motion.circle
+          cx="18"
+          cy="3"
+          r="2.5"
+          fill="#38bdf8"
+          animate={{
+            scale: [1, 1.4, 1],
+            opacity: [0.8, 1, 0.8],
+          }}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        {/* Ears / Side Bolt Accessories */}
+        <rect x="3" y="17" width="3" height="6" rx="1.5" fill="currentColor" opacity="0.8" />
+        <rect x="30" y="17" width="3" height="6" rx="1.5" fill="currentColor" opacity="0.8" />
+
+        {/* Head Base */}
+        <rect
+          x="5"
+          y="11"
+          width="26"
+          height="18"
+          rx="6"
+          fill="#0f172a"
+          stroke="currentColor"
+          strokeWidth="2.5"
+        />
+
+        {/* Glossy Overlay Highlight on Head */}
+        <path
+          d="M8 13.5C8 12.6716 8.67157 12 9.5 12H26.5C27.3284 12 28 12.6716 28 13.5V14.5H8V13.5Z"
+          fill="white"
+          opacity="0.1"
+        />
+
+        {/* Screen/Face Inner Plate */}
+        <rect
+          x="8"
+          y="14"
+          width="20"
+          height="12"
+          rx="3"
+          fill="#1e1b4b"
+        />
+
+        {/* Glowing Eyes with Blink and Idle Animation */}
+        <motion.circle
+          cx="14"
+          cy="19"
+          r="2.2"
+          fill="#38bdf8"
+          animate={{
+            scaleY: [1, 1, 0.1, 1, 1],
+          }}
+          transition={{
+            duration: 3.5,
+            repeat: Infinity,
+            repeatDelay: 0.5,
+            times: [0, 0.45, 0.5, 0.55, 1],
+          }}
+        />
+        <motion.circle
+          cx="22"
+          cy="19"
+          r="2.2"
+          fill="#38bdf8"
+          animate={{
+            scaleY: [1, 1, 0.1, 1, 1],
+          }}
+          transition={{
+            duration: 3.5,
+            repeat: Infinity,
+            repeatDelay: 0.5,
+            times: [0, 0.45, 0.5, 0.55, 1],
+          }}
+        />
+
+        {/* Digital Speaking Mouth/Waveform or Smile */}
+        <motion.path
+          d="M15 23H21"
+          stroke="#38bdf8"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          animate={{
+            d: [
+              "M15 23H21",
+              "M15 23C16 24 20 24 21 23",
+              "M15 23.5C16 22 20 22 21 23.5",
+              "M15 23H21",
+            ],
+            strokeWidth: [1.5, 2, 1.5, 1.5],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            repeatDelay: 1,
+            ease: "easeInOut",
+          }}
+        />
+
+        <defs>
+          <radialGradient id="botHalo" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#a78bfa" />
+            <stop offset="100%" stopColor="#a78bfa" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+      </svg>
+    </motion.div>
+  );
 }
 
 export function AIAssistantWidget() {
@@ -146,7 +354,9 @@ export function AIAssistantWidget() {
     };
   }, [isRecording]);
 
-  // NLP Parsing engine (Client side)
+  // ============================================
+  // Enhanced NLP Parsing Engine
+  // ============================================
   const parseMessage = (input: string) => {
     const text = input.toLowerCase().trim();
     const complaints = getComplaints();
@@ -157,25 +367,169 @@ export function AIAssistantWidget() {
       window.dispatchEvent(new CustomEvent("janmitra-db-change"));
     };
 
-    // 1. GREETINGS
+    // ── 1. HELP / GUIDE ──
     if (
-      text.includes("hello") ||
-      text.includes("hi") ||
-      text.includes("namaste") ||
-      text.includes("helo") ||
-      text.includes("नमस्ते") ||
-      text.includes("राम राम") ||
-      text.includes("pranam")
+      text === "help" ||
+      text === "?" ||
+      text === "madad" ||
+      text.includes("kya kar sakte") ||
+      text.includes("kya kya") ||
+      text.includes("guide") ||
+      text.includes("features") ||
+      text.includes("commands") ||
+      text.includes("मदद") ||
+      text.includes("सहायता") ||
+      text.includes("क्या कर सकते") ||
+      text.includes("how to use") ||
+      text.includes("kaise use")
     ) {
       return {
-        text: isHi
-          ? "नमस्ते! मैं जनमित्र AI हूँ। मैं आपकी शिकायत दर्ज करने, आपके टिकट की स्थिति जांचने, या लखनऊ के सक्रिय हॉटस्पॉट की जानकारी देने में मदद कर सकता हूँ।"
-          : "Namaste! I am JanMitra AI. I can help you register a grievance, check your ticket status, or summarize active hotspots in Lucknow.",
+        text: "",
+        isCustomCard: true,
+        cardType: "help" as const,
+        cardData: {},
       };
     }
 
-    // 2. ADMIN ESCALATION & AUTO OVERRIDES
-    if (text.includes("admin") || text.includes("escalate") || text.includes("escalation") || text.includes("overide")) {
+    // ── 2. CLEAR CHAT ──
+    if (
+      text === "clear" ||
+      text === "reset" ||
+      text === "clear chat" ||
+      text === "new chat" ||
+      text.includes("साफ करो") ||
+      text.includes("नया चैट")
+    ) {
+      // We'll handle this after returning — set a flag
+      return {
+        text: isHi
+          ? "चैट साफ कर दी गई है! आप नई बातचीत शुरू कर सकते हैं। 🔄"
+          : "Chat cleared! You can start a fresh conversation. 🔄",
+        _clearChat: true,
+      };
+    }
+
+    // ── 3. GREETINGS ──
+    if (
+      /^(hello|hi|hey|namaste|helo|pranam|good morning|good evening|suprabhat)$/i.test(text) ||
+      text.includes("नमस्ते") ||
+      text.includes("राम राम") ||
+      text.includes("सुप्रभात") ||
+      text.includes("शुभ")
+    ) {
+      return {
+        text: isHi
+          ? "नमस्ते! 🙏 मैं जनमित्र AI हूँ। मैं आपकी शिकायत दर्ज करने, टिकट ट्रैक करने, हॉटस्पॉट दिखाने, विभाग की जानकारी देने, या आंकड़े बताने में मदद कर सकता हूँ। 'help' टाइप करें सभी सुविधाएँ देखने के लिए।"
+          : "Namaste! 🙏 I am JanMitra AI. I can help you file complaints, track tickets, view hotspots, check stats, or find department info. Type 'help' to see all capabilities.",
+      };
+    }
+
+    // ── 4. THANK YOU / FEEDBACK ──
+    if (
+      text.includes("thank") ||
+      text.includes("thanks") ||
+      text.includes("dhanyavaad") ||
+      text.includes("shukriya") ||
+      text.includes("धन्यवाद") ||
+      text.includes("शुक्रिया") ||
+      text.includes("bahut accha") ||
+      text.includes("great work") ||
+      text.includes("awesome") ||
+      text.includes("very good") ||
+      text.includes("badiya")
+    ) {
+      return {
+        text: isHi
+          ? "धन्यवाद! 🙏 आपकी प्रतिक्रिया हमारे लिए बहुत महत्वपूर्ण है। अगर आपको और कोई सहायता चाहिए, तो बेझिझक पूछें। जनमित्र AI हमेशा आपकी सेवा में तत्पर है!"
+          : "Thank you for your kind words! 🙏 Your feedback matters to us. Feel free to ask if you need anything else. JanMitra AI is always here to serve you!",
+      };
+    }
+
+    // ── 5. STATS / ANALYTICS ──
+    if (
+      text.includes("stats") ||
+      text.includes("statistics") ||
+      text.includes("analytics") ||
+      text.includes("overview") ||
+      text.includes("summary") ||
+      text.includes("dashboard") ||
+      text.includes("kitne") ||
+      text.includes("total") ||
+      text.includes("count") ||
+      text.includes("आँकड़े") ||
+      text.includes("सारांश") ||
+      text.includes("कितने") ||
+      text.includes("कुल")
+    ) {
+      const stats = getStats();
+      return {
+        text: isHi
+          ? "यहाँ जनमित्र AI सिस्टम का वर्तमान विश्लेषण रिपोर्ट है:"
+          : "Here is the current JanMitra AI system analytics report:",
+        isCustomCard: true,
+        cardType: "stats" as const,
+        cardData: stats,
+      };
+    }
+
+    // ── 6. DEPARTMENT INFO ──
+    if (
+      text.includes("department") ||
+      text.includes("vibhag") ||
+      text.includes("office") ||
+      text.includes("contact") ||
+      text.includes("phone") ||
+      text.includes("helpline") ||
+      text.includes("number") ||
+      text.includes("विभाग") ||
+      text.includes("कार्यालय") ||
+      text.includes("संपर्क") ||
+      text.includes("हेल्पलाइन") ||
+      text.includes("फोन") ||
+      text.includes("kahan complain") ||
+      text.includes("kisko bole")
+    ) {
+      return {
+        text: isHi
+          ? "यहाँ लखनऊ के सभी प्रमुख विभागों की जानकारी और हेल्पलाइन नंबर हैं:"
+          : "Here are all major Lucknow departments with their contact details and helpline numbers:",
+        isCustomCard: true,
+        cardType: "department_info" as const,
+        cardData: {},
+      };
+    }
+
+    // ── 7. RECENT COMPLAINTS LIST ──
+    if (
+      text.includes("my complaint") ||
+      text.includes("recent") ||
+      text.includes("meri shikayat") ||
+      text.includes("all complaint") ||
+      text.includes("list") ||
+      text.includes("मेरी शिकायत") ||
+      text.includes("हाल की") ||
+      text.includes("सूची")
+    ) {
+      const recentComplaints = complaints.slice(0, 5);
+      if (recentComplaints.length === 0) {
+        return {
+          text: isHi
+            ? "अभी तक कोई शिकायत दर्ज नहीं है। आप नई शिकायत दर्ज करने के लिए अपनी समस्या बताएं।"
+            : "No complaints found yet. Describe your issue to file a new complaint.",
+        };
+      }
+      return {
+        text: isHi
+          ? `यहाँ हाल की ${recentComplaints.length} शिकायतों की सूची है:`
+          : `Here are the ${recentComplaints.length} most recent complaints:`,
+        isCustomCard: true,
+        cardType: "recent_list" as const,
+        cardData: { complaints: recentComplaints },
+      };
+    }
+
+    // ── 8. ADMIN ESCALATION & AUTO OVERRIDES ──
+    if (text.includes("admin") || text.includes("escalate") || text.includes("escalation") || text.includes("overide") || text.includes("एस्कलेट") || text.includes("बड़े अधिकारी")) {
       // Find a high priority or pending complaint to escalate
       const pending = complaints.find((c) => c.status !== "resolved");
       if (pending) {
@@ -212,14 +566,18 @@ export function AIAssistantWidget() {
       }
     }
 
-    // 3. HOTSPOT SUMMARIZER
+    // ── 9. HOTSPOT SUMMARIZER ──
     if (
       text.includes("hotspot") ||
       text.includes("active cluster") ||
       text.includes("kahan problem") ||
       text.includes("hospot") ||
       text.includes("हॉटस्पॉट") ||
-      text.includes("समस्या वाले क्षेत्र")
+      text.includes("समस्या वाले क्षेत्र") ||
+      text.includes("problem area") ||
+      text.includes("danger zone") ||
+      text.includes("critical area") ||
+      text.includes("zyada shikayat")
     ) {
       // Compute hotspots from dynamic complaints list
       const activeGroups: Record<string, { count: number; area: string; category: string }> = {};
@@ -256,9 +614,9 @@ export function AIAssistantWidget() {
       };
     }
 
-    // 4. TICKET STATUS LOOKUP
+    // ── 10. TICKET STATUS LOOKUP ──
     const ticketMatch = text.match(/jm-\d{4}-\d{3}/i) || text.match(/jm-\d{3}/i);
-    const statusTerms = ["status", "track", "ticket", "mera ticket", "स्थिति", "जांच", "ट्रैक"];
+    const statusTerms = ["status", "track", "ticket", "mera ticket", "kya hua", "kab hoga", "update", "progress", "स्थिति", "जांच", "ट्रैक", "क्या हुआ", "कब होगा"];
     const hasStatusTerm = statusTerms.some((t) => text.includes(t));
 
     if (ticketMatch || hasStatusTerm) {
@@ -286,27 +644,17 @@ export function AIAssistantWidget() {
       } else {
         return {
           text: isHi
-            ? "क्षमा करें, मुझे इस आईडी का कोई टिकट नहीं मिला। कृपया सही शिकायत आईडी (जैसे: JM-2026-008) दर्ज करें।"
-            : "Sorry, I could not find a ticket with that ID. Please double check the ticket number (e.g. JM-2026-008).",
+            ? "क्षमा करें, मुझे इस आईडी का कोई टिकट नहीं मिला। कृपया सही शिकायत आईडी (जैसे: JM-2026-008) दर्ज करें। आप 'recent' टाइप करके हाल की शिकायतें देख सकते हैं।"
+            : "Sorry, I could not find a ticket with that ID. Please check the ticket number (e.g. JM-2026-008). You can type 'recent' to see recent complaints.",
         };
       }
     }
 
-    // 5. CONVERSATIONAL TICKET FILING (Simulated NLP engine)
-    const categoryKeywords = [
-      { name: "Garbage / Sanitation", nameHi: "कचरा / स्वच्छता", keys: ["garbage", "kachra", "dirty", "gandagi", "dustbin", "waste", "कचरा", "गंदगी", "सफाई"] },
-      { name: "Water Supply", nameHi: "जल आपूर्ति", keys: ["water", "leak", "pipe", "pani", "waterlogging", "leakage", "पानी", "पाइप", "लीक"] },
-      { name: "Road Damage", nameHi: "सड़क मरम्मत", keys: ["road", "pothole", "asphalt", "sadak", "gaddha", "damage", "सड़क", "गड्ढा", "टूटी सड़क"] },
-      { name: "Electricity", nameHi: "बिजली", keys: ["electricity", "bijli", "power", "transformer", "wire", "current", "बिजली", "करंट", "ट्रांसफार्मर"] },
-      { name: "Street Light", nameHi: "स्ट्रीट लाइट", keys: ["street light", "light", "andhera", "darkness", "pole", "रोशनी", "स्ट्रीट लाइट", "अंधेरा"] },
-      { name: "Illegal Construction", nameHi: "अवैध निर्माण", keys: ["construction", "illegal", "encroachment", "kabza", "building", "अवैध निर्माण", "कब्जा"] },
-      { name: "Corruption", nameHi: "भ्रष्टाचार", keys: ["corruption", "bribe", "ghoos", "money", "demand", "रिश्वत", "घूस", "भ्रष्टाचार"] },
-    ];
-
-    let detectedCategory = categoryKeywords[0]; // fallback
+    // ── 11. CONVERSATIONAL TICKET FILING (Enhanced NLP) ──
+    let detectedCategory = CATEGORY_KEYWORDS[0]; // fallback
     let maxMatches = 0;
 
-    categoryKeywords.forEach((cat) => {
+    CATEGORY_KEYWORDS.forEach((cat) => {
       let matches = 0;
       cat.keys.forEach((k) => {
         if (text.includes(k)) matches++;
@@ -318,16 +666,29 @@ export function AIAssistantWidget() {
     });
 
     // Check if there are any grievance indicators
-    const isFilingQuery = maxMatches > 0 || text.includes("complain") || text.includes("shikayat") || text.includes("शिकायत") || text.includes("दर्ज");
+    const isFilingQuery = maxMatches > 0 || text.includes("complain") || text.includes("shikayat") || text.includes("शिकायत") || text.includes("दर्ज") || text.includes("problem") || text.includes("issue") || text.includes("samasya") || text.includes("समस्या") || text.includes("dikkat") || text.includes("pareshani");
 
     if (isFilingQuery) {
-      // Determine area
+      // Determine area from expanded area map
       let area = "Gomti Nagar, Lucknow";
-      if (text.includes("alambagh") || text.includes("आलमबाग")) area = "Alambagh, Lucknow";
-      else if (text.includes("rajajipuram") || text.includes("राजाजीपुरम")) area = "Rajajipuram, Lucknow";
-      else if (text.includes("hazratganj") || text.includes("हजरतगंज")) area = "Hazratganj, Lucknow";
-      else if (text.includes("aminabad") || text.includes("अमीनाबाद")) area = "Aminabad, Lucknow";
-      else if (text.includes("indira nagar") || text.includes("इंदिरा नगर")) area = "Indira Nagar, Lucknow";
+      let lat = 26.8643;
+      let lng = 80.9576;
+
+      for (const [keyword, data] of Object.entries(AREA_MAP)) {
+        if (text.includes(keyword)) {
+          area = data.name;
+          lat = data.lat;
+          lng = data.lng;
+          break;
+        }
+      }
+
+      // Detect priority from urgency keywords
+      let priority: "high" | "medium" | "low" = "medium";
+      const urgentKeywords = ["urgent", "emergency", "turant", "jaldi", "tatkaal", "bahut", "serious", "danger", "khatarnak", "तुरंत", "आपातकाल", "खतरनाक", "गंभीर", "जल्दी", "तत्काल", "critical", "life threatening", "jaan ka khatra"];
+      if (urgentKeywords.some((k) => text.includes(k))) {
+        priority = "high";
+      }
 
       // File complaint
       const titleEn = `Conversational filing: Active ${detectedCategory.name} reported near ${area.split(",")[0]}`;
@@ -341,31 +702,31 @@ export function AIAssistantWidget() {
         category: detectedCategory.name,
         categoryHi: detectedCategory.nameHi,
         area: area,
-        priority: "medium",
-        aiSummary: `Citizen conversational filing parsed: "${input}". Classifying under ${detectedCategory.name} with 98% confidence. Immediate dispatch warranted.`,
-        aiSummaryHi: `नागरिक संवाद फाइलिंग विश्लेषित: "${input}"। 98% सटीकता के साथ ${detectedCategory.nameHi} के अंतर्गत वर्गीकृत। तत्काल निस्तारण आवश्यक।`,
+        priority,
+        aiSummary: `Citizen conversational filing parsed: "${input}". Classifying under ${detectedCategory.name} with 98% confidence. Priority: ${priority.toUpperCase()}. Immediate dispatch warranted.`,
+        aiSummaryHi: `नागरिक संवाद फाइलिंग विश्लेषित: "${input}"। 98% सटीकता के साथ ${detectedCategory.nameHi} के अंतर्गत वर्गीकृत। प्राथमिकता: ${priority === "high" ? "उच्च" : priority === "medium" ? "मध्यम" : "निम्न"}। तत्काल निस्तारण आवश्यक।`,
         aiConfidence: 0.98,
-        latitude: area.includes("Alambagh") ? 26.8028 : area.includes("Rajajipuram") ? 26.8373 : area.includes("Hazratganj") ? 26.8496 : 26.8643,
-        longitude: area.includes("Alambagh") ? 80.9022 : area.includes("Rajajipuram") ? 80.8926 : area.includes("Hazratganj") ? 80.9467 : 80.9576,
+        latitude: lat,
+        longitude: lng,
       });
 
       notifyDatabaseChanged();
 
       return {
         text: isHi
-          ? `मैंने आपकी समस्या को **${detectedCategory.nameHi}** श्रेणी के अंतर्गत सफलतापूर्वक दर्ज कर लिया है! आपका टिकट आईडी **${newTicket.id}** है। इसे तत्काल संबंधित अधिकारी को सौंप दिया गया है।`
-          : `I have successfully registered your grievance under **${detectedCategory.name}**! Your unique Ticket ID is **${newTicket.id}**. Our automated routing has dispatched it to the assigned department.`,
+          ? `मैंने आपकी समस्या को **${detectedCategory.nameHi}** श्रेणी के अंतर्गत सफलतापूर्वक दर्ज कर लिया है! आपका टिकट आईडी **${newTicket.id}** है।${priority === "high" ? " ⚡ इसे उच्च प्राथमिकता पर सेट किया गया है!" : ""} इसे तत्काल संबंधित अधिकारी को सौंप दिया गया है।`
+          : `I have successfully registered your grievance under **${detectedCategory.name}**! Your unique Ticket ID is **${newTicket.id}**.${priority === "high" ? " ⚡ Marked as HIGH PRIORITY!" : ""} Our automated routing has dispatched it to the assigned department.`,
         isCustomCard: true,
         cardType: "filing_success",
         cardData: newTicket,
       };
     }
 
-    // 6. DEFAULT FALLBACK
+    // ── 12. SMART FALLBACK ──
     return {
       text: isHi
-        ? "मुझे ठीक से समझ नहीं आया। आप शिकायत दर्ज कर सकते हैं (जैसे: 'Gomti Nagar me kachra pada hai'), किसी टिकट को ट्रैक कर सकते हैं (जैसे: 'JM-2026-008 का स्टेटस क्या है?'), या 'active hotspots' पूछ सकते हैं।"
-        : "I didn't quite catch that. You can file a grievance (e.g. 'Water pipe leakage in Alambagh'), track a ticket (e.g. 'Status of JM-2026-008'), or ask for 'active hotspots'.",
+        ? "मुझे ठीक से समझ नहीं आया। आप यह कर सकते हैं:\n\n• शिकायत दर्ज करें: 'Gomti Nagar me kachra pada hai'\n• टिकट ट्रैक करें: 'JM-2026-008 का स्टेटस'\n• हॉटस्पॉट देखें: 'active hotspots'\n• आंकड़े देखें: 'stats'\n• विभाग जानकारी: 'department info'\n• सहायता: 'help'\n\n💡 बस अपनी समस्या बताएं, मैं स्वतः सही विभाग तक पहुँचा दूँगा!"
+        : "I didn't quite catch that. Here's what I can do:\n\n• File a complaint: 'Water pipe leakage in Alambagh'\n• Track a ticket: 'Status of JM-2026-008'\n• View hotspots: 'active hotspots'\n• Check analytics: 'stats'\n• Department info: 'department info'\n• Get help: 'help'\n\n💡 Just describe your problem and I'll auto-route it to the right department!",
     };
   };
 
@@ -385,7 +746,23 @@ export function AIAssistantWidget() {
 
     // Simulate AI response delay
     setTimeout(() => {
-      const result = parseMessage(textToSend);
+      const result = parseMessage(textToSend) as any;
+
+      // Handle clear chat special case
+      if (result._clearChat) {
+        setMessages([
+          {
+            id: `msg-${Date.now()}-clear`,
+            sender: "ai",
+            text: result.text,
+            timestamp: new Date(),
+          },
+        ]);
+        setIsTyping(false);
+        if (audioFeedback) playTickSound();
+        return;
+      }
+
       const newAiMessage: Message = {
         id: `msg-${Date.now()}-ai`,
         sender: "ai",
@@ -542,6 +919,21 @@ export function AIAssistantWidget() {
     } catch (e) {}
   };
 
+  // Status badge helper
+  const getStatusBadge = (status: string) => {
+    const map: Record<string, { label: string; cls: string }> = {
+      submitted: { label: "Submitted", cls: "bg-blue-500/10 text-blue-400 border-blue-500/30" },
+      ai_analyzing: { label: "AI Analyzing", cls: "bg-violet-500/10 text-violet-400 border-violet-500/30" },
+      department_assigned: { label: "Dept. Assigned", cls: "bg-sky-500/10 text-sky-400 border-sky-500/30" },
+      officer_reviewing: { label: "Under Review", cls: "bg-amber-500/10 text-amber-400 border-amber-500/30" },
+      action_in_progress: { label: "In Progress", cls: "bg-orange-500/10 text-orange-400 border-orange-500/30" },
+      resolved: { label: "Resolved", cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" },
+      escalated: { label: "Escalated", cls: "bg-red-500/10 text-red-400 border-red-500/30" },
+    };
+    const badge = map[status] || map.submitted;
+    return <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${badge.cls}`}>{badge.label}</span>;
+  };
+
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
       {/* Floating launcher trigger */}
@@ -555,7 +947,7 @@ export function AIAssistantWidget() {
             onClick={() => setIsOpen(true)}
             className="flex items-center justify-center w-14 h-14 rounded-full cursor-pointer relative bg-gradient-to-tr from-gov-blue via-violet-600 to-ai-purple shadow-[0_0_25px_rgba(139,92,246,0.5)] border border-violet-400/30 text-white"
           >
-            <Sparkles className="w-6 h-6 animate-pulse" />
+            <AnimatedBotFace className="w-9 h-9" />
             <span className="absolute -top-1 -right-1 flex h-4 w-4">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-4 w-4 bg-cyan-500 text-[10px] text-slate-950 font-bold items-center justify-center">
@@ -574,24 +966,24 @@ export function AIAssistantWidget() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.95 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="w-[420px] max-w-[92vw] h-[580px] rounded-2xl flex flex-col overflow-hidden border border-slate-800/80 bg-slate-950/90 backdrop-blur-xl shadow-[0_0_50px_rgba(139,92,246,0.25)]"
+            className="w-[420px] max-w-[92vw] h-[600px] rounded-2xl flex flex-col overflow-hidden border border-slate-800/80 bg-slate-950/90 backdrop-blur-xl shadow-[0_0_50px_rgba(139,92,246,0.25)]"
           >
             {/* Header section with status, sound, language */}
             <div className="p-4 border-b border-slate-800/80 bg-gradient-to-r from-slate-950 via-slate-900/60 to-slate-950 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-violet-600/10 border border-violet-500/30 flex items-center justify-center shadow-lg relative">
-                  <BotIcon className="w-5 h-5 text-violet-400" />
+                  <AnimatedBotFace className="w-6 h-6" />
                   <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-slate-950 animate-pulse"></span>
                 </div>
                 <div>
                   <h4 className="font-semibold text-slate-200 text-sm flex items-center gap-1.5">
                     JanMitra AI
                     <span className="px-1.5 py-0.5 rounded bg-violet-500/10 border border-violet-500/20 text-[10px] text-violet-400 font-medium">
-                      Bilingual NLP
+                      v3.0
                     </span>
                   </h4>
                   <p className="text-[10px] text-slate-400 flex items-center gap-1">
-                    Lucknow Nagar Nigam • Online
+                    Lucknow Nagar Nigam • Online • 13 Categories
                   </p>
                 </div>
               </div>
@@ -648,20 +1040,20 @@ export function AIAssistantWidget() {
                           className={`rounded-2xl px-3.5 py-2.5 text-xs shadow-md ${
                             msg.sender === "user"
                               ? "bg-violet-600 text-white rounded-tr-none font-medium"
-                              : "bg-slate-900/60 border border-slate-800 text-slate-300 rounded-tl-none leading-relaxed"
+                              : "bg-slate-900/60 border border-slate-800 text-slate-300 rounded-tl-none leading-relaxed whitespace-pre-line"
                           }`}
                         >
                           {msg.text}
                         </div>
                       )}
 
-                      {/* CUSTOM CARD RENDERERS */}
+                      {/* ═══ GREETING CARD ═══ */}
                       {msg.isCustomCard && msg.cardType === "greeting" && (
                         <div className="p-4 rounded-xl border border-violet-500/20 bg-violet-950/10 backdrop-blur-md space-y-3">
                           <p className="text-xs text-slate-300 leading-relaxed">
                             {isHi
-                              ? "नमस्ते! मैं जनमित्र AI सहायक हूँ। आप लखनऊ में नागरिक समस्याओं (कचरा, पानी लीक, स्ट्रीट लाइट) को सीधे यहाँ बातचीत करके दर्ज कर सकते हैं या अपने शिकायत टिकट की प्रगति को ट्रैक कर सकते हैं।"
-                              : "Namaste! I am the JanMitra AI Assistant. You can file civic complaints in Lucknow (garbage, water leakage, street lights) directly through conversation, or track the progress of your grievance tickets."}
+                              ? "नमस्ते! 🙏 मैं जनमित्र AI सहायक हूँ। आप लखनऊ में नागरिक समस्याओं को सीधे बातचीत करके दर्ज कर सकते हैं, टिकट ट्रैक कर सकते हैं, या विभागीय जानकारी प्राप्त कर सकते हैं।"
+                              : "Namaste! 🙏 I am the JanMitra AI Assistant. You can file civic complaints in Lucknow directly through conversation, track tickets, view analytics, or get department info."}
                           </p>
                           <div className="border-t border-slate-800/80 pt-2">
                             <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider block mb-1.5">
@@ -672,25 +1064,44 @@ export function AIAssistantWidget() {
                                 onClick={() => handleSendMessage(isHi ? "मेरे टिकट JM-2026-008 की स्थिति बताएं" : "Track status of ticket JM-2026-008")}
                                 className="px-2.5 py-1 text-[10px] rounded-full border border-slate-800 bg-slate-900/40 hover:bg-slate-800/80 text-slate-300 text-left transition-all duration-150 cursor-pointer"
                               >
-                                {isHi ? "JM-2026-008 का स्टेटस?" : "Track JM-2026-008"}
+                                📋 {isHi ? "JM-2026-008 ट्रैक करें" : "Track JM-2026-008"}
                               </button>
                               <button
                                 onClick={() => handleSendMessage(isHi ? "आलमबाग क्षेत्र में सड़कों के गड्ढे की शिकायत दर्ज करें" : "Register a pothole complaint in Alambagh area")}
                                 className="px-2.5 py-1 text-[10px] rounded-full border border-slate-800 bg-slate-900/40 hover:bg-slate-800/80 text-slate-300 text-left transition-all duration-150 cursor-pointer"
                               >
-                                🚧 {isHi ? "सड़क गड्ढा दर्ज करें" : "File Alambagh Pothole"}
+                                🚧 {isHi ? "सड़क गड्ढा दर्ज करें" : "File Road Complaint"}
                               </button>
                               <button
                                 onClick={() => handleSendMessage(isHi ? "सक्रिय हॉटस्पॉट विश्लेषण दिखाओ" : "Show Lucknow active hotspots")}
                                 className="px-2.5 py-1 text-[10px] rounded-full border border-slate-800 bg-slate-900/40 hover:bg-slate-800/80 text-slate-300 text-left transition-all duration-150 cursor-pointer"
                               >
-                                🔥 {isHi ? "सक्रिय हॉटस्पॉट?" : "Active Hotspots?"}
+                                🔥 {isHi ? "सक्रिय हॉटस्पॉट?" : "Active Hotspots"}
+                              </button>
+                              <button
+                                onClick={() => handleSendMessage("stats")}
+                                className="px-2.5 py-1 text-[10px] rounded-full border border-slate-800 bg-slate-900/40 hover:bg-slate-800/80 text-slate-300 text-left transition-all duration-150 cursor-pointer"
+                              >
+                                📊 {isHi ? "आंकड़े देखें" : "View Stats"}
+                              </button>
+                              <button
+                                onClick={() => handleSendMessage("department info")}
+                                className="px-2.5 py-1 text-[10px] rounded-full border border-slate-800 bg-slate-900/40 hover:bg-slate-800/80 text-slate-300 text-left transition-all duration-150 cursor-pointer"
+                              >
+                                🏢 {isHi ? "विभाग जानकारी" : "Dept. Info"}
+                              </button>
+                              <button
+                                onClick={() => handleSendMessage("help")}
+                                className="px-2.5 py-1 text-[10px] rounded-full border border-slate-800 bg-slate-900/40 hover:bg-slate-800/80 text-slate-300 text-left transition-all duration-150 cursor-pointer"
+                              >
+                                ❓ {isHi ? "सहायता / गाइड" : "Help / Guide"}
                               </button>
                             </div>
                           </div>
                         </div>
                       )}
 
+                      {/* ═══ TIMELINE CARD ═══ */}
                       {msg.isCustomCard && msg.cardType === "timeline" && (
                         <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/40 space-y-3 shadow-lg">
                           <div className="flex justify-between items-center bg-slate-950/40 p-2 rounded-lg border border-slate-800">
@@ -754,6 +1165,7 @@ export function AIAssistantWidget() {
                         </div>
                       )}
 
+                      {/* ═══ HOTSPOTS CARD ═══ */}
                       {msg.isCustomCard && msg.cardType === "hotspots" && (
                         <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/40 space-y-3">
                           <div className="flex items-center gap-2 text-amber-400 text-xs font-semibold uppercase tracking-wider">
@@ -788,6 +1200,7 @@ export function AIAssistantWidget() {
                         </div>
                       )}
 
+                      {/* ═══ FILING SUCCESS CARD ═══ */}
                       {msg.isCustomCard && msg.cardType === "filing_success" && (
                         <div className="p-3.5 rounded-xl border border-emerald-500/30 bg-emerald-950/10 space-y-3">
                           <div className="flex items-center gap-2 text-emerald-400 text-xs font-semibold uppercase">
@@ -809,6 +1222,12 @@ export function AIAssistantWidget() {
                               <span className="text-slate-300 font-medium">{msg.cardData.area}</span>
                             </div>
                             <div className="flex justify-between">
+                              <span className="text-slate-400">Priority</span>
+                              <span className={`font-bold ${msg.cardData.priority === "high" ? "text-red-400" : msg.cardData.priority === "medium" ? "text-amber-400" : "text-emerald-400"}`}>
+                                {msg.cardData.priority?.toUpperCase()}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
                               <span className="text-slate-400">Officer</span>
                               <span className="text-slate-300">{msg.cardData.assignedOfficer}</span>
                             </div>
@@ -822,6 +1241,7 @@ export function AIAssistantWidget() {
                         </div>
                       )}
 
+                      {/* ═══ ADMIN OVERRIDE CARD ═══ */}
                       {msg.isCustomCard && msg.cardType === "admin_override" && (
                         <div className="p-3.5 rounded-xl border border-violet-500/30 bg-violet-950/10 space-y-3">
                           <div className="flex items-center gap-2 text-violet-400 text-xs font-semibold uppercase tracking-wider">
@@ -848,6 +1268,155 @@ export function AIAssistantWidget() {
                             {isHi
                               ? "ऑटो-एसकेलेशन पूर्ण। नागरिक को रियल-टाइम सूचना भेज दी गई है।"
                               : "Auto-escalation complete. Real-time Citizen alert dispatched."}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* ═══ STATS CARD (NEW) ═══ */}
+                      {msg.isCustomCard && msg.cardType === "stats" && (
+                        <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/40 space-y-3">
+                          <div className="flex items-center gap-2 text-sky-400 text-xs font-semibold uppercase tracking-wider">
+                            <BarChart3 className="w-4 h-4" />
+                            {isHi ? "सिस्टम एनालिटिक्स डैशबोर्ड" : "System Analytics Dashboard"}
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800 text-center">
+                              <span className="text-lg font-black text-slate-200">{msg.cardData.total}</span>
+                              <p className="text-[9px] text-slate-400 font-medium uppercase">{isHi ? "कुल शिकायतें" : "Total Complaints"}</p>
+                            </div>
+                            <div className="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800 text-center">
+                              <span className="text-lg font-black text-amber-400">{msg.cardData.pending}</span>
+                              <p className="text-[9px] text-slate-400 font-medium uppercase">{isHi ? "लंबित" : "Pending"}</p>
+                            </div>
+                            <div className="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800 text-center">
+                              <span className="text-lg font-black text-emerald-400">{msg.cardData.resolved}</span>
+                              <p className="text-[9px] text-slate-400 font-medium uppercase">{isHi ? "हल की गई" : "Resolved"}</p>
+                            </div>
+                            <div className="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800 text-center">
+                              <span className="text-lg font-black text-red-400">{msg.cardData.escalated}</span>
+                              <p className="text-[9px] text-slate-400 font-medium uppercase">{isHi ? "एस्कलेटेड" : "Escalated"}</p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center bg-slate-950/40 p-2 rounded-lg border border-slate-800 text-[11px]">
+                              <span className="text-slate-400">{isHi ? "AI सटीकता" : "AI Accuracy"}</span>
+                              <span className="font-bold text-emerald-400">{msg.cardData.aiAccuracy}%</span>
+                            </div>
+                            <div className="flex justify-between items-center bg-slate-950/40 p-2 rounded-lg border border-slate-800 text-[11px]">
+                              <span className="text-slate-400">{isHi ? "संतुष्टि दर" : "Satisfaction Rate"}</span>
+                              <span className="font-bold text-sky-400">{msg.cardData.satisfactionRate}%</span>
+                            </div>
+                            <div className="flex justify-between items-center bg-slate-950/40 p-2 rounded-lg border border-slate-800 text-[11px]">
+                              <span className="text-slate-400">{isHi ? "औसत निवारण" : "Avg Resolution"}</span>
+                              <span className="font-bold text-violet-400">{msg.cardData.avgResolutionHours}h</span>
+                            </div>
+                            <div className="flex justify-between items-center bg-slate-950/40 p-2 rounded-lg border border-slate-800 text-[11px]">
+                              <span className="text-slate-400">{isHi ? "उच्च प्राथमिकता" : "High Priority"}</span>
+                              <span className="font-bold text-red-400">{msg.cardData.highPriority} {isHi ? "सक्रिय" : "active"}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ═══ HELP CARD (NEW) ═══ */}
+                      {msg.isCustomCard && msg.cardType === "help" && (
+                        <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/40 space-y-3">
+                          <div className="flex items-center gap-2 text-violet-400 text-xs font-semibold uppercase tracking-wider">
+                            <HelpCircle className="w-4 h-4" />
+                            {isHi ? "जनमित्र AI — सुविधाएँ गाइड" : "JanMitra AI — Features Guide"}
+                          </div>
+
+                          <div className="space-y-1.5">
+                            {[
+                              { icon: "📝", cmd: isHi ? "'कचरा पड़ा है Gomti Nagar me'" : "'Water pipe leak in Alambagh'", desc: isHi ? "शिकायत दर्ज करें (13 श्रेणियाँ)" : "File a complaint (13 categories)" },
+                              { icon: "🔍", cmd: isHi ? "'JM-2026-008 का स्टेटस'" : "'Track JM-2026-008'", desc: isHi ? "टिकट ट्रैक करें" : "Track ticket status" },
+                              { icon: "🔥", cmd: isHi ? "'active hotspots'" : "'hotspots'", desc: isHi ? "सक्रिय हॉटस्पॉट देखें" : "View grievance clusters" },
+                              { icon: "📊", cmd: isHi ? "'stats'" : "'stats / analytics'", desc: isHi ? "सिस्टम आंकड़े" : "System analytics" },
+                              { icon: "🏢", cmd: isHi ? "'विभाग जानकारी'" : "'department info'", desc: isHi ? "विभाग हेल्पलाइन" : "Department helplines" },
+                              { icon: "📋", cmd: isHi ? "'हाल की शिकायतें'" : "'recent complaints'", desc: isHi ? "हाल की शिकायतों की सूची" : "Recent complaints list" },
+                              { icon: "⚡", cmd: isHi ? "'escalate'" : "'escalate / admin override'", desc: isHi ? "ऑटो-एस्कलेशन" : "Auto-escalation trigger" },
+                              { icon: "🎤", cmd: isHi ? "माइक बटन दबाएं" : "Press mic button", desc: isHi ? "वॉयस इनपुट (हिंदी/English)" : "Voice input (Hindi/English)" },
+                              { icon: "🔄", cmd: isHi ? "'clear'" : "'clear / reset'", desc: isHi ? "चैट साफ करें" : "Clear chat history" },
+                            ].map((item, i) => (
+                              <div key={i} className="flex items-start gap-2 p-1.5 rounded-lg hover:bg-slate-950/40 transition-colors">
+                                <span className="text-sm">{item.icon}</span>
+                                <div>
+                                  <code className="text-[10px] text-violet-400 bg-violet-500/10 px-1.5 py-0.5 rounded font-mono">{item.cmd}</code>
+                                  <p className="text-[10px] text-slate-400 mt-0.5">{item.desc}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          <p className="text-[10px] text-slate-500 text-center bg-slate-950/40 py-1.5 rounded border border-slate-800">
+                            {isHi
+                              ? "💡 20+ लखनऊ क्षेत्र समर्थित • हिंदी, English, Hinglish में बात करें"
+                              : "💡 20+ Lucknow areas supported • Speak in Hindi, English, or Hinglish"}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* ═══ DEPARTMENT INFO CARD (NEW) ═══ */}
+                      {msg.isCustomCard && msg.cardType === "department_info" && (
+                        <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/40 space-y-3">
+                          <div className="flex items-center gap-2 text-sky-400 text-xs font-semibold uppercase tracking-wider">
+                            <Building2 className="w-4 h-4" />
+                            {isHi ? "विभाग निर्देशिका" : "Department Directory"}
+                          </div>
+
+                          <div className="space-y-2 max-h-[220px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800">
+                            {DEPARTMENTS.map((dept, i) => (
+                              <div key={i} className="p-2.5 rounded-lg border border-slate-800 bg-slate-950/40 space-y-1">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] font-bold text-slate-200">{isHi ? dept.nameHi : dept.name}</span>
+                                  <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-semibold">
+                                    <Phone className="w-3 h-3" />
+                                    {dept.helpline}
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-slate-400">
+                                  {isHi ? dept.handlesHi : dept.handles}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+
+                          <p className="text-[10px] text-sky-400/80 text-center bg-sky-500/5 py-1.5 rounded border border-sky-500/15">
+                            📞 {isHi
+                              ? "आपातकाल में सीधे हेल्पलाइन नंबर पर कॉल करें"
+                              : "Call helpline numbers directly for emergencies"}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* ═══ RECENT COMPLAINTS LIST CARD (NEW) ═══ */}
+                      {msg.isCustomCard && msg.cardType === "recent_list" && (
+                        <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/40 space-y-3">
+                          <div className="flex items-center gap-2 text-violet-400 text-xs font-semibold uppercase tracking-wider">
+                            <FileText className="w-4 h-4" />
+                            {isHi ? "हाल की शिकायतें" : "Recent Complaints"}
+                          </div>
+
+                          <div className="space-y-2">
+                            {msg.cardData.complaints.map((c: Complaint) => (
+                              <button
+                                key={c.id}
+                                onClick={() => handleSendMessage(`Track ${c.id}`)}
+                                className="w-full p-2.5 rounded-lg border border-slate-800 bg-slate-950/40 text-left hover:bg-slate-950/60 transition-colors cursor-pointer"
+                              >
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="text-[11px] font-bold text-slate-200">{c.id}</span>
+                                  {getStatusBadge(c.status)}
+                                </div>
+                                <p className="text-[10px] text-slate-400 line-clamp-1">{isHi ? c.categoryHi : c.category} • {c.area}</p>
+                              </button>
+                            ))}
+                          </div>
+
+                          <p className="text-[10px] text-slate-500 text-center">
+                            {isHi ? "किसी भी टिकट पर क्लिक करके विस्तार देखें" : "Click any ticket to view detailed timeline"}
                           </p>
                         </div>
                       )}
@@ -935,8 +1504,8 @@ export function AIAssistantWidget() {
                     onChange={(e) => setInputValue(e.target.value)}
                     placeholder={
                       isHi
-                        ? "शिकायत दर्ज करें या स्थिति जांचें..."
-                        : "Ask about a ticket or file an issue..."
+                        ? "समस्या बताएं, टिकट ट्रैक करें, या 'help' लिखें..."
+                        : "Describe your issue, track a ticket, or type 'help'..."
                     }
                     className="flex-1 bg-transparent border-0 outline-none text-slate-200 text-xs py-2 placeholder-slate-500"
                   />
@@ -946,7 +1515,7 @@ export function AIAssistantWidget() {
                     type="button"
                     onClick={startVoiceRecording}
                     className="p-1.5 rounded-lg hover:bg-slate-950 text-slate-400 hover:text-violet-400 transition-colors shrink-0 cursor-pointer"
-                    title="Simulate Speech Input"
+                    title="Voice Input"
                   >
                     <Mic className="w-4 h-4" />
                   </button>
@@ -955,16 +1524,34 @@ export function AIAssistantWidget() {
                 <button
                   type="submit"
                   disabled={!inputValue.trim()}
-                  className="w-9 h-9 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:bg-slate-900 disabled:text-slate-600 text-white flex items-center justify-center shrink-0 transition-colors shadow-md hover:shadow-lg shadow-violet-950 cursor-pointer"
+                  className="w-9 h-9 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:bg-slate-900 disabled:text-slate-600 text-white flex items-center justify-center shrink-0 transition-colors shadow-md shadow-violet-950 cursor-pointer"
                 >
                   <Send className="w-4 h-4" />
                 </button>
               </form>
 
-              {/* Suggestions quick chips */}
+              {/* Quick Action Chips */}
+              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
+                {[
+                  { label: isHi ? "📊 आंकड़े" : "📊 Stats", cmd: "stats" },
+                  { label: isHi ? "🔥 हॉटस्पॉट" : "🔥 Hotspots", cmd: "hotspots" },
+                  { label: isHi ? "📋 हाल की" : "📋 Recent", cmd: "recent complaints" },
+                  { label: isHi ? "🏢 विभाग" : "🏢 Depts", cmd: "department info" },
+                  { label: isHi ? "❓ मदद" : "❓ Help", cmd: "help" },
+                ].map((chip) => (
+                  <button
+                    key={chip.cmd}
+                    onClick={() => handleSendMessage(chip.cmd)}
+                    className="shrink-0 px-2.5 py-1 text-[9px] font-semibold rounded-lg border border-slate-800/80 bg-slate-900/30 hover:bg-slate-800/60 text-slate-400 hover:text-slate-300 transition-all cursor-pointer"
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+
               <div className="flex items-center justify-between text-[9px] text-slate-500 px-1 border-t border-slate-900 pt-1.5">
-                <span>{isHi ? "टाइप करें: status या problem" : "Try typing: status, hotspots or kachra"}</span>
-                <span className="text-violet-400 font-medium">JanMitra AI Core v2.4</span>
+                <span>{isHi ? "13 श्रेणियाँ • 20+ क्षेत्र • हिंदी/English" : "13 categories • 20+ areas • Hindi/English/Hinglish"}</span>
+                <span className="text-violet-400 font-medium">JanMitra AI Core v3.0</span>
               </div>
             </div>
           </motion.div>

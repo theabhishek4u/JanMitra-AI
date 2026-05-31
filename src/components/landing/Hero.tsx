@@ -6,8 +6,6 @@ import Link from "next/link";
 import {
   Bot,
   ArrowRight,
-  Sparkles,
-  ChevronRight,
   Brain,
   Building2,
   Bell,
@@ -15,7 +13,10 @@ import {
   Clock,
   MapPin,
   TrendingUp,
-  Activity
+  Activity,
+  Search,
+  FileText,
+  CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -75,12 +76,21 @@ const mockTicketCycle: TicketState[] = [
 
 export function Hero() {
   const [currentStep, setCurrentStep] = useState(0);
+  const [complaintCount, setComplaintCount] = useState(200);
 
   // Cycle the live ticket representation
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentStep((prev) => (prev + 1) % mockTicketCycle.length);
     }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Live incoming complaints counter simulation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setComplaintCount((prev) => prev + Math.floor(Math.random() * 2) + 1);
+    }, 15000);
     return () => clearInterval(interval);
   }, []);
 
@@ -135,19 +145,6 @@ export function Hero() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           {/* Left Column: Headlines & CTAs */}
           <div className="lg:col-span-7 space-y-8 text-center lg:text-left">
-            {/* Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-block"
-            >
-              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/8 border border-primary/15 text-sm font-semibold text-primary">
-                <Sparkles className="w-4 h-4 animate-spin-slow" />
-                AI-Powered Smart Governance
-                <ChevronRight className="w-3.5 h-3.5" />
-              </span>
-            </motion.div>
 
             {/* Headline */}
             <motion.h1
@@ -182,43 +179,64 @@ export function Hero() {
               <Link href="/citizen">
                 <Button
                   size="lg"
-                  className="bg-gradient-to-r from-gov-blue to-gov-blue-light text-white shadow-xl shadow-gov-blue/20 hover:shadow-gov-blue/40 transition-all duration-300 h-13 px-8 text-base font-semibold group rounded-xl"
+                  className="relative overflow-hidden z-10 bg-gradient-to-r from-gov-blue to-gov-blue-light text-white shadow-xl shadow-gov-blue/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 h-13 px-8 text-base font-semibold group rounded-xl cursor-pointer before:absolute before:inset-0 before:z-[-1] before:bg-gradient-to-r before:from-blue-600 before:via-violet-600 before:to-pink-600 before:scale-x-0 hover:before:scale-x-100 before:origin-left before:transition-transform before:duration-500"
                 >
-                  <Shield className="w-5 h-5 mr-2" />
+                  <Bot className="w-5 h-5 mr-2 animate-pulse" />
                   File a Complaint
                   <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <Link href="/officer">
+              <Link href="/citizen?tab=track">
                 <Button
                   size="lg"
                   variant="outline"
-                  className="h-13 px-8 text-base font-semibold border-2 hover:bg-primary/5 rounded-xl transition-all"
+                  className="relative overflow-hidden z-10 bg-[#090d16]/40 border-2 border-slate-800/80 text-gray-200 hover:text-white hover:border-violet-500/50 shadow-lg shadow-black/25 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 h-13 px-8 text-base font-semibold rounded-xl cursor-pointer before:absolute before:inset-0 before:z-[-1] before:bg-gradient-to-r before:from-blue-950/50 before:to-violet-950/50 before:scale-x-0 hover:before:scale-x-100 before:origin-left before:transition-transform before:duration-500"
                 >
-                  <Bot className="w-5 h-5 mr-2 text-ai-purple" />
-                  Officer Dashboard
+                  <Search className="w-5 h-5 mr-2 text-ai-purple" />
+                  My Complaints
                 </Button>
               </Link>
             </motion.div>
 
-            {/* Trust indicators */}
+            {/* Premium Trust Indicators / Live Nodal Stats Row */}
             <motion.div
-              className="flex flex-wrap items-center justify-center lg:justify-start gap-6 sm:gap-8 pt-6 text-sm text-muted-foreground border-t border-border/40"
+              className="flex flex-wrap lg:flex-nowrap items-center justify-center lg:justify-start gap-2.5 pt-6 border-t border-border/40 w-full"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.5 }}
             >
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 bg-trust-green rounded-full radar-glow relative" />
-                <span className="font-semibold text-foreground/90">10,000+ Issues Resolved</span>
+              {/* Stat 1: Complaints Filed Today */}
+              <div className="bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800/80 px-3.5 py-2 rounded-full flex items-center gap-2 text-xs font-black text-slate-700 dark:text-slate-200 shadow-sm hover:scale-[1.03] hover:border-emerald-500/30 dark:hover:border-emerald-500/20 transition-all duration-300 select-none whitespace-nowrap">
+                <FileText className="w-4 h-4 text-emerald-500 animate-pulse" />
+                <span className="flex items-center gap-1">
+                  <motion.span
+                    key={complaintCount}
+                    animate={{ scale: [1, 1.25, 1], color: ["#10b981", "#34d399", "#10b981"] }}
+                    transition={{ duration: 0.4 }}
+                    className="inline-block font-mono font-black"
+                  >
+                    {complaintCount}
+                  </motion.span>
+                  Complaints Filed Today
+                </span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 bg-gov-blue rounded-full" />
-                <span className="font-semibold text-foreground/90">75 Districts (UP)</span>
+
+              {/* Stat 2: Issues Resolved */}
+              <div className="bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800/80 px-3.5 py-2 rounded-full flex items-center gap-2 text-xs font-black text-slate-700 dark:text-slate-200 shadow-sm hover:scale-[1.03] hover:border-blue-500/30 dark:hover:border-blue-500/20 transition-all duration-300 select-none whitespace-nowrap">
+                <CheckCircle2 className="w-4 h-4 text-blue-500" />
+                <span>10,000+ Issues Resolved</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 bg-ai-purple rounded-full animate-pulse" />
-                <span className="font-semibold text-foreground/90">24/7 AI Engine Active</span>
+
+              {/* Stat 3: Districts (UP) */}
+              <div className="bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800/80 px-3.5 py-2 rounded-full flex items-center gap-2 text-xs font-black text-slate-700 dark:text-slate-200 shadow-sm hover:scale-[1.03] hover:border-indigo-500/30 dark:hover:border-indigo-500/20 transition-all duration-300 select-none whitespace-nowrap">
+                <MapPin className="w-4 h-4 text-indigo-500 animate-bounce" style={{ animationDuration: '3s' }} />
+                <span>75 Districts (UP)</span>
+              </div>
+
+              {/* Stat 4: AI Engine Status */}
+              <div className="bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800/80 px-3.5 py-2 rounded-full flex items-center gap-2 text-xs font-black text-slate-700 dark:text-slate-200 shadow-sm hover:scale-[1.03] hover:border-purple-500/30 dark:hover:border-purple-500/20 transition-all duration-300 select-none whitespace-nowrap">
+                <Activity className="w-4 h-4 text-purple-500 animate-pulse" />
+                <span>24/7 AI Engine Active</span>
               </div>
             </motion.div>
           </div>
@@ -234,9 +252,6 @@ export function Hero() {
               animate={{ opacity: 1, scale: 1, rotateY: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              {/* Dynamic scanning laser sweep */}
-              {activeTicket.step === 2 && <div className="holo-scanline" />}
-
               {/* Header block */}
               <div className="flex items-center justify-between border-b border-border/50 pb-3.5 mb-4">
                 <div className="flex items-center gap-2">

@@ -1,36 +1,41 @@
 import Link from "next/link";
-import { Bot, ExternalLink, Mail, Phone } from "lucide-react";
+import { Bot, Mail, Phone, Code2 } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="border-t border-border/50 bg-muted/30">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Brand */}
+    <footer className="border-t border-slate-900 bg-slate-950 relative overflow-hidden">
+      {/* Ambient background soft glow effects */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-gov-blue/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-0 right-1/4 w-96 h-96 bg-ai-purple/5 rounded-full blur-[120px] pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12">
+          {/* Brand & Description */}
           <div className="md:col-span-1">
-            <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-gov-blue to-ai-purple flex items-center justify-center">
-                <Bot className="w-5 h-5 text-white" />
+            <div className="flex items-center gap-2.5 mb-5">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gov-blue to-ai-purple flex items-center justify-center relative group/logo">
+                <span className="absolute -inset-1 rounded-xl bg-gradient-to-br from-gov-blue to-ai-purple opacity-20 blur-[2px] group-hover/logo:opacity-50 transition-opacity" />
+                <Bot className="w-5.5 h-5.5 text-white relative z-10" />
               </div>
               <div>
-                <div className="font-bold text-lg gradient-text-blue">JanMitra</div>
-                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                <div className="font-bold text-lg gradient-text-blue leading-none">JanMitra</div>
+                <div className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">
                   AI Governance
                 </div>
               </div>
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">
+            <p className="text-sm text-slate-400 leading-relaxed font-medium">
               AI-Powered Smart Governance for faster citizen complaint resolution
               in Uttar Pradesh.
             </p>
           </div>
 
-          {/* Quick Links */}
+          {/* Quick Links (Platform) */}
           <div>
-            <h3 className="font-semibold text-sm mb-3 uppercase tracking-wider text-foreground/80">
+            <h3 className="font-bold text-xs mb-4 uppercase tracking-widest text-slate-200">
               Platform
             </h3>
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {[
                 { label: "File Complaint", href: "/citizen" },
                 { label: "Track Status", href: "/citizen" },
@@ -40,7 +45,7 @@ export function Footer() {
                 <li key={item.label}>
                   <Link
                     href={item.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm text-slate-400 hover:text-white hover:translate-x-1 transition-all duration-300 inline-block font-medium"
                   >
                     {item.label}
                   </Link>
@@ -51,12 +56,11 @@ export function Footer() {
 
           {/* Resources */}
           <div>
-            <h3 className="font-semibold text-sm mb-3 uppercase tracking-wider text-foreground/80">
+            <h3 className="font-bold text-xs mb-4 uppercase tracking-widest text-slate-200">
               Resources
             </h3>
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {[
-                { label: "API Documentation", href: "/api-docs" },
                 { label: "Privacy Policy", href: "/privacy" },
                 { label: "Terms of Service", href: "/terms" },
                 { label: "Help Center", href: "/help" }
@@ -64,7 +68,7 @@ export function Footer() {
                 <li key={item.label}>
                   <Link
                     href={item.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    className="text-sm text-slate-400 hover:text-white hover:translate-x-1 transition-all duration-300 inline-block font-medium"
                   >
                     {item.label}
                   </Link>
@@ -75,33 +79,45 @@ export function Footer() {
 
           {/* Contact */}
           <div>
-            <h3 className="font-semibold text-sm mb-3 uppercase tracking-wider text-foreground/80">
+            <h3 className="font-bold text-xs mb-4 uppercase tracking-widest text-slate-200">
               Contact
             </h3>
-            <ul className="space-y-3">
-              <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Phone className="w-4 h-4" /> 1076 (CM Helpline)
+            <ul className="space-y-3.5">
+              <li className="flex items-center gap-3 text-sm text-slate-400 group/item">
+                <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center border border-slate-800/80 group-hover/item:border-gov-blue/30 group-hover/item:bg-slate-950 transition-all duration-300">
+                  <Phone className="w-3.5 h-3.5 text-gov-blue" />
+                </div>
+                <span className="group-hover/item:text-slate-200 transition-colors font-medium">1076 (CM Helpline)</span>
               </li>
-              <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Mail className="w-4 h-4" /> support@janmitra.gov.in
+              <li className="flex items-center gap-3 text-sm text-slate-400 group/item">
+                <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center border border-slate-800/80 group-hover/item:border-gov-blue/30 group-hover/item:bg-slate-950 transition-all duration-300">
+                  <Phone className="w-3.5 h-3.5 text-gov-blue" />
+                </div>
+                <span className="group-hover/item:text-slate-200 transition-colors font-medium">1800-180-5531 (Nagar Nigam)</span>
               </li>
-              <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                <ExternalLink className="w-4 h-4" /> Open Source
+              <li className="flex items-center gap-3 text-sm text-slate-400 group/item">
+                <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center border border-slate-800/80 group-hover/item:border-ai-purple/30 group-hover/item:bg-slate-950 transition-all duration-300">
+                  <Mail className="w-3.5 h-3.5 text-ai-purple" />
+                </div>
+                <span className="group-hover/item:text-slate-200 transition-colors font-medium">support@janmitra.gov.in</span>
+              </li>
+              <li className="flex items-center gap-3 text-sm text-slate-400 group/item">
+                <Link href="/developers" className="flex items-center gap-3 w-full">
+                  <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center border border-slate-800/80 group-hover/item:border-slate-400/30 group-hover/item:bg-slate-950 transition-all duration-300">
+                    <Code2 className="w-3.5 h-3.5 text-slate-400" />
+                  </div>
+                  <span className="group-hover/item:text-slate-200 transition-colors font-medium">Developers</span>
+                </Link>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-border/50 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-muted-foreground">
+        {/* Center-Aligned Copyright Footer Block */}
+        <div className="border-t border-slate-900 mt-12 pt-8 flex justify-center">
+          <p className="text-xs text-slate-500 font-medium text-center tracking-wide">
             © 2026 JanMitra AI — Government of Uttar Pradesh. All rights reserved.
           </p>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span className="w-2 h-2 bg-trust-green rounded-full animate-pulse" />
-              System Operational
-            </span>
-          </div>
         </div>
       </div>
     </footer>

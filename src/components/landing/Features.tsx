@@ -68,12 +68,12 @@ const features = [
 ];
 
 const extraFeatures = [
-  { icon: Mic, label: "Multilingual Voice Input" },
-  { icon: ImageIcon, label: "Multimodal Photo Analysis" },
-  { icon: Shield, label: "AI-Powered Fraud Detection" },
-  { icon: Clock, label: "Autonomous Escalation Engine" },
-  { icon: Sparkles, label: "Nodal Officer AI Summaries" },
-  { icon: TrendingUp, label: "District Analytics Heatmap" },
+  { icon: Mic, label: "Multilingual Voice Input", color: "#3B82F6", hoverBg: "hover:bg-blue-500/15 hover:border-blue-500/30 hover:text-blue-600 dark:hover:text-blue-400" },
+  { icon: ImageIcon, label: "Multimodal Photo Analysis", color: "#7C3AED", hoverBg: "hover:bg-purple-500/15 hover:border-purple-500/30 hover:text-purple-600 dark:hover:text-purple-400" },
+  { icon: Shield, label: "AI-Powered Fraud Detection", color: "#EF4444", hoverBg: "hover:bg-red-500/15 hover:border-red-500/30 hover:text-red-600 dark:hover:text-red-400" },
+  { icon: Clock, label: "Autonomous Escalation Engine", color: "#F59E0B", hoverBg: "hover:bg-amber-500/15 hover:border-amber-500/30 hover:text-amber-600 dark:hover:text-amber-400" },
+  { icon: Sparkles, label: "Nodal Officer AI Summaries", color: "#10B981", hoverBg: "hover:bg-emerald-500/15 hover:border-emerald-500/30 hover:text-emerald-600 dark:hover:text-emerald-400" },
+  { icon: TrendingUp, label: "District Analytics Heatmap", color: "#06B6D4", hoverBg: "hover:bg-cyan-500/15 hover:border-cyan-500/30 hover:text-cyan-600 dark:hover:text-cyan-400" },
 ];
 
 export function Features() {
@@ -110,14 +110,13 @@ export function Features() {
           {features.map((feature, i) => (
             <motion.div
               key={feature.title}
-              className="glass-card premium-glow-border rounded-2xl p-6 group cursor-default backdrop-blur-md"
+              className="glass-card rounded-2xl p-6 group cursor-default backdrop-blur-md"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.08 }}
               whileHover={{ 
                 y: -6,
-                boxShadow: "0 12px 24px -4px rgba(29, 78, 216, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.6)"
               }}
             >
               {/* Icon container */}
@@ -146,22 +145,34 @@ export function Features() {
 
         {/* Extra features strip */}
         <motion.div
-          className="mt-16 flex flex-wrap items-center justify-center gap-3.5"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
+          className="mt-16 flex flex-wrap items-center justify-center gap-4"
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          {extraFeatures.map((f) => (
-            <motion.span
-              key={f.label}
-              className="inline-flex items-center gap-2 px-4.5 py-2.5 rounded-full bg-muted/40 border border-border/40 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/80 hover:border-border/80 transition-all cursor-default"
-              whileHover={{ scale: 1.03 }}
-            >
-              <f.icon className="w-4 h-4 text-primary/85" />
-              {f.label}
-            </motion.span>
-          ))}
+          {extraFeatures.map((f) => {
+            const IconComponent = f.icon;
+            return (
+              <motion.div
+                key={f.label}
+                className={`inline-flex items-center gap-2.5 px-5 py-3 rounded-xl bg-slate-100/60 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-900/80 text-xs font-bold text-slate-600 dark:text-slate-400 transition-all duration-300 cursor-default group ${f.hoverBg}`}
+                whileHover={{ 
+                  y: -3, 
+                  scale: 1.02,
+                }}
+              >
+                <div className="relative flex items-center justify-center">
+                  <IconComponent className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" style={{ color: f.color }} />
+                  {/* Subtle pulsing background dot for the icon */}
+                  <span className="absolute -inset-1 rounded-full opacity-0 group-hover:opacity-20 transition-opacity blur-[2px]" style={{ backgroundColor: f.color }} />
+                </div>
+                <span className="tracking-wide">
+                  {f.label}
+                </span>
+              </motion.div>
+            );
+          })}
         </motion.div>
       </div>
     </section>
