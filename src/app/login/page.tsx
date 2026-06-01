@@ -95,6 +95,20 @@ export default function LoginPage() {
     };
   }, [router]);
 
+  // Auto pre-fill credentials for Officer & Admin
+  useEffect(() => {
+    if (activeLoginForm === "officer") {
+      setEmail("officers@gmail.com");
+      setPassword("1122");
+    } else if (activeLoginForm === "admin") {
+      setEmail("admin@gmail.com");
+      setPassword("1234");
+    } else {
+      setEmail("");
+      setPassword("");
+    }
+  }, [activeLoginForm]);
+
   // Officer & Admin roles list (Citizen removed for direct access)
   const roles = [
     {
@@ -177,8 +191,6 @@ export default function LoginPage() {
     }
 
     // Otherwise, transition to Login Form
-    setEmail("");
-    setPassword("");
     setError(null);
     setShowPassword(false);
     setActiveLoginForm(roleId as "officer" | "admin");
@@ -610,22 +622,28 @@ export default function LoginPage() {
 
                   <CardContent className="p-8 space-y-6 relative">
                     
-                    {/* Header Block */}
+                    {/* Header Block with dynamic glow ring */}
                     <div className="flex items-start gap-4">
-                      <div
-                        className="w-14 h-14 rounded-2xl flex items-center justify-center border shadow-inner transition-transform duration-300 hover:scale-105"
-                        style={{
-                          background: `${theme.solid}12`,
-                          borderColor: theme.solid,
-                          boxShadow: `inset 0 0 8px ${theme.solid}15`,
-                        }}
-                      >
-                        {currentRoleConfig && (
-                          <currentRoleConfig.icon
-                            className="w-7 h-7 animate-pulse"
-                            style={{ color: theme.solid }}
-                          />
-                        )}
+                      <div className="relative group">
+                        <div 
+                          className="absolute -inset-1 rounded-2xl blur-md opacity-35 group-hover:opacity-60 transition duration-300 animate-pulse"
+                          style={{ backgroundColor: theme.solid }}
+                        />
+                        <div
+                          className="relative w-14 h-14 rounded-2xl flex items-center justify-center border shadow-inner transition-transform duration-300 hover:scale-105"
+                          style={{
+                            background: `${theme.solid}12`,
+                            borderColor: theme.solid,
+                            boxShadow: `inset 0 0 8px ${theme.solid}15`,
+                          }}
+                        >
+                          {currentRoleConfig && (
+                            <currentRoleConfig.icon
+                              className="w-7 h-7 animate-pulse"
+                              style={{ color: theme.solid }}
+                            />
+                          )}
+                        </div>
                       </div>
                       <div className="space-y-0.5">
                         <h2 className="text-xl font-bold text-white flex items-center gap-1.5">
@@ -647,7 +665,7 @@ export default function LoginPage() {
                       {/* Email Input Field */}
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
+                          <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest pl-2">
                             Official Email Address
                           </label>
                           {emailFocused && (
@@ -657,7 +675,7 @@ export default function LoginPage() {
                               className="text-[9px] font-mono font-bold uppercase tracking-wider"
                               style={{ color: theme.solid }}
                             >
-                              Clearance Scan Active
+                              Scanning Node...
                             </motion.span>
                           )}
                         </div>
@@ -675,12 +693,12 @@ export default function LoginPage() {
                             onFocus={() => setEmailFocused(true)}
                             onBlur={() => setEmailFocused(false)}
                             placeholder="e.g. name@up.gov.in"
-                            className="w-full bg-slate-950/40 backdrop-blur-md border rounded-xl pl-11 pr-4 py-3.5 text-sm text-white placeholder:text-slate-500 focus:outline-none transition-all duration-300 font-medium"
+                            className="w-full bg-slate-950/60 backdrop-blur-md border rounded-full pl-11 pr-4 py-3.5 text-sm text-white placeholder:text-slate-500 focus:outline-none transition-all duration-300 font-medium"
                             style={{
-                              borderColor: emailFocused ? theme.solid : "rgba(255, 255, 255, 0.06)",
+                              borderColor: emailFocused ? theme.solid : "rgba(255, 255, 255, 0.08)",
                               boxShadow: emailFocused 
-                                ? `0 0 16px ${theme.solid}25, inset 0 0 8px ${theme.solid}15` 
-                                : "inset 0 2px 4px rgba(0,0,0,0.4)",
+                                ? `0 0 20px ${theme.solid}20, inset 0 0 10px ${theme.solid}10` 
+                                : "inset 0 2px 4px rgba(0,0,0,0.5)",
                             }}
                             required
                             disabled={loading || success}
@@ -691,7 +709,7 @@ export default function LoginPage() {
                       {/* Password Input Field */}
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
+                          <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest pl-2">
                             Security Passkey / Code
                           </label>
                           {passwordFocused && (
@@ -701,7 +719,7 @@ export default function LoginPage() {
                               className="text-[9px] font-mono font-bold uppercase tracking-wider"
                               style={{ color: theme.solid }}
                             >
-                              Securing Terminal
+                              Securing Port
                             </motion.span>
                           )}
                         </div>
@@ -719,12 +737,12 @@ export default function LoginPage() {
                             onFocus={() => setPasswordFocused(true)}
                             onBlur={() => setPasswordFocused(false)}
                             placeholder="••••"
-                            className="w-full bg-slate-950/40 backdrop-blur-md border rounded-xl pl-11 pr-12 py-3.5 text-sm text-white placeholder:text-slate-500 focus:outline-none transition-all duration-300 font-medium tracking-[0.25em]"
+                            className="w-full bg-slate-950/60 backdrop-blur-md border rounded-full pl-11 pr-12 py-3.5 text-sm text-white placeholder:text-slate-500 focus:outline-none transition-all duration-300 font-medium tracking-[0.25em]"
                             style={{
-                              borderColor: passwordFocused ? theme.solid : "rgba(255, 255, 255, 0.06)",
+                              borderColor: passwordFocused ? theme.solid : "rgba(255, 255, 255, 0.08)",
                               boxShadow: passwordFocused 
-                                ? `0 0 16px ${theme.solid}25, inset 0 0 8px ${theme.solid}15` 
-                                : "inset 0 2px 4px rgba(0,0,0,0.4)",
+                                ? `0 0 20px ${theme.solid}20, inset 0 0 10px ${theme.solid}10` 
+                                : "inset 0 2px 4px rgba(0,0,0,0.5)",
                             }}
                             required
                             disabled={loading || success}
@@ -732,7 +750,7 @@ export default function LoginPage() {
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors cursor-pointer z-10"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors cursor-pointer z-10 p-1"
                             disabled={loading || success}
                           >
                             {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
@@ -752,11 +770,28 @@ export default function LoginPage() {
                         </motion.div>
                       )}
 
-                      {/* Decryption status tracker */}
+                      {/* Futuristic Decryption status tracker with progress bar */}
                       {loading && (
-                        <div className="text-[10px] text-slate-400 font-mono flex items-center justify-between border-t border-slate-900 pt-2 animate-pulse">
-                          <span>[CLEARANCE SHA-256 PARSING]</span>
-                          <span>EST. DELAY ~ 0.4S</span>
+                        <div className="space-y-2 border-t border-slate-900 pt-3">
+                          <div className="text-[9.5px] text-slate-400 font-mono flex items-center justify-between animate-pulse">
+                            <span className="flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+                              [DECRYPTING RSA SHA-256 KEYS]
+                            </span>
+                            <span>EST. SECURE DELAY ~ 0.4S</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-slate-950 border border-white/5 rounded-full overflow-hidden relative">
+                            <motion.div
+                              className="h-full rounded-full"
+                              style={{
+                                background: `linear-gradient(90deg, ${theme.solid}, #3B82F6)`,
+                                boxShadow: `0 0 8px ${theme.solid}`,
+                              }}
+                              initial={{ width: 0 }}
+                              animate={{ width: "100%" }}
+                              transition={{ duration: 1.2, ease: "easeInOut" }}
+                            />
+                          </div>
                         </div>
                       )}
 
@@ -765,23 +800,23 @@ export default function LoginPage() {
                         <Button
                           type="submit"
                           disabled={loading || success}
-                          className="w-full text-white cursor-pointer py-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all hover:brightness-110"
+                          className="w-full text-white cursor-pointer py-6 rounded-full font-extrabold uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg hover:brightness-110 hover:scale-[1.01] active:scale-[0.98] transition-all duration-300"
                           style={{
                             background: success
                               ? "#10B981"
                               : `linear-gradient(135deg, ${theme.solid}, #3B82F6)`,
-                            boxShadow: `0 4px 20px -5px ${theme.solid}50`,
+                            boxShadow: `0 4px 25px -5px ${theme.solid}60`,
                           }}
                         >
                           {loading ? (
                             <>
                               <Loader2 className="w-4.5 h-4.5 animate-spin" />
-                              <span>Verifying Digital Core...</span>
+                              <span>Decrypting Mainframe Core...</span>
                             </>
                           ) : success ? (
                             <>
                               <CheckCircle className="w-4.5 h-4.5 text-white animate-bounce" />
-                              <span>Authorization Handshake Cleared</span>
+                              <span>Handshake Cleared</span>
                             </>
                           ) : (
                             <>
@@ -794,51 +829,6 @@ export default function LoginPage() {
                     </form>
                   </CardContent>
                 </Card>
-              </motion.div>
-
-              {/* Redesigned Premium Demo Credentials Terminal Display Card */}
-              <motion.div
-                className="mt-6 text-[11px] font-semibold text-left glass-premium border border-slate-900 p-4 rounded-2xl space-y-2 relative overflow-hidden"
-                style={{
-                  boxShadow: `inset 0 0 16px ${theme.solid}06`,
-                }}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <ShieldAlert
-                      className="w-4.5 h-4.5 animate-pulse"
-                      style={{ color: theme.solid }}
-                    />
-                    <span className="text-white text-xs font-bold font-mono">ADMINISTRATIVE SECURITY TOKEN</span>
-                  </div>
-                  <Badge variant="outline" className="text-[8px] tracking-widest font-mono text-slate-500 border-slate-800 uppercase px-1.5 py-0">
-                    TEST MODE
-                  </Badge>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3 text-slate-400 pt-2 border-t border-slate-900">
-                  <div>
-                    <span className="text-[9px] text-slate-500 block font-bold font-mono">TOKEN ADDRESS:</span>
-                    <code className="text-xs text-white bg-slate-950 border border-slate-800/60 px-2 py-0.5 rounded font-mono font-bold select-all block mt-0.5 truncate w-full text-center">
-                      {activeLoginForm === "officer" ? "officers@gmail.com" : "admin@gmail.com"}
-                    </code>
-                  </div>
-                  <div>
-                    <span className="text-[9px] text-slate-500 block font-bold font-mono">CLEARANCE KEY:</span>
-                    <code className="text-xs text-white bg-slate-950 border border-slate-800/60 px-2 py-0.5 rounded font-mono font-bold select-all block mt-0.5 text-center">
-                      {activeLoginForm === "officer" ? "1122" : "1234"}
-                    </code>
-                  </div>
-                </div>
-                
-                {activeLoginForm === "officer" && (
-                  <p className="text-[10px] text-slate-500 pt-1 leading-relaxed border-t border-slate-900/60">
-                    * Alternate clearance email: <code className="font-mono text-slate-300 select-all font-bold">officer@gmail.com</code> is also accepted.
-                  </p>
-                )}
               </motion.div>
             </motion.div>
           )}

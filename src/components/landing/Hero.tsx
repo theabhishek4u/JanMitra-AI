@@ -179,7 +179,7 @@ export function Hero() {
               <Link href="/citizen">
                 <Button
                   size="lg"
-                  className="relative overflow-hidden z-10 bg-linear-to-r from-gov-blue to-gov-blue-light text-white shadow-xl shadow-gov-blue/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 h-13 px-8 text-base font-semibold group rounded-xl cursor-pointer before:absolute before:inset-0 before:z-[-1] before:bg-linear-to-r before:from-blue-600 before:via-violet-600 before:to-pink-600 before:scale-x-0 hover:before:scale-x-100 before:origin-left before:transition-transform before:duration-500"
+                  className="relative overflow-hidden z-10 bg-linear-to-r from-gov-blue to-gov-blue-light text-white shadow-xl shadow-gov-blue/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 h-13 px-8 text-base font-semibold group rounded-full cursor-pointer before:absolute before:inset-0 before:z-[-1] before:bg-linear-to-r before:from-blue-600 before:via-violet-600 before:to-pink-600 before:scale-x-0 hover:before:scale-x-100 before:origin-left before:transition-transform before:duration-500"
                 >
                   <Bot className="w-5 h-5 mr-2 animate-pulse" />
                   File a Complaint
@@ -190,7 +190,7 @@ export function Hero() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="relative overflow-hidden z-10 bg-[#090d16]/40 border-2 border-slate-800/80 text-gray-200 hover:text-white hover:border-violet-500/50 shadow-lg shadow-black/25 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 h-13 px-8 text-base font-semibold rounded-xl cursor-pointer before:absolute before:inset-0 before:z-[-1] before:bg-linear-to-r before:from-blue-950/50 before:to-violet-950/50 before:scale-x-0 hover:before:scale-x-100 before:origin-left before:transition-transform before:duration-500"
+                  className="relative overflow-hidden z-10 bg-[#090d16]/40 border-2 border-slate-800/80 text-gray-200 hover:text-white hover:border-violet-500/50 shadow-lg shadow-black/25 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 h-13 px-8 text-base font-semibold rounded-full cursor-pointer before:absolute before:inset-0 before:z-[-1] before:bg-linear-to-r before:from-blue-950/50 before:to-violet-950/50 before:scale-x-0 hover:before:scale-x-100 before:origin-left before:transition-transform before:duration-500"
                 >
                   <Search className="w-5 h-5 mr-2 text-ai-purple" />
                   My Complaints
