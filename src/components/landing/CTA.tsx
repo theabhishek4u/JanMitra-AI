@@ -45,7 +45,7 @@ export function CTA() {
             <Link href="/citizen">
               <Button
                 size="lg"
-                className="relative overflow-hidden z-10 bg-white text-gov-blue-dark shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 h-12 px-8 text-base font-semibold group cursor-pointer before:absolute before:inset-0 before:z-[-1] before:bg-gradient-to-r before:from-blue-600 before:via-violet-600 before:to-pink-600 before:scale-x-0 hover:before:scale-x-100 before:origin-left before:transition-transform before:duration-500 hover:text-white hover:border-0 border-0"
+                className="relative overflow-hidden z-10 bg-white text-gov-blue-dark shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 h-12 px-8 text-base font-semibold group cursor-pointer before:absolute before:inset-0 before:z-[-1] before:bg-linear-to-r before:from-blue-600 before:via-violet-600 before:to-pink-600 before:scale-x-0 hover:before:scale-x-100 before:origin-left before:transition-transform before:duration-500 hover:text-white hover:border-0 border-0"
               >
                 <Shield className="w-5 h-5 mr-2" />
                 File a Complaint Now

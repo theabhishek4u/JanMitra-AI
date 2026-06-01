@@ -90,7 +90,7 @@ const itemVariants = {
     y: 0, 
     scale: 1,
     transition: { 
-      type: "spring", 
+      type: "spring" as const, 
       stiffness: 110, 
       damping: 16,
     }
@@ -194,8 +194,8 @@ export function DemoWorkflow() {
         <div ref={containerRef} className="relative font-sans">
           
           {/* Mobile vertical line rail (only visible on mobile collapse) */}
-          <div className="absolute left-6 sm:left-8 top-0 bottom-0 w-[3px] bg-gradient-to-b from-blue-500 via-violet-500 via-amber-500 via-cyan-500 via-emerald-500 to-red-500 rounded-full opacity-35 blur-[1px] md:hidden" />
-          <div className="absolute left-[25px] sm:left-[33px] top-0 bottom-0 w-[1px] bg-slate-800/40 md:hidden" />
+          <div className="absolute left-6 sm:left-8 top-0 bottom-0 w-[3px] bg-linear-to-b from-blue-500 via-violet-500 to-red-500 rounded-full opacity-35 blur-[1px] md:hidden" />
+          <div className="absolute left-[25px] sm:left-[33px] top-0 bottom-0 w-px bg-slate-800/40 md:hidden" />
 
           {/* Desktop dynamic glowing SVG snake pipeline */}
           <svg 
@@ -279,7 +279,7 @@ export function DemoWorkflow() {
                   }`}
                 >
                   {/* Step circle container */}
-                  <div className="relative z-10 flex-shrink-0">
+                  <div className="relative z-10 shrink-0">
                     <motion.div
                       ref={(el) => {
                         stepRefs.current[index] = el;
@@ -296,14 +296,14 @@ export function DemoWorkflow() {
                       }}
                     >
                       {/* Active Pulse Aura behind Icon */}
-                      <span className="absolute -inset-1 rounded-2xl opacity-10 group-hover:opacity-25 transition-opacity blur-[4px]" style={{ backgroundColor: step.color }} />
+                      <span className="absolute -inset-1 rounded-2xl opacity-10 group-hover:opacity-25 transition-opacity blur-xs" style={{ backgroundColor: step.color }} />
                       <IconComponent className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: step.color }} />
                     </motion.div>
                   </div>
 
                   {/* Content Card with Left Colored Border */}
                   <motion.div 
-                    className="glass-card rounded-2xl p-4 sm:p-5 flex-1 relative overflow-hidden transition-all duration-300 hover:bg-slate-900/35 border-l-4 border-slate-800/80 shadow-none border border-slate-900"
+                    className="glass-card rounded-2xl p-4 sm:p-5 flex-1 relative overflow-hidden transition-all duration-300 hover:bg-slate-900/35 border-l-4 shadow-none border border-slate-900"
                     style={{ borderLeftColor: step.color }}
                     whileHover={{ 
                       y: -4, 
@@ -329,11 +329,11 @@ export function DemoWorkflow() {
 
                     {/* Monospace Command line / Diagnostic console badge box */}
                     <div className="bg-slate-950/80 border border-slate-900/80 rounded-xl p-3.5 text-[10px] sm:text-xs font-mono text-slate-300 flex items-start gap-2.5 shadow-inner relative overflow-hidden group/console">
-                      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808005_1px,transparent_1px),linear-gradient(to_bottom,#80808005_1px,transparent_1px)] bg-[size:14px_24px] pointer-events-none" />
-                      <span className="font-bold select-none tracking-wider flex-shrink-0" style={{ color: step.color }}>
+                      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808005_1px,transparent_1px),linear-gradient(to_bottom,#80808005_1px,transparent_1px)] bg-size-[14px_24px] pointer-events-none" />
+                      <span className="font-bold select-none tracking-wider shrink-0" style={{ color: step.color }}>
                         [{step.prefix}] &gt;
                       </span>
-                      <span className="break-words font-medium text-slate-300 relative z-10 leading-relaxed">{step.example}</span>
+                      <span className="wrap-break-word font-medium text-slate-300 relative z-10 leading-relaxed">{step.example}</span>
                     </div>
                   </motion.div>
                 </motion.div>

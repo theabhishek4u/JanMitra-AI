@@ -197,7 +197,7 @@ export default function CitizenDashboard() {
             animate={{ opacity: 1, y: 0 }}
           >
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-gov-blue to-ai-purple flex items-center justify-center shadow-lg shadow-gov-blue/20">
+              <div className="w-9 h-9 rounded-xl bg-linear-to-br from-gov-blue to-ai-purple flex items-center justify-center shadow-lg shadow-gov-blue/20">
                 <Bot className="w-4.5 h-4.5 text-white" />
               </div>
               <div className="text-left">
@@ -214,7 +214,7 @@ export default function CitizenDashboard() {
             <div className="flex items-center gap-3 relative justify-end">
               {/* Token Tracker Pill */}
               <div className="flex items-center gap-2 bg-[#090d16] border border-amber-500/20 px-3.5 py-1.5 rounded-xl shadow-inner transition-all duration-300 hover:border-amber-500/35">
-                <Coins className="w-4 h-4 text-amber-500 animate-pulse flex-shrink-0" />
+                <Coins className="w-4 h-4 text-amber-500 animate-pulse shrink-0" />
                 <div className="flex flex-col text-left">
                   <span className="text-[9px] uppercase tracking-wider font-extrabold text-amber-500/90 leading-none">
                     {isHi ? "दैनिक कोटा" : "Daily Tokens"}
@@ -348,98 +348,6 @@ export default function CitizenDashboard() {
             </div>
           </motion.div>
 
-          {/* Redesigned Hero and Civic Stats Card Section */}
-          <motion.div
-            className="w-full bg-[#090d16]/30 border border-[#1f2937]/45 rounded-3xl p-6 sm:p-8 mb-8 relative overflow-hidden text-left shadow-lg shadow-black/20"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            {/* Soft decorative background glows inside card */}
-            <div className="absolute -right-24 -top-24 w-80 h-80 bg-indigo-600/10 rounded-full filter blur-[100px] pointer-events-none" />
-            <div className="absolute -left-24 -bottom-24 w-80 h-80 bg-emerald-600/5 rounded-full filter blur-[100px] pointer-events-none" />
-
-            {/* Pill badge */}
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full border border-indigo-500/20 bg-indigo-500/5 text-[10px] font-black tracking-wider text-indigo-400 uppercase mb-5">
-              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
-              AI-Powered Citizen Governance
-            </div>
-
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-2 leading-tight">
-              Report Civic Issues Instantly
-            </h2>
-            <p className="text-sm text-gray-400 max-w-2xl font-semibold leading-relaxed mb-6">
-              Powered by AI to automatically classify, prioritize, and route complaints to the correct department in real-time.
-            </p>
-
-            {/* AI-Powered Civic Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mt-8 w-full">
-              {/* Stat 1: Green Clock Card */}
-              <div className="relative overflow-hidden rounded-2xl border border-emerald-500/10 bg-[#090f19]/70 p-5 shadow-[0_0_15px_rgba(16,185,129,0.02)] hover:shadow-[0_0_25px_rgba(16,185,129,0.08)] hover:border-emerald-500/30 transition-all duration-300 group text-left">
-                <div className="flex items-center justify-between mb-5">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]">
-                    <Clock className="w-4.5 h-4.5 text-emerald-400 animate-pulse" />
-                  </div>
-                  <span className="flex items-center gap-1 text-[10px] font-black text-emerald-400 tracking-wider">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    LIVE
-                  </span>
-                </div>
-                <div className="text-2xl font-black text-white group-hover:scale-[1.01] transition-transform duration-300">36 Hours</div>
-                <div className="text-xs font-bold text-gray-200 mt-1">Avg Resolution Time</div>
-                <div className="text-[10px] text-gray-500 font-semibold mt-0.5">Municipal Standard</div>
-              </div>
-
-              {/* Stat 2: Blue Checkmark Card */}
-              <div className="relative overflow-hidden rounded-2xl border border-blue-500/10 bg-[#090f19]/70 p-5 shadow-[0_0_15px_rgba(59,130,246,0.02)] hover:shadow-[0_0_25px_rgba(59,130,246,0.08)] hover:border-blue-500/30 transition-all duration-300 group text-left">
-                <div className="flex items-center justify-between mb-5">
-                  <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.1)]">
-                    <CheckCircle2 className="w-4.5 h-4.5 text-blue-400" />
-                  </div>
-                  <span className="flex items-center gap-1 text-[10px] font-black text-blue-400 tracking-wider">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-                    LIVE
-                  </span>
-                </div>
-                <div className="text-2xl font-black text-white group-hover:scale-[1.01] transition-transform duration-300">12,400+</div>
-                <div className="text-xs font-bold text-gray-200 mt-1">Complaints Resolved</div>
-                <div className="text-[10px] text-gray-500 font-semibold mt-0.5">This Month</div>
-              </div>
-
-              {/* Stat 3: Purple Target Card */}
-              <div className="relative overflow-hidden rounded-2xl border border-purple-500/10 bg-[#090f19]/70 p-5 shadow-[0_0_15px_rgba(168,85,247,0.02)] hover:shadow-[0_0_25px_rgba(168,85,247,0.08)] hover:border-purple-500/30 transition-all duration-300 group text-left">
-                <div className="flex items-center justify-between mb-5">
-                  <div className="w-9 h-9 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20 shadow-[0_0_10px_rgba(168,85,247,0.1)]">
-                    <Search className="w-4.5 h-4.5 text-purple-400" />
-                  </div>
-                  <span className="flex items-center gap-1 text-[10px] font-black text-purple-400 tracking-wider">
-                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
-                    LIVE
-                  </span>
-                </div>
-                <div className="text-2xl font-black text-white group-hover:scale-[1.01] transition-transform duration-300">95.8%</div>
-                <div className="text-xs font-bold text-gray-200 mt-1">AI Routing Accuracy</div>
-                <div className="text-[10px] text-gray-500 font-semibold mt-0.5">Automated Dispatch</div>
-              </div>
-
-              {/* Stat 4: Orange Building Card */}
-              <div className="relative overflow-hidden rounded-2xl border border-amber-500/10 bg-[#090f19]/70 p-5 shadow-[0_0_15px_rgba(245,158,11,0.02)] hover:shadow-[0_0_25px_rgba(245,158,11,0.08)] hover:border-amber-500/30 transition-all duration-300 group text-left">
-                <div className="flex items-center justify-between mb-5">
-                  <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.1)]">
-                    <AlertTriangle className="w-4.5 h-4.5 text-amber-400" />
-                  </div>
-                  <span className="flex items-center gap-1 text-[10px] font-black text-amber-400 tracking-wider">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                    LIVE
-                  </span>
-                </div>
-                <div className="text-2xl font-black text-white group-hover:scale-[1.01] transition-transform duration-300">8 Nodal</div>
-                <div className="text-xs font-bold text-gray-200 mt-1">Active Departments</div>
-                <div className="text-[10px] text-gray-500 font-semibold mt-0.5">Resolution Partners</div>
-              </div>
-            </div>
-          </motion.div>
-
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <div className="flex items-center justify-start border-b border-[#1f2937]/30 pb-2">
               <TabsList className="bg-[#090d16] border border-[#1f2937]/45 p-1 rounded-xl h-11 gap-1.5 shadow-lg shadow-black/10">
@@ -488,9 +396,9 @@ export default function CitizenDashboard() {
                       return (
                         <motion.div
                           key={c.id}
-                          className={`glass-card rounded-2xl p-4.5 cursor-pointer transition-all duration-300 border-l-[4px] premium-glow-border ${
+                          className={`glass-card rounded-2xl p-4.5 cursor-pointer transition-all duration-300 border-l-4 premium-glow-border ${
                             isActive
-                              ? "active active-glow-primary border-l-primary scale-[1.01] shadow-lg shadow-primary/5 bg-primary/[0.02]"
+                              ? "active active-glow-primary border-l-primary scale-[1.01] shadow-lg shadow-primary/5 bg-primary/2"
                               : "border-l-transparent hover:border-l-border"
                           }`}
                           onClick={() => setSelectedComplaint(c.id)}
@@ -506,7 +414,7 @@ export default function CitizenDashboard() {
                               variant="outline"
                               className={`text-[10px] uppercase font-bold tracking-wider priority-${c.priority}`}
                             >
-                              <PIcon className="w-3 h-3 mr-1" />
+                              <PIcon className="w-3.5 h-3.5 mr-1" />
                               {getPriorityLabel(c.priority)}
                             </Badge>
                           </div>
@@ -515,7 +423,7 @@ export default function CitizenDashboard() {
                           </h4>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground/80 font-medium">
                             <span
-                              className="w-2.5 h-2.5 rounded-full flex-shrink-0 animate-pulse"
+                              className="w-2.5 h-2.5 rounded-full shrink-0 animate-pulse"
                               style={{
                                 backgroundColor:
                                   c.status === "resolved"
@@ -655,6 +563,98 @@ export default function CitizenDashboard() {
               </div>
             </TabsContent>
           </Tabs>
+
+          {/* Redesigned Hero and Civic Stats Card Section */}
+          <motion.div
+            className="w-full bg-[#090d16]/30 border border-[#1f2937]/45 rounded-3xl p-6 sm:p-8 mt-8 relative overflow-hidden text-left shadow-lg shadow-black/20"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            {/* Soft decorative background glows inside card */}
+            <div className="absolute -right-24 -top-24 w-80 h-80 bg-indigo-600/10 rounded-full filter blur-[100px] pointer-events-none" />
+            <div className="absolute -left-24 -bottom-24 w-80 h-80 bg-emerald-600/5 rounded-full filter blur-[100px] pointer-events-none" />
+
+            {/* Pill badge */}
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full border border-indigo-500/20 bg-indigo-500/5 text-[10px] font-black tracking-wider text-indigo-400 uppercase mb-5">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+              AI-Powered Citizen Governance
+            </div>
+
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-2 leading-tight">
+              Report Civic Issues Instantly
+            </h2>
+            <p className="text-sm text-gray-400 max-w-2xl font-semibold leading-relaxed mb-6">
+              Powered by AI to automatically classify, prioritize, and route complaints to the correct department in real-time.
+            </p>
+
+            {/* AI-Powered Civic Stats Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mt-8 w-full">
+              {/* Stat 1: Green Clock Card */}
+              <div className="relative overflow-hidden rounded-2xl border border-emerald-500/10 bg-[#090f19]/70 p-5 shadow-[0_0_15px_rgba(16,185,129,0.02)] hover:shadow-[0_0_25px_rgba(16,185,129,0.08)] hover:border-emerald-500/30 transition-all duration-300 group text-left">
+                <div className="flex items-center justify-between mb-5">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]">
+                    <Clock className="w-4.5 h-4.5 text-emerald-400 animate-pulse" />
+                  </div>
+                  <span className="flex items-center gap-1 text-[10px] font-black text-emerald-400 tracking-wider">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    LIVE
+                  </span>
+                </div>
+                <div className="text-2xl font-black text-white group-hover:scale-[1.01] transition-transform duration-300">36 Hours</div>
+                <div className="text-xs font-bold text-gray-200 mt-1">Avg Resolution Time</div>
+                <div className="text-[10px] text-gray-500 font-semibold mt-0.5">Municipal Standard</div>
+              </div>
+
+              {/* Stat 2: Blue Checkmark Card */}
+              <div className="relative overflow-hidden rounded-2xl border border-blue-500/10 bg-[#090f19]/70 p-5 shadow-[0_0_15px_rgba(59,130,246,0.02)] hover:shadow-[0_0_25px_rgba(59,130,246,0.08)] hover:border-blue-500/30 transition-all duration-300 group text-left">
+                <div className="flex items-center justify-between mb-5">
+                  <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.1)]">
+                    <CheckCircle2 className="w-4.5 h-4.5 text-blue-400" />
+                  </div>
+                  <span className="flex items-center gap-1 text-[10px] font-black text-blue-400 tracking-wider">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                    LIVE
+                  </span>
+                </div>
+                <div className="text-2xl font-black text-white group-hover:scale-[1.01] transition-transform duration-300">12,400+</div>
+                <div className="text-xs font-bold text-gray-200 mt-1">Complaints Resolved</div>
+                <div className="text-[10px] text-gray-500 font-semibold mt-0.5">This Month</div>
+              </div>
+
+              {/* Stat 3: Purple Target Card */}
+              <div className="relative overflow-hidden rounded-2xl border border-purple-500/10 bg-[#090f19]/70 p-5 shadow-[0_0_15px_rgba(168,85,247,0.02)] hover:shadow-[0_0_25px_rgba(168,85,247,0.08)] hover:border-purple-500/30 transition-all duration-300 group text-left">
+                <div className="flex items-center justify-between mb-5">
+                  <div className="w-9 h-9 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20 shadow-[0_0_10px_rgba(168,85,247,0.1)]">
+                    <Search className="w-4.5 h-4.5 text-purple-400" />
+                  </div>
+                  <span className="flex items-center gap-1 text-[10px] font-black text-purple-400 tracking-wider">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                    LIVE
+                  </span>
+                </div>
+                <div className="text-2xl font-black text-white group-hover:scale-[1.01] transition-transform duration-300">95.8%</div>
+                <div className="text-xs font-bold text-gray-200 mt-1">AI Routing Accuracy</div>
+                <div className="text-[10px] text-gray-500 font-semibold mt-0.5">Automated Dispatch</div>
+              </div>
+
+              {/* Stat 4: Orange Building Card */}
+              <div className="relative overflow-hidden rounded-2xl border border-amber-500/10 bg-[#090f19]/70 p-5 shadow-[0_0_15px_rgba(245,158,11,0.02)] hover:shadow-[0_0_25px_rgba(245,158,11,0.08)] hover:border-amber-500/30 transition-all duration-300 group text-left">
+                <div className="flex items-center justify-between mb-5">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.1)]">
+                    <AlertTriangle className="w-4.5 h-4.5 text-amber-400" />
+                  </div>
+                  <span className="flex items-center gap-1 text-[10px] font-black text-amber-400 tracking-wider">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                    LIVE
+                  </span>
+                </div>
+                <div className="text-2xl font-black text-white group-hover:scale-[1.01] transition-transform duration-300">8 Nodal</div>
+                <div className="text-xs font-bold text-gray-200 mt-1">Active Departments</div>
+                <div className="text-[10px] text-gray-500 font-semibold mt-0.5">Resolution Partners</div>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </main>
     </>

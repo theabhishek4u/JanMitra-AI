@@ -65,7 +65,7 @@ export function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
             <div className="relative">
-              <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-gov-blue via-violet-600 to-ai-purple flex items-center justify-center transition-all duration-300 group-hover:scale-105">
+              <div className="relative w-9 h-9 rounded-xl bg-linear-to-br from-gov-blue via-violet-600 to-ai-purple flex items-center justify-center transition-all duration-300 group-hover:scale-105">
                 <Bot className="w-5 h-5 text-white" />
               </div>
             </div>
@@ -85,7 +85,7 @@ export function Navbar() {
             
             {/* File Complaint button always visible on desktop */}
             <Link href="/citizen">
-              <Button className="h-9 px-4 bg-gradient-to-r from-blue-600 via-violet-600 to-pink-600 hover:from-blue-500 hover:via-violet-500 hover:to-pink-500 text-white font-extrabold shadow-[0_0_15px_rgba(124,58,237,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-xs tracking-wider gap-1.5 cursor-pointer rounded-lg uppercase">
+              <Button className="h-9 px-4 bg-linear-to-r from-blue-600 via-violet-600 to-pink-600 hover:from-blue-500 hover:via-violet-500 hover:to-pink-500 text-white font-extrabold shadow-[0_0_15px_rgba(124,58,237,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-xs tracking-wider gap-1.5 cursor-pointer rounded-lg uppercase">
                 <FileText className="w-3.5 h-3.5 text-white animate-pulse" />
                 File Complaint
               </Button>
@@ -99,17 +99,13 @@ export function Navbar() {
                 <span className="ml-1 text-[8px] opacity-60">▼</span>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-[#05070f]/95 backdrop-blur-xl border border-slate-800/80 shadow-[0_10px_40px_rgba(0,0,0,0.6)] text-gray-200 rounded-xl p-1.5 min-w-[200px] mt-1 z-50">
-                <DropdownMenuItem asChild>
-                  <Link href="/officer" className="flex items-center gap-2.5 px-3 py-2 text-xs font-black uppercase text-gray-300 hover:text-white focus:text-white focus:bg-gradient-to-r focus:from-blue-600/20 focus:to-violet-600/20 hover:bg-gradient-to-r hover:from-blue-600/20 hover:to-violet-600/20 border border-transparent focus:border-violet-500/30 hover:border-violet-500/30 rounded-lg transition-all duration-200 cursor-pointer">
-                    <LayoutDashboard className="w-4 h-4 text-sky-400" />
-                    Officer Console
-                  </Link>
+                <DropdownMenuItem render={<Link href="/officer" className="flex items-center gap-2.5 px-3 py-2 text-xs font-black uppercase text-gray-300 hover:text-white focus:text-white focus:bg-linear-to-r focus:from-blue-600/20 focus:to-violet-600/20 hover:bg-linear-to-r hover:from-blue-600/20 hover:to-violet-600/20 border border-transparent focus:border-violet-500/30 hover:border-violet-500/30 rounded-lg transition-all duration-200 cursor-pointer" />}>
+                  <LayoutDashboard className="w-4 h-4 text-sky-400" />
+                  Officer Console
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/admin" className="flex items-center gap-2.5 px-3 py-2 text-xs font-black uppercase text-gray-300 hover:text-white focus:text-white focus:bg-gradient-to-r focus:from-blue-600/20 focus:to-violet-600/20 hover:bg-gradient-to-r hover:from-blue-600/20 hover:to-violet-600/20 border border-transparent focus:border-violet-500/30 hover:border-violet-500/30 rounded-lg transition-all duration-200 cursor-pointer mt-1">
-                    <BarChart3 className="w-4 h-4 text-pink-400" />
-                    CAG Admin Panel
-                  </Link>
+                <DropdownMenuItem render={<Link href="/admin" className="flex items-center gap-2.5 px-3 py-2 text-xs font-black uppercase text-gray-300 hover:text-white focus:text-white focus:bg-linear-to-r focus:from-blue-600/20 focus:to-violet-600/20 hover:bg-linear-to-r hover:from-blue-600/20 hover:to-violet-600/20 border border-transparent focus:border-violet-500/30 hover:border-violet-500/30 rounded-lg transition-all duration-200 cursor-pointer mt-1" />}>
+                  <BarChart3 className="w-4 h-4 text-pink-400" />
+                  CAG Admin Panel
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -159,7 +155,7 @@ export function Navbar() {
             <div className="px-4 py-4 space-y-4">
               {/* File Complaint Link */}
               <Link href="/citizen" onClick={() => setOpen(false)}>
-                <Button className="w-full bg-gradient-to-r from-blue-600 via-violet-600 to-pink-600 text-white font-extrabold text-sm uppercase tracking-wider py-5 cursor-pointer shadow-[0_0_15px_rgba(124,58,237,0.3)] rounded-lg">
+                <Button className="w-full bg-linear-to-r from-blue-600 via-violet-600 to-pink-600 text-white font-extrabold text-sm uppercase tracking-wider py-5 cursor-pointer shadow-[0_0_15px_rgba(124,58,237,0.3)] rounded-lg">
                   <FileText className="w-4 h-4 mr-2" />
                   File Complaint
                 </Button>

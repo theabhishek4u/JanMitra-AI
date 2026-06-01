@@ -589,16 +589,14 @@ export function ComplaintForm({
                 </div>
               </div>
 
-              <div className={`relative rounded-xl transition-all duration-500 p-[1.5px] ${isFocused ? "bg-gradient-to-r from-gov-blue via-ai-purple to-trust-green shadow-[0_0_20px_rgba(124,58,237,0.25)] scale-[1.002]" : "bg-[#1f2937]/60"}`}>
-                <Textarea
-                  value={text}
-                  onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder={dict.placeholderText}
-                  className="min-h-[140px] text-sm resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-4 py-3 bg-[#070b13] text-gray-100 w-full rounded-[10.5px] transition-all duration-300 placeholder:text-gray-600"
-                />
-              </div>
+              <Textarea
+                value={text}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                onChange={(e) => setText(e.target.value)}
+                placeholder={dict.placeholderText}
+                className="min-h-[140px] text-sm resize-none border border-[#1f2937]/80 focus:border-[#7c3aed]/60 focus:ring-1 focus:ring-[#7c3aed]/40 rounded-xl px-4 py-3 bg-[#070b13] text-gray-100 w-full transition-all duration-300 placeholder:text-gray-600 focus:shadow-[0_0_20px_rgba(124,58,237,0.15)] focus:scale-[1.001] outline-none"
+              />
 
               {/* Hidden file input */}
               <input
@@ -615,11 +613,11 @@ export function ComplaintForm({
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className={`flex items-center gap-3.5 p-2.5 pr-4 bg-ai-purple/[0.03] border rounded-2xl w-fit relative overflow-hidden transition-all duration-300 ${
-                    isScanningImage ? "border-ai-purple shadow-[0_0_15px_rgba(124,58,237,0.2)] bg-ai-purple/[0.05]" : "border-[#1f2937]"
+                  className={`flex items-center gap-3.5 p-2.5 pr-4 bg-ai-purple/3 border rounded-2xl w-fit relative overflow-hidden transition-all duration-300 ${
+                    isScanningImage ? "border-ai-purple shadow-[0_0_15px_rgba(124,58,237,0.2)] bg-ai-purple/5" : "border-[#1f2937]"
                   }`}
                 >
-                  <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-[#1f2937] bg-black/5 flex-shrink-0">
+                  <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-[#1f2937] bg-black/5 shrink-0">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={photo} alt="Preview" className="w-full h-full object-cover" />
                     
@@ -711,12 +709,12 @@ export function ComplaintForm({
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-trust-green/[0.02] border border-trust-green/20 rounded-xl mt-3 animate-fade-in relative overflow-hidden"
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-trust-green/2 border border-trust-green/20 rounded-xl mt-3 animate-fade-in relative overflow-hidden"
                 >
                   <div className="absolute -left-6 -bottom-6 w-16 h-16 bg-trust-green/5 rounded-full filter blur-lg pointer-events-none" />
                   
                   <div className="flex items-center gap-3 text-left">
-                    <div className="w-6 h-6 rounded-full bg-trust-green/20 flex items-center justify-center flex-shrink-0 relative">
+                    <div className="w-6 h-6 rounded-full bg-trust-green/20 flex items-center justify-center shrink-0 relative">
                       <div className="w-2.5 h-2.5 rounded-full bg-trust-green radar-glow relative" />
                     </div>
                     <div>
@@ -778,7 +776,7 @@ export function ComplaintForm({
               >
                 {isEmergencyComplaint(text) ? (
                   <>
-                    <Zap className="w-5 h-5 text-amber-400 animate-bounce flex-shrink-0" />
+                    <Zap className="w-5 h-5 text-amber-400 animate-bounce shrink-0" />
                     <div>
                       <p className="text-xs font-bold text-amber-300">
                         {isHi ? "आपातकालीन शिकायत का पता चला" : "Emergency Complaint Detected"}
@@ -792,7 +790,7 @@ export function ComplaintForm({
                   </>
                 ) : (
                   <>
-                    <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 animate-pulse" />
+                    <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 animate-pulse" />
                     <div>
                       <p className="text-xs font-bold text-red-300">
                         {isHi ? "दैनिक शिकायत सीमा पूरी हो गई है" : "Daily Complaint Limit Reached"}
@@ -823,7 +821,7 @@ export function ComplaintForm({
               type="button"
               onClick={handleSubmit}
               disabled={!text.trim() || (tokenState.tokensRemaining <= 0 && !isEmergencyComplaint(text))}
-              className="w-full h-12 rounded-xl bg-gradient-to-r from-[#4f46e5] via-[#7c3aed] to-[#db2777] hover:bg-right text-white shadow-xl shadow-[#7c3aed]/25 hover:shadow-[#7c3aed]/45 hover:scale-[1.01] active:scale-[0.99] transition-all duration-500 text-base font-extrabold group cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full h-12 rounded-xl bg-linear-to-r from-[#4f46e5] via-[#7c3aed] to-[#db2777] hover:bg-right text-white shadow-xl shadow-[#7c3aed]/25 hover:shadow-[#7c3aed]/45 hover:scale-[1.01] active:scale-[0.99] transition-all duration-500 text-base font-extrabold group cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <div className="flex items-center justify-center gap-2 uppercase tracking-wider text-xs font-black">
                 <Sparkles className="w-4.5 h-4.5 text-white" />
@@ -844,7 +842,7 @@ export function ComplaintForm({
             className="glass-card rounded-2xl p-8 sm:p-10 text-center space-y-6 scanning-laser-container neon-glow-ai"
           >
             <motion.div
-              className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-ai-purple/20 via-primary/10 to-gov-blue/20 border border-ai-purple/30 flex items-center justify-center shadow-lg"
+              className="w-20 h-20 mx-auto rounded-2xl bg-linear-to-br from-ai-purple/20 via-primary/10 to-gov-blue/20 border border-ai-purple/30 flex items-center justify-center shadow-lg"
               animate={{ 
                 rotate: 360,
                 boxShadow: ["0 0 0 0px rgba(124, 58, 237, 0.2)", "0 0 0 12px rgba(124, 58, 237, 0)", "0 0 0 0px rgba(124, 58, 237, 0.2)"]
@@ -858,7 +856,7 @@ export function ComplaintForm({
             </motion.div>
 
             <div className="space-y-1">
-              <h3 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-gov-blue to-ai-purple bg-clip-text text-transparent">{dict.analyzingTitle}</h3>
+              <h3 className="text-2xl font-bold tracking-tight bg-linear-to-r from-gov-blue to-ai-purple bg-clip-text text-transparent">{dict.analyzingTitle}</h3>
               <p className="text-sm text-muted-foreground/80">{dict.analyzingDesc}</p>
             </div>
 
@@ -878,15 +876,15 @@ export function ComplaintForm({
                   transition={{ delay: i * 0.08 }}
                 >
                   {processingStep > i ? (
-                    <div className="w-5 h-5 rounded-full bg-trust-green/10 flex items-center justify-center text-trust-green flex-shrink-0">
+                    <div className="w-5 h-5 rounded-full bg-trust-green/10 flex items-center justify-center text-trust-green shrink-0">
                       <CheckCircle2 className="w-3.5 h-3.5" />
                     </div>
                   ) : processingStep === i ? (
-                    <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+                    <div className="w-5 h-5 flex items-center justify-center shrink-0">
                       <Loader2 className="w-4 h-4 text-ai-purple animate-spin" />
                     </div>
                   ) : (
-                    <div className="w-5 h-5 rounded-full border border-current/30 flex-shrink-0 flex items-center justify-center" />
+                    <div className="w-5 h-5 rounded-full border border-current/30 shrink-0 flex items-center justify-center" />
                   )}
                   <span>{s.label}</span>
                 </motion.div>
@@ -896,7 +894,7 @@ export function ComplaintForm({
             {/* Glowing Gradient Custom Progress Bar */}
             <div className="max-w-md mx-auto h-2 bg-muted/50 rounded-full overflow-hidden p-0.5 border border-border/20">
               <motion.div 
-                className="h-full bg-gradient-to-r from-gov-blue via-ai-purple to-trust-green rounded-full shadow-[0_0_8px_rgba(124,58,237,0.4)]"
+                className="h-full bg-linear-to-r from-gov-blue via-ai-purple to-trust-green rounded-full shadow-[0_0_8px_rgba(124,58,237,0.4)]"
                 initial={{ width: 0 }}
                 animate={{ width: `${(processingStep / 5) * 100}%` }}
                 transition={{ duration: 0.4 }}
@@ -921,7 +919,7 @@ export function ComplaintForm({
             >
               <div className="flex items-center gap-4">
                 <motion.div 
-                  className="w-12 h-12 rounded-xl bg-trust-green/10 flex items-center justify-center flex-shrink-0"
+                  className="w-12 h-12 rounded-xl bg-trust-green/10 flex items-center justify-center shrink-0"
                   animate={{ scale: [1, 1.1, 1] }}
                   transition={{ duration: 1.5, repeat: 2 }}
                 >
@@ -944,7 +942,7 @@ export function ComplaintForm({
                 className="glass-premium rounded-2xl p-5 border-l-4 border-l-amber-500 neon-glow-warning bg-amber-500/5"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
                     <Zap className="w-5 h-5 text-amber-500 animate-pulse" />
                   </div>
                   <div>
@@ -1054,7 +1052,7 @@ export function ComplaintForm({
               <Button 
                 type="button" 
                 onClick={() => onTrack?.(createdComplaintId)}
-                className="flex-1 rounded-xl h-11 font-bold text-sm bg-gradient-to-r from-gov-blue to-gov-blue-light text-white shadow-lg shadow-gov-blue/20"
+                className="flex-1 rounded-xl h-11 font-bold text-sm bg-linear-to-r from-gov-blue to-gov-blue-light text-white shadow-lg shadow-gov-blue/20"
               >
                 {dict.trackThis}
               </Button>

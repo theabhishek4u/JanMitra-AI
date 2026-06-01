@@ -103,7 +103,7 @@ const cardVariants = {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: { type: "spring", stiffness: 90, damping: 15 },
+    transition: { type: "spring" as const, stiffness: 90, damping: 15 },
   },
 };
 
@@ -118,8 +118,8 @@ export default function DevelopersPage() {
       <header className="border-b border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-gov-blue to-ai-purple flex items-center justify-center relative">
-              <span className="absolute -inset-1 rounded-xl bg-gradient-to-br from-gov-blue to-ai-purple opacity-20 blur-[2px] group-hover:opacity-40 transition-opacity" />
+            <div className="w-9 h-9 rounded-xl bg-linear-to-br from-gov-blue to-ai-purple flex items-center justify-center relative">
+              <span className="absolute -inset-1 rounded-xl bg-linear-to-br from-gov-blue to-ai-purple opacity-20 blur-[2px] group-hover:opacity-40 transition-opacity" />
               <Bot className="w-5 h-5 text-white relative z-10" />
             </div>
             <div>

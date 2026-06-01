@@ -945,7 +945,7 @@ export function AIAssistantWidget() {
             exit={{ scale: 0.8, opacity: 0 }}
             whileHover={{ scale: 1.1 }}
             onClick={() => setIsOpen(true)}
-            className="flex items-center justify-center w-14 h-14 rounded-full cursor-pointer relative bg-gradient-to-tr from-gov-blue via-violet-600 to-ai-purple shadow-[0_0_25px_rgba(139,92,246,0.5)] border border-violet-400/30 text-white"
+            className="flex items-center justify-center w-14 h-14 rounded-full cursor-pointer relative bg-linear-to-tr from-gov-blue via-violet-600 to-ai-purple shadow-[0_0_25px_rgba(139,92,246,0.5)] border border-violet-400/30 text-white"
           >
             <AnimatedBotFace className="w-9 h-9" />
             <span className="absolute -top-1 -right-1 flex h-4 w-4">
@@ -969,7 +969,7 @@ export function AIAssistantWidget() {
             className="w-[420px] max-w-[92vw] h-[600px] rounded-2xl flex flex-col overflow-hidden border border-slate-800/80 bg-slate-950/90 backdrop-blur-xl shadow-[0_0_50px_rgba(139,92,246,0.25)]"
           >
             {/* Header section with status, sound, language */}
-            <div className="p-4 border-b border-slate-800/80 bg-gradient-to-r from-slate-950 via-slate-900/60 to-slate-950 flex items-center justify-between">
+            <div className="p-4 border-b border-slate-800/80 bg-linear-to-r from-slate-950 via-slate-900/60 to-slate-950 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-violet-600/10 border border-violet-500/30 flex items-center justify-center shadow-lg relative">
                   <AnimatedBotFace className="w-6 h-6" />
@@ -1497,7 +1497,7 @@ export function AIAssistantWidget() {
                 }}
                 className="flex items-center gap-2"
               >
-                <div className="flex-1 bg-slate-900/60 rounded-xl border border-slate-800/80 focus-within:border-violet-500/60 focus-within:shadow-[0_0_12px_rgba(139,92,246,0.15)] flex items-center px-3 py-1 bg-slate-900/30 transition-all duration-200">
+                <div className="flex-1 bg-slate-900/60 rounded-xl border border-slate-800/80 focus-within:border-violet-500/60 focus-within:shadow-[0_0_12px_rgba(139,92,246,0.15)] flex items-center px-3 py-1 transition-all duration-200">
                   <input
                     type="text"
                     value={inputValue}

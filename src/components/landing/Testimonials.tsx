@@ -144,7 +144,7 @@ export function Testimonials() {
             {[...testimonials, ...testimonials].map((t, i) => (
               <div
                 key={`${t.name}-${i}`}
-                className="glass-card testimonial-card-override rounded-2xl p-5 w-[290px] sm:w-[340px] flex-shrink-0 flex flex-col justify-between border border-slate-200 dark:border-slate-900/60 relative overflow-hidden cursor-default select-none border-l-4 group"
+                className="glass-card testimonial-card-override rounded-2xl p-5 w-[290px] sm:w-[340px] shrink-0 flex flex-col justify-between border border-slate-200 dark:border-slate-900/60 relative overflow-hidden cursor-default select-none border-l-4 group"
                 style={{ borderLeftColor: t.color }}
               >
                 {/* Dynamic Rounded Border Tracing SVG */}
@@ -163,11 +163,11 @@ export function Testimonials() {
                 </svg>
 
                 {/* Glow aura inside card on hover */}
-                <span className="absolute -inset-1 rounded-2xl opacity-0 group-hover:opacity-10 transition-opacity blur-[4px] pointer-events-none" style={{ backgroundColor: t.color }} />
+                <span className="absolute -inset-1 rounded-2xl opacity-0 group-hover:opacity-10 transition-opacity blur-xs pointer-events-none" style={{ backgroundColor: t.color }} />
 
                 <div className="relative z-10 flex flex-col h-full justify-between gap-4">
                   <div className="flex gap-3 items-start">
-                    <Quote className="w-6 h-6 flex-shrink-0 mt-0.5" style={{ color: `${t.color}40` }} />
+                    <Quote className="w-6 h-6 shrink-0 mt-0.5" style={{ color: `${t.color}40` }} />
                     <p className="text-[13px] sm:text-[14px] leading-relaxed text-slate-700 dark:text-slate-300 font-medium">
                       &ldquo;{t.textEn}&rdquo;
                     </p>

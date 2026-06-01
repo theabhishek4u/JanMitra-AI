@@ -342,7 +342,7 @@ export default function AdminDashboard() {
 
           {/* Daily Complaint Token System Controls */}
           <div className="mt-8">
-            <Card className="glass-premium border border-amber-500/20 relative overflow-hidden shadow-xl shadow-black/5 hover:shadow-amber-500/[0.03] transition-all duration-300">
+            <Card className="glass-premium border border-amber-500/20 relative overflow-hidden shadow-xl shadow-black/5 hover:shadow-amber-500/3 transition-all duration-300">
               <div className="absolute right-0 top-0 w-32 h-32 bg-linear-to-bl from-amber-500/5 to-transparent pointer-events-none rounded-bl-full" />
               <CardHeader className="pb-3 border-b border-border/10">
                 <CardTitle className="text-lg flex items-center gap-2.5 font-bold text-foreground/90">
@@ -407,7 +407,7 @@ export default function AdminDashboard() {
                           key={amount}
                           type="button"
                           onClick={() => handleGrantTokens(amount)}
-                          className="bg-gradient-to-br from-card to-muted hover:from-amber-500/10 hover:to-amber-500/20 border border-border/40 hover:border-amber-500/30 py-3 rounded-xl text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center gap-1 group"
+                          className="bg-linear-to-br from-card to-muted hover:from-amber-500/10 hover:to-amber-500/20 border border-border/40 hover:border-amber-500/30 py-3 rounded-xl text-center transition-all active:scale-95 cursor-pointer flex flex-col items-center justify-center gap-1 group"
                         >
                           <span className="text-sm font-black text-foreground group-hover:text-amber-300">+{amount}</span>
                           <span className="text-[9px] font-bold text-muted-foreground group-hover:text-amber-400 uppercase tracking-wider">Tokens</span>

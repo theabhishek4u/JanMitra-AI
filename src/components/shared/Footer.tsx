@@ -13,8 +13,8 @@ export function Footer() {
           {/* Brand & Description */}
           <div className="md:col-span-1">
             <div className="flex items-center gap-2.5 mb-5">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gov-blue to-ai-purple flex items-center justify-center relative group/logo">
-                <span className="absolute -inset-1 rounded-xl bg-gradient-to-br from-gov-blue to-ai-purple opacity-20 blur-[2px] group-hover/logo:opacity-50 transition-opacity" />
+              <div className="w-10 h-10 rounded-xl bg-linear-to-br from-gov-blue to-ai-purple flex items-center justify-center relative group/logo">
+                <span className="absolute -inset-1 rounded-xl bg-linear-to-br from-gov-blue to-ai-purple opacity-20 blur-[2px] group-hover/logo:opacity-50 transition-opacity" />
                 <Bot className="w-5.5 h-5.5 text-white relative z-10" />
               </div>
               <div>

@@ -344,7 +344,7 @@ export function AIPlayground() {
 
               <div className="mt-5">
                 <Button
-                  className="w-full bg-gradient-to-r from-gov-blue to-ai-purple text-white shadow-lg shadow-gov-blue/20 h-12 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2"
+                  className="w-full bg-linear-to-r from-gov-blue to-ai-purple text-white shadow-lg shadow-gov-blue/20 h-12 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2"
                   disabled={isAnalyzing || (!inputText && !customText)}
                   onClick={runAnalysis}
                 >
@@ -435,7 +435,7 @@ export function AIPlayground() {
                         <div className="h-1.5 bg-slate-900/60 border border-slate-800/40 rounded-full mt-1.5 overflow-hidden">
                           {step >= 1 && (
                             <motion.div 
-                              className="h-full bg-gradient-to-r from-ai-purple to-violet-500 shadow-[0_0_8px_#7c3aed]" 
+                              className="h-full bg-linear-to-r from-ai-purple to-violet-500 shadow-[0_0_8px_#7c3aed]" 
                               initial={{ width: 0 }} 
                               animate={{ width: step === 1 ? "65%" : "100%" }}
                               transition={{ duration: 1 }}
@@ -473,7 +473,7 @@ export function AIPlayground() {
                         <div className="h-1.5 bg-slate-900/60 border border-slate-800/40 rounded-full mt-1.5 overflow-hidden">
                           {step >= 2 && (
                             <motion.div 
-                              className="h-full bg-gradient-to-r from-gov-blue to-blue-500 shadow-[0_0_8px_#1d4ed8]" 
+                              className="h-full bg-linear-to-r from-gov-blue to-blue-500 shadow-[0_0_8px_#1d4ed8]" 
                               initial={{ width: 0 }} 
                               animate={{ width: step === 2 ? "65%" : "100%" }}
                               transition={{ duration: 1.2 }}
@@ -511,7 +511,7 @@ export function AIPlayground() {
                         <div className="h-1.5 bg-slate-900/60 border border-slate-800/40 rounded-full mt-1.5 overflow-hidden">
                           {step >= 3 && (
                             <motion.div 
-                              className="h-full bg-gradient-to-r from-trust-green to-emerald-500 shadow-[0_0_8px_#10b981]" 
+                              className="h-full bg-linear-to-r from-trust-green to-emerald-500 shadow-[0_0_8px_#10b981]" 
                               initial={{ width: 0 }} 
                               animate={{ width: step === 3 ? "70%" : "100%" }}
                               transition={{ duration: 1.3 }}
@@ -619,7 +619,7 @@ export function AIPlayground() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       {result.actions.map((act, i) => (
                         <div key={i} className="flex items-center gap-2.5 bg-slate-100/70 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-900/60 px-3.5 py-2 rounded-xl text-xs text-slate-700 dark:text-slate-300 transition-all hover:bg-slate-200/50 dark:hover:bg-slate-900/25">
-                          <div className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0 font-bold border border-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.15)] text-[9px] font-mono">
+                          <div className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 font-bold border border-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.15)] text-[9px] font-mono">
                             0{i + 1}
                           </div>
                           <span className="line-clamp-1 text-slate-700 dark:text-slate-300">{act}</span>

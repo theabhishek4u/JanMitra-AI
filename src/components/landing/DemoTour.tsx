@@ -124,7 +124,7 @@ export function DemoTour() {
   const config = getStepConfig();
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 sm:bottom-6 sm:right-6 sm:left-auto z-[9999] sm:max-w-sm w-full px-4 pb-4 sm:px-0 sm:pb-0">
+    <div className="fixed bottom-0 left-0 right-0 sm:bottom-6 sm:right-6 sm:left-auto z-9999 sm:max-w-sm w-full px-4 pb-4 sm:px-0 sm:pb-0">
       <AnimatePresence>
         {minimized ? (
           <motion.button
@@ -192,7 +192,7 @@ export function DemoTour() {
                   <Button
                     onClick={config.action}
                     disabled={config.disabled}
-                    className="w-full justify-center bg-gradient-to-r from-gov-blue to-ai-purple text-white rounded-xl py-5 font-extrabold shadow-lg shadow-gov-blue/20 hover:scale-[1.01] transition-transform cursor-pointer relative overflow-hidden"
+                    className="w-full justify-center bg-linear-to-r from-gov-blue to-ai-purple text-white rounded-xl py-5 font-extrabold shadow-lg shadow-gov-blue/20 hover:scale-[1.01] transition-transform cursor-pointer relative overflow-hidden"
                   >
                     <div className="holo-scanline" />
                     <Sparkles className="w-4 h-4 mr-2 text-white animate-pulse" />
@@ -200,7 +200,7 @@ export function DemoTour() {
                   </Button>
                 ) : (
                   <div className="flex items-center gap-2 text-xs font-bold text-trust-green bg-trust-green/5 border border-trust-green/20 rounded-xl px-3 py-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-trust-green flex-shrink-0 animate-bounce" />
+                    <CheckCircle2 className="w-4 h-4 text-trust-green shrink-0 animate-bounce" />
                     <span>
                       {currentStep === 1
                         ? "Autofill Active! Scanner engaged. Submit below!"
@@ -219,7 +219,7 @@ export function DemoTour() {
                         key={s}
                         className={`w-5 h-1.5 rounded-full transition-all duration-300 ${
                           currentStep === s
-                            ? "bg-gradient-to-r from-gov-blue to-ai-purple w-8"
+                            ? "bg-linear-to-r from-gov-blue to-ai-purple w-8"
                             : currentStep > s
                             ? "bg-trust-green"
                             : "bg-muted-foreground/20"
