@@ -22,9 +22,9 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/shared/Navbar";
-import { getStats, getAnalytics } from "@/lib/complaints";
+import { getStats, getAnalytics, getComplaints } from "@/lib/complaints";
 import { getAdminTokenConfig, setAdminTokenConfig, grantExtraTokens, getCitizenFrequencyReport } from "@/lib/tokenSystem";
-import type { DashboardStats, AnalyticsData } from "@/types";
+import type { DashboardStats, AnalyticsData, Complaint } from "@/types";
 
 // Dynamic import to avoid SSR issues with recharts
 const AnalyticsCharts = dynamic(() => import("@/components/admin/AnalyticsCharts"), {
@@ -65,6 +65,8 @@ export default function AdminDashboard() {
   const [mounted, setMounted] = useState(false);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+
+  const [complaints, setComplaints] = useState<Complaint[]>([]);
 
   // Token System states
   const [maxTokens, setMaxTokens] = useState(3);
@@ -110,6 +112,7 @@ export default function AdminDashboard() {
     setMounted(true);
     setStats(getStats());
     setAnalytics(getAnalytics());
+    setComplaints(getComplaints());
     setMaxTokens(getAdminTokenConfig());
     setReport(getCitizenFrequencyReport());
 
@@ -117,12 +120,23 @@ export default function AdminDashboard() {
       checkAuth();
     };
 
+    const handleSync = () => {
+      setComplaints(getComplaints());
+      setStats(getStats());
+      setAnalytics(getAnalytics());
+      setReport(getCitizenFrequencyReport());
+    };
+
     window.addEventListener("focus", handleTabSync);
     window.addEventListener("visibilitychange", handleTabSync);
+    window.addEventListener("janmitra-db-change", handleSync);
+    window.addEventListener("storage", handleSync);
 
     return () => {
       window.removeEventListener("focus", handleTabSync);
       window.removeEventListener("visibilitychange", handleTabSync);
+      window.removeEventListener("janmitra-db-change", handleSync);
+      window.removeEventListener("storage", handleSync);
     };
   }, []);
 
@@ -443,6 +457,92 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Nodal Grievance Registry (Complaint List) */}
+          <div className="mt-8">
+            <Card className="glass-premium border border-border/30 relative overflow-hidden shadow-xl shadow-black/5 hover:neon-glow-primary transition-all duration-300">
+              <div className="absolute right-0 top-0 w-32 h-32 bg-linear-to-bl from-primary/5 to-transparent pointer-events-none rounded-bl-full" />
+              <CardHeader className="pb-3 border-b border-border/10">
+                <CardTitle className="text-lg flex items-center gap-2.5 font-bold text-foreground/90">
+                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <Building2 className="w-4.5 h-4.5 text-primary" />
+                  </div>
+                  <div>
+                    <span>Nodal Grievance Registry</span>
+                    <p className="text-[11px] font-medium text-muted-foreground/80 mt-0.5">
+                      Consolidated citizen ticket ledger with dynamic department mapping & priority monitoring
+                    </p>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto max-h-[400px] overflow-y-auto custom-scrollbar">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-border/10 text-[10px] font-black uppercase tracking-wider text-muted-foreground sticky top-0 bg-[#090d16]/90 z-10 backdrop-blur-md">
+                        <th className="py-3.5 px-6">Complaint No.</th>
+                        <th className="py-3.5 px-4">Citizen</th>
+                        <th className="py-3.5 px-4">Category & Nodal Niche</th>
+                        <th className="py-3.5 px-4">Assigned Department</th>
+                        <th className="py-3.5 px-4">Priority</th>
+                        <th className="py-3.5 px-6 text-right">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/10">
+                      {complaints.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="text-center py-12 text-xs font-bold text-muted-foreground">
+                            No registered complaints found in system ledger.
+                          </td>
+                        </tr>
+                      ) : (
+                        complaints.map((c) => (
+                          <tr key={c.id} className="hover:bg-muted/10 transition-colors text-xs font-semibold">
+                            <td className="py-4 px-6 font-mono font-black text-foreground/90">
+                              <span className="bg-primary/5 border border-primary/20 text-primary px-2.5 py-1 rounded-lg">
+                                {c.id}
+                              </span>
+                            </td>
+                            <td className="py-4 px-4">
+                              <div className="flex flex-col">
+                                <span className="font-extrabold text-foreground">{c.citizenName}</span>
+                                <span className="text-[10px] text-muted-foreground mt-0.5">{c.citizenPhone}</span>
+                              </div>
+                            </td>
+                            <td className="py-4 px-4">
+                              <div className="flex flex-col">
+                                <span className="font-extrabold text-foreground">{c.title}</span>
+                                <span className="text-[10px] mt-0.5 font-bold uppercase tracking-wider text-primary">{c.category}</span>
+                              </div>
+                            </td>
+                            <td className="py-4 px-4">
+                              <span className="font-extrabold text-gray-300">{c.department}</span>
+                            </td>
+                            <td className="py-4 px-4">
+                              <Badge variant="outline" className={`priority-${c.priority} font-extrabold uppercase text-[9px] tracking-wider`}>
+                                {c.priority}
+                              </Badge>
+                            </td>
+                            <td className="py-4 px-6 text-right">
+                              <Badge className={`font-extrabold uppercase text-[9px] px-2 py-0.5 tracking-wider ${
+                                c.status === "resolved" 
+                                  ? "bg-emerald-500/10 border border-emerald-500/25 text-emerald-400"
+                                  : c.status === "escalated"
+                                  ? "bg-red-500/10 border border-red-500/25 text-red-400 animate-pulse"
+                                  : "bg-amber-500/10 border border-amber-500/25 text-amber-400"
+                              }`}>
+                                {c.status.replace(/_/g, " ")}
+                              </Badge>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </CardContent>
             </Card>

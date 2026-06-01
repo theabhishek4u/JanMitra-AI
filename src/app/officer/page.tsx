@@ -36,6 +36,9 @@ import {
   Eye,
   Ban,
   Fingerprint,
+  Route,
+  Lightbulb,
+  Scale,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -410,12 +413,12 @@ export default function OfficerDashboard() {
   const categoriesList = [
     { name: "Garbage / Sanitation", label: "Sanitation", icon: Trash2, color: "#3B82F6", glowClass: "hover:shadow-[0_0_15px_-3px_rgba(59,130,246,0.3)] border-blue-500/20 shadow-blue-500/5", bg: "bg-blue-500/5" },
     { name: "Water Supply", label: "Water", icon: Droplet, color: "#06B6D4", glowClass: "hover:shadow-[0_0_15px_-3px_rgba(6,182,212,0.3)] border-cyan-500/20 shadow-cyan-500/5", bg: "bg-cyan-500/5" },
-    { name: "Road Damage", label: "Roads", icon: AlertTriangle, color: "#10B981", glowClass: "hover:shadow-[0_0_15px_-3px_rgba(16,185,129,0.3)] border-emerald-500/20 shadow-emerald-500/5", bg: "bg-emerald-500/5" },
+    { name: "Road Damage", label: "Roads", icon: Route, color: "#10B981", glowClass: "hover:shadow-[0_0_15px_-3px_rgba(16,185,129,0.3)] border-emerald-500/20 shadow-emerald-500/5", bg: "bg-emerald-500/5" },
     { name: "Electricity", label: "Power", icon: Zap, color: "#F59E0B", glowClass: "hover:shadow-[0_0_15px_-3px_rgba(245,158,11,0.3)] border-amber-500/20 shadow-amber-500/5", bg: "bg-amber-500/5" },
-    { name: "Street Light", label: "Lights", icon: Sparkles, color: "#7C3AED", glowClass: "hover:shadow-[0_0_15px_-3px_rgba(124,58,237,0.3)] border-violet-500/20 shadow-violet-500/5", bg: "bg-violet-500/5" },
+    { name: "Street Light", label: "Lights", icon: Lightbulb, color: "#7C3AED", glowClass: "hover:shadow-[0_0_15px_-3px_rgba(124,58,237,0.3)] border-violet-500/20 shadow-violet-500/5", bg: "bg-violet-500/5" },
     { name: "Illegal Construction", label: "Civic Construction", icon: Building2, color: "#F97316", glowClass: "hover:shadow-[0_0_15px_-3px_rgba(249,115,22,0.3)] border-orange-500/20 shadow-orange-500/5", bg: "bg-orange-500/5" },
     { name: "Encroachment", label: "Encroach", icon: Layers, color: "#EC4899", glowClass: "hover:shadow-[0_0_15px_-3px_rgba(236,72,153,0.3)] border-pink-500/20 shadow-pink-500/5", bg: "bg-pink-500/5" },
-    { name: "Corruption", label: "Vigilance", icon: Shield, color: "#EF4444", glowClass: "hover:shadow-[0_0_15px_-3px_rgba(239,68,68,0.3)] border-red-500/20 shadow-red-500/5", bg: "bg-red-500/5" },
+    { name: "Corruption", label: "Vigilance", icon: Scale, color: "#EF4444", glowClass: "hover:shadow-[0_0_15px_-3px_rgba(239,68,68,0.3)] border-red-500/20 shadow-red-500/5", bg: "bg-red-500/5" },
     { name: "Public Health", label: "Health", icon: Activity, color: "#8B5CF6", glowClass: "hover:shadow-[0_0_15px_-3px_rgba(139,92,246,0.3)] border-purple-500/20 shadow-purple-500/5", bg: "bg-purple-500/5" },
   ];
 
@@ -449,17 +452,21 @@ export default function OfficerDashboard() {
                 <LayoutDashboard className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">Officer Command Console</h1>
-                <p className="text-sm text-muted-foreground">
-                  Welcome, Shri Rajesh Kumar — Municipal Commissioner
-                </p>
+                <h1 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
+                  Officer Command Console
+                </h1>
+                <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                  <span className="text-sm font-semibold text-gray-400">Welcome,</span>
+                  <span className="text-sm font-black text-transparent bg-clip-text bg-linear-to-r from-blue-400 via-indigo-200 to-purple-400 drop-shadow-sm">
+                    Shri Rajesh Kumar
+                  </span>
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-sky-500/30 bg-sky-500/10 text-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.15)] select-none">
+                    Municipal Commissioner
+                  </span>
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-3 relative">
-              <span className="inline-flex items-center gap-1.5 text-xs text-trust-green bg-trust-green/5 border border-trust-green/25 px-2.5 py-1 rounded-full font-bold">
-                <span className="w-2 h-2 bg-trust-green rounded-full animate-pulse" />
-                AI Agent Active
-              </span>
 
               {/* Officer Notification Bell Dropdown */}
               <div className="relative">
@@ -488,55 +495,68 @@ export default function OfficerDashboard() {
                       className="fixed inset-0 z-40 cursor-default" 
                       onClick={() => setShowNotifications(false)} 
                     />
-                    <div className="absolute right-0 mt-3 w-80 max-h-[420px] overflow-y-auto z-50 glass-card rounded-2xl p-4 shadow-xl border border-border/50 bg-background/95 backdrop-blur-md animate-in fade-in slide-in-from-top-3 duration-200">
-                      <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-3">
-                        <h4 className="font-bold text-sm text-foreground">
-                          System Alerts
-                        </h4>
-                        {notifications.length > 0 && (
+                    <div className="absolute right-0 mt-3 w-[360px] max-h-[460px] overflow-y-auto z-50 glass-card rounded-2xl p-4.5 border border-white/8 bg-slate-950/95 backdrop-blur-xl animate-in fade-in slide-in-from-top-3 duration-250 select-none">
+                      <div className="flex items-center justify-between border-b border-white/8 pb-3 mb-3.5">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                          <h4 className="font-black text-xs uppercase tracking-wider text-gray-200">
+                            System Alerts
+                          </h4>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {notifications.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={handleClearAllNotifications}
+                              className="text-[10px] font-extrabold uppercase text-red-400 hover:text-red-300 transition-colors flex items-center gap-1 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              Clear All
+                            </button>
+                          )}
                           <button
                             type="button"
-                            onClick={handleClearAllNotifications}
-                            className="text-[11px] font-semibold text-red-500 hover:text-red-600 transition-colors flex items-center gap-1 cursor-pointer"
+                            onClick={() => setShowNotifications(false)}
+                            className="p-1 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer flex items-center justify-center"
+                            aria-label="Close alerts"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            Clear All
+                            <X className="w-4 h-4" />
                           </button>
-                        )}
+                        </div>
                       </div>
 
                       {notifications.length === 0 ? (
-                        <div className="py-8 flex flex-col items-center justify-center text-center text-muted-foreground gap-2">
-                          <Inbox className="w-7 h-7 opacity-40 animate-bounce" />
-                          <p className="text-xs font-semibold">
+                        <div className="py-12 flex flex-col items-center justify-center text-center text-gray-500 gap-3">
+                          <Inbox className="w-8 h-8 opacity-30 animate-bounce" />
+                          <p className="text-xs font-bold uppercase tracking-wider">
                             No active alerts
                           </p>
                         </div>
                       ) : (
-                        <div className="space-y-2.5">
+                        <div className="space-y-3">
                           {notifications.map((n) => (
                             <div
                               key={n.id}
                               onClick={() => handleNotificationClick(n)}
-                              className={`p-3 rounded-xl border transition-all cursor-pointer flex flex-col gap-1.5 ${
+                              className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col gap-2 ${
                                 n.read
-                                  ? "bg-muted/20 border-border/20 hover:bg-muted/40"
-                                  : "bg-primary/4 border-primary/25 hover:bg-primary/[0.07] shadow-sm active-glow-primary hover:border-primary/45"
+                                  ? "bg-white/2 border-white/5 hover:bg-white/5 hover:border-white/8"
+                                  : "bg-cyan-500/5 border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-500/30"
                               }`}
                             >
                               <div className="flex items-start justify-between gap-1.5">
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground uppercase tracking-wider font-mono">
+                                <span className="text-[10px] font-mono font-black text-gray-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">
                                   {n.complaintId}
                                 </span>
-                                <span className="text-[9px] text-muted-foreground font-semibold">
+                                <span className="text-[9.5px] text-gray-400 font-bold uppercase tracking-wide">
                                   {formatTime(n.timestamp)}
                                 </span>
                               </div>
-                              <p className="text-xs font-semibold text-foreground/90 leading-normal">
+                              <p className="text-xs font-semibold text-white/90 leading-relaxed">
                                 {n.message}
                               </p>
                               {!n.read && (
-                                <span className="text-[10px] font-bold text-primary self-end animate-pulse">
+                                <span className="text-[9.5px] font-black text-cyan-400 self-end animate-pulse uppercase tracking-wider">
                                   ● New Alert
                                 </span>
                               )}
@@ -560,7 +580,12 @@ export default function OfficerDashboard() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.08 }}
               >
-                <Card className={`glass-premium border premium-glow-border relative overflow-hidden transition-all duration-300 hover:scale-[1.02] group ${stat.glowClass}`}>
+                <Card 
+                  className={`glass-premium border premium-glow-border relative overflow-hidden transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] group ${stat.glowClass}`}
+                  style={{
+                    background: `radial-gradient(circle at 100% 100%, ${stat.color}0c 0%, transparent 60%)`
+                  }}
+                >
                   <div
                     className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full filter blur-xl opacity-15 pointer-events-none group-hover:scale-125 transition-transform duration-500"
                     style={{ backgroundColor: stat.color }}
@@ -568,7 +593,7 @@ export default function OfficerDashboard() {
                   <CardContent className="p-5 relative z-10">
                     <div className="flex items-center justify-between mb-3">
                       <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors group-hover:bg-opacity-20"
+                        className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors group-hover:bg-opacity-20 shadow-sm"
                         style={{
                           background: `${stat.color}15`,
                           border: `1px solid ${stat.color}25`,
@@ -577,20 +602,20 @@ export default function OfficerDashboard() {
                         <stat.icon className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" style={{ color: stat.color }} />
                       </div>
                       <span
-                        className={`text-xs font-bold flex items-center gap-0.5 ${
+                        className={`text-xs font-black flex items-center gap-0.5 ${
                           stat.up ? "text-trust-green" : "text-danger-red"
                         }`}
                       >
                         {stat.up ? (
-                          <ArrowUpRight className="w-3.5 h-3.5" />
+                          <ArrowUpRight className="w-3.5 h-3.5 stroke-[3px]" />
                         ) : (
-                          <ArrowDownRight className="w-3.5 h-3.5" />
+                          <ArrowDownRight className="w-3.5 h-3.5 stroke-[3px]" />
                         )}
                         {stat.change}
                       </span>
                     </div>
-                    <div className="text-2xl font-bold tracking-tight text-foreground/90">{stat.value.toLocaleString()}</div>
-                    <div className="text-xs font-semibold text-muted-foreground mt-1.5">{stat.title}</div>
+                    <div className="text-3xl font-black tracking-tight text-foreground drop-shadow-sm">{stat.value.toLocaleString()}</div>
+                    <div className="text-xs font-bold tracking-wide uppercase text-muted-foreground mt-2 transition-colors">{stat.title}</div>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -636,15 +661,15 @@ export default function OfficerDashboard() {
                     key={cat.name}
                     className={`glass-premium border rounded-2xl p-4 flex flex-col justify-between cursor-pointer transition-all duration-300 relative group overflow-hidden ${
                       isSelected
-                        ? "scale-[1.03] shadow-lg ring-1"
+                        ? "scale-[1.03] shadow-xl ring-1"
                         : `border-border/10 ${cat.glowClass} hover:scale-[1.02] active:scale-[0.98] bg-muted/10`
                     }`}
                     style={
                       isSelected
                         ? {
-                            borderColor: `${cat.color}70`,
-                            backgroundColor: `${cat.color}06`,
-                            boxShadow: `0 0 20px ${cat.color}20`,
+                            borderColor: `${cat.color}75`,
+                            background: `radial-gradient(circle at 100% 100%, ${cat.color}15 0%, transparent 80%)`,
+                            boxShadow: `0 8px 30px ${cat.color}20`,
                             color: cat.color,
                           }
                         : {}
@@ -665,36 +690,39 @@ export default function OfficerDashboard() {
 
                     <div className="flex items-start justify-between mb-2 relative z-10">
                       <div
-                        className={`w-8.5 h-8.5 rounded-xl flex items-center justify-center border transition-all duration-300 group-hover:rotate-12 ${cat.bg}`}
+                        className={`w-8.5 h-8.5 rounded-xl flex items-center justify-center border transition-all duration-300 group-hover:rotate-12 ${cat.bg} group-hover:scale-105`}
                         style={{ borderColor: `${cat.color}25` }}
                       >
                         <cat.icon className="w-4.5 h-4.5" style={{ color: cat.color }} />
                       </div>
                       
                       <div className="text-right">
-                        <span className="text-lg font-extrabold text-foreground leading-none block">
+                        <span className="text-lg font-black text-foreground leading-none block group-hover:scale-110 transition-transform">
                           {active}
                         </span>
-                        <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider block">
+                        <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider block mt-0.5">
                           Active
                         </span>
                       </div>
                     </div>
 
                     <div className="mt-3.5 relative z-10">
-                      <h3 className="text-xs font-bold text-foreground/90 group-hover:text-primary transition-colors leading-tight">
+                      <h3 className="text-xs font-black text-foreground/90 group-hover:text-primary transition-colors leading-tight">
                         {cat.label}
                       </h3>
                       <span className="text-[9px] text-muted-foreground font-semibold flex items-center gap-1.5 mt-1">
-                        Total: <strong className="text-foreground/75">{total}</strong>
+                        Total: <strong className="text-foreground/75 font-extrabold">{total}</strong>
                       </span>
                     </div>
 
                     {/* Progress Bar relative to maxActive */}
-                    <div className="mt-3.5 w-full bg-border/20 h-1.5 rounded-full overflow-hidden relative z-10">
+                    <div className="mt-3.5 w-full bg-slate-950/60 border border-white/5 h-2 rounded-full overflow-hidden relative z-10">
                       <motion.div
                         className="h-full rounded-full"
-                        style={{ backgroundColor: cat.color }}
+                        style={{
+                          background: `linear-gradient(90deg, ${cat.color}bb, ${cat.color})`,
+                          boxShadow: `0 0 8px ${cat.color}80`,
+                        }}
                         initial={{ width: 0 }}
                         animate={{ width: `${pct}%` }}
                         transition={{ duration: 0.8, ease: "easeOut" }}
@@ -776,25 +804,19 @@ export default function OfficerDashboard() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.06, ease: "easeOut" }}
                           >
-                            <Card className={`glass-premium border overflow-hidden transition-all duration-300 hover:scale-[1.01] group relative suspicious-section-glow ${
+                            <Card className={`glass-premium border overflow-hidden transition-all duration-300 hover:scale-[1.02] active:scale-[0.99] group relative suspicious-section-glow ${
                               trust.trustLevel === "low"
-                                ? "border-danger-red/30 hover:border-danger-red/50"
-                                : "border-warning-amber/30 hover:border-warning-amber/50"
+                                ? "border-danger-red/30 hover:border-danger-red/50 shadow-[0_4px_25px_rgba(239,68,68,0.05)]"
+                                : "border-warning-amber/30 hover:border-warning-amber/50 shadow-[0_4px_25px_rgba(245,158,11,0.05)]"
                             }`}>
-                              {/* Top colored accent strip */}
-                              <div
-                                className="h-[2px] w-full"
-                                style={{ background: `linear-gradient(90deg, transparent, ${config.color}, transparent)` }}
-                              />
-
-                              <CardContent className="p-4 space-y-3">
+                              <CardContent className="p-5 space-y-4">
                                 {/* Header: ID + Trust Badge */}
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2">
-                                    <span className="font-mono text-[10px] font-bold text-muted-foreground bg-muted/50 border border-border/20 px-1.5 py-0.5 rounded">
+                                    <span className="font-mono text-[10px] font-bold text-gray-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">
                                       {sc.id}
                                     </span>
-                                    <Badge className={`${config.bgClass} text-[9px] font-extrabold uppercase px-2 py-0.5 flex items-center gap-1`}>
+                                    <Badge className={`${config.bgClass} text-[9.5px] font-extrabold uppercase px-2.5 py-0.5 flex items-center gap-1 border border-white/5`}>
                                       <TrustIcon className="w-3 h-3" />
                                       {config.emoji} {config.label}
                                     </Badge>
@@ -802,15 +824,18 @@ export default function OfficerDashboard() {
                                 </div>
 
                                 {/* Trust Score Bar */}
-                                <div className="space-y-1">
-                                  <div className="flex justify-between text-[10px] font-bold">
-                                    <span className="text-muted-foreground">Trust Score</span>
-                                    <span style={{ color: config.color }}>{trust.trustScore}/100</span>
+                                <div className="space-y-1.5">
+                                  <div className="flex justify-between text-[11px] font-black">
+                                    <span className="text-gray-400">Trust Score</span>
+                                    <span style={{ color: config.color }} className="font-extrabold">{trust.trustScore}/100</span>
                                   </div>
-                                  <div className="h-1.5 bg-border/20 rounded-full overflow-hidden">
+                                  <div className="h-2 bg-slate-950/60 border border-white/5 rounded-full overflow-hidden relative">
                                     <motion.div
                                       className="h-full rounded-full"
-                                      style={{ backgroundColor: config.color }}
+                                      style={{
+                                        background: `linear-gradient(90deg, ${config.color}bb, ${config.color})`,
+                                        boxShadow: `0 0 8px ${config.color}80`,
+                                      }}
                                       initial={{ width: 0 }}
                                       animate={{ width: `${trust.trustScore}%` }}
                                       transition={{ duration: 0.8, ease: "easeOut" }}
@@ -819,58 +844,61 @@ export default function OfficerDashboard() {
                                 </div>
 
                                 {/* Flag Badges */}
-                                <div className="flex flex-wrap gap-1">
-                                  {trust.flags.map((flag) => (
-                                    <span
-                                      key={flag}
-                                      className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border bg-muted/30 border-border/20 text-muted-foreground"
-                                    >
-                                      {getFlagLabel(flag)}
-                                    </span>
-                                  ))}
-                                </div>
+                                {trust.flags.length > 0 && (
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {trust.flags.map((flag) => (
+                                      <span
+                                        key={flag}
+                                        className="text-[8.5px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md border border-white/5 bg-white/5 text-gray-300 shadow-sm"
+                                      >
+                                        {getFlagLabel(flag)}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
 
                                 {/* Primary Reason */}
-                                <p className="text-[11px] text-foreground/80 font-semibold leading-normal line-clamp-2">
+                                 <p className="text-xs font-semibold text-foreground/90 leading-relaxed line-clamp-2 bg-muted/30 dark:bg-white/2 border border-border/40 dark:border-white/4 p-3 rounded-xl">
                                   {trust.reasons[0] || "Suspicious activity detected"}
                                 </p>
 
                                 {/* Meta: Time + Category */}
-                                <div className="flex items-center gap-2 text-[9px] text-muted-foreground font-semibold">
-                                  <Clock className="w-3 h-3" />
+                                <div className="flex items-center gap-2 text-[9.5px] text-gray-400 font-bold tracking-wide uppercase">
+                                  <Clock className="w-3 h-3 text-gray-500" />
                                   <span>{new Date(sc.createdAt).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" })}</span>
-                                  <span className="text-muted-foreground/30">•</span>
-                                  <span className="truncate">{sc.category}</span>
+                                  <span className="text-white/10">•</span>
+                                  <span className="truncate bg-white/5 px-2 py-0.5 rounded text-[8px] tracking-wider text-gray-300 font-extrabold border border-white/5">
+                                    {sc.category}
+                                  </span>
                                 </div>
 
                                 {/* Action Buttons */}
-                                <div className="flex items-center gap-2 pt-1 border-t border-border/10">
+                                <div className="flex items-center gap-2 pt-2 border-t border-white/5">
                                   <Button
                                     size="sm"
-                                    variant="outline"
-                                    className="flex-1 text-[10px] h-8 rounded-lg border-primary/30 text-primary hover:bg-primary/5 font-bold cursor-pointer flex items-center justify-center gap-1 active:scale-95 transition-all"
+                                    className="flex-1 text-[10px] h-8 rounded-lg bg-sky-500/10 hover:bg-sky-500 hover:text-black text-sky-400 border border-sky-500/20 hover:border-transparent font-black uppercase cursor-pointer flex items-center justify-center gap-1 active:scale-95 transition-all duration-200"
                                     onClick={() => {
                                       setSelectedComplaintId(sc.id);
                                       setActiveSubTab("queue");
                                     }}
                                   >
-                                    <Eye className="w-3 h-3" />
+                                    <Eye className="w-3.5 h-3.5" />
                                     Review
                                   </Button>
                                   <Button
                                     size="sm"
-                                    className="flex-1 text-[10px] h-8 rounded-lg bg-trust-green/10 text-trust-green border border-trust-green/25 hover:bg-trust-green/20 font-bold cursor-pointer flex items-center justify-center gap-1 active:scale-95 transition-all"
+                                    className="flex-1 text-[10px] h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-black text-emerald-400 border border-emerald-500/20 hover:border-transparent font-black uppercase cursor-pointer flex items-center justify-center gap-1 active:scale-95 transition-all duration-200"
                                     onClick={() => handleMarkSafe(sc.id)}
                                   >
-                                    <ShieldCheck className="w-3 h-3" />
+                                    <ShieldCheck className="w-3.5 h-3.5" />
                                     Mark Safe
                                   </Button>
                                   <Button
                                     size="sm"
-                                    className="flex-1 text-[10px] h-8 rounded-lg bg-danger-red/10 text-danger-red border border-danger-red/25 hover:bg-danger-red/20 font-bold cursor-pointer flex items-center justify-center gap-1 active:scale-95 transition-all"
+                                    className="flex-1 text-[10px] h-8 rounded-lg bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 border border-red-500/20 hover:border-transparent font-black uppercase cursor-pointer flex items-center justify-center gap-1 active:scale-95 transition-all duration-200"
                                     onClick={() => handleConfirmSpam(sc.id)}
                                   >
-                                    <Ban className="w-3 h-3" />
+                                    <Ban className="w-3.5 h-3.5" />
                                     Spam
                                   </Button>
                                 </div>
@@ -1004,9 +1032,9 @@ export default function OfficerDashboard() {
                             return (
                               <motion.div
                                 key={c.id}
-                                className={`flex items-center gap-3.5 p-3.5 rounded-2xl cursor-pointer border transition-all duration-300 group ${
+                                className={`flex items-start gap-3 p-4 rounded-2xl cursor-pointer border transition-all duration-300 group ${
                                   isSelected
-                                    ? "bg-primary/4 border-primary/45 active-glow-primary scale-[1.01]"
+                                    ? "bg-primary/4 border-primary/45 scale-[1.01]"
                                     : "bg-muted/15 border-border/10 hover:border-primary/25 hover:bg-primary/1"
                                 }`}
                                 onClick={() => setSelectedComplaintId(c.id)}
@@ -1015,7 +1043,7 @@ export default function OfficerDashboard() {
                                 transition={{ delay: Math.min(i * 0.03, 0.3), ease: "easeOut" }}
                               >
                                 <div
-                                  className="w-2.5 h-2.5 rounded-full shrink-0 animate-pulse"
+                                  className="w-2.5 h-2.5 rounded-full shrink-0 animate-pulse mt-1.5"
                                   style={{
                                     backgroundColor:
                                       c.priority === "high"
@@ -1025,48 +1053,57 @@ export default function OfficerDashboard() {
                                         : "#10B981",
                                   }}
                                 />
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-[10px] font-mono font-bold text-muted-foreground/75">
+                                <div className="flex-1 min-w-0 space-y-2">
+                                  {/* Upper line: ID & Status */}
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-mono font-black text-gray-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">
                                       {c.id}
                                     </span>
+                                    <span className="text-[8.5px] font-black uppercase tracking-wider text-sky-400 bg-sky-950/20 border border-sky-500/20 px-2 py-0.5 rounded-md">
+                                      {c.status.replace(/_/g, " ")}
+                                    </span>
+                                  </div>
+
+                                  {/* Second line: Specific Threat Badges */}
+                                  <div className="flex flex-wrap items-center gap-1.5">
                                     <Badge
                                       variant="outline"
-                                      className={`text-[8px] uppercase tracking-wider px-1.5 py-0.1 priority-${c.priority}`}
+                                      className={`text-[8px] font-extrabold uppercase tracking-wider px-2 py-0.5 priority-${c.priority} border-transparent`}
                                     >
-                                      {c.priority}
+                                      {c.priority} priority
                                     </Badge>
                                     {c.isHotspot && (
-                                      <span className="bg-red-500/10 border border-red-500/25 text-red-500 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase animate-pulse flex items-center gap-0.5">
+                                      <span className="bg-red-500/10 border border-red-500/25 text-red-500 px-2 py-0.5 rounded-md text-[8px] font-extrabold uppercase animate-pulse flex items-center gap-0.5">
                                         🔥 HOTSPOT
                                       </span>
                                     )}
                                     {c.trustAnalysis && c.trustAnalysis.trustLevel !== "high" && (
-                                      <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase flex items-center gap-0.5 ${
+                                      <span className={`px-2 py-0.5 rounded-md text-[8px] font-extrabold uppercase flex items-center gap-0.5 ${
                                         c.trustAnalysis.trustLevel === "low"
                                           ? "bg-danger-red/10 border border-danger-red/25 text-danger-red animate-pulse"
                                           : "bg-warning-amber/10 border border-warning-amber/25 text-warning-amber"
                                       }`}>
-                                        {c.trustAnalysis.trustLevel === "low" ? "🚨" : "⚠️"} {c.trustAnalysis.trustLevel === "low" ? "FLAGGED" : "RISK"}
+                                        {c.trustAnalysis.trustLevel === "low" ? "🚨 FLAGGED" : "⚠️ RISK"}
                                       </span>
                                     )}
-                                    <span className="text-[9px] font-bold text-muted-foreground ml-auto capitalize bg-muted/50 border border-border/10 px-1.5 py-0.2 rounded">
-                                      {c.status.replace(/_/g, " ")}
-                                    </span>
                                   </div>
-                                  <div className="text-xs font-bold text-foreground/90 group-hover:text-primary transition-colors line-clamp-1">
+
+                                  {/* Title */}
+                                  <div className="text-xs font-black text-foreground group-hover:text-primary transition-colors line-clamp-1 leading-snug">
                                     {c.title}
                                   </div>
-                                  <div className="text-[10px] text-muted-foreground/80 font-medium flex items-center gap-1.5 mt-1">
-                                    <MapPin className="w-3 h-3 text-muted-foreground/50" />
+
+                                  {/* Bottom line: Meta details */}
+                                  <div className="text-[10px] text-gray-400 font-bold flex items-center gap-1.5 mt-1 uppercase tracking-wide">
+                                    <MapPin className="w-3.5 h-3.5 text-gray-500" />
                                     <span className="truncate">{c.area}</span>
-                                    <span className="text-muted-foreground/30">•</span>
-                                    <span className="bg-primary/5 border border-primary/15 text-primary px-1 py-0.1 rounded text-[8px] font-bold uppercase truncate max-w-[80px]">
+                                    <span className="text-white/10">•</span>
+                                    <span className="bg-white/5 border border-white/5 text-gray-300 px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase truncate max-w-[100px]">
                                       {c.category}
                                     </span>
                                   </div>
                                 </div>
-                                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-300" />
+                                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-300 mt-1" />
                               </motion.div>
                             );
                           })
@@ -1454,17 +1491,11 @@ export default function OfficerDashboard() {
                       {/* AI Cluster Pattern & Resolution Directive Panel */}
                       {selectedComplaint.isHotspot && (
                         <motion.div
-                          className="border border-cyan-500/30 bg-cyan-950/15 rounded-2xl p-5 relative overflow-hidden active-glow-primary shadow-[0_0_15px_-3px_rgba(6,182,212,0.15)]"
+                          className="border border-cyan-500/25 bg-cyan-950/10 rounded-2xl p-5 relative overflow-hidden backdrop-blur-md"
                           initial={{ opacity: 0, y: 15 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.1 }}
                         >
-                          {/* Laser Scanner Bar */}
-                          <motion.div
-                            className="absolute left-0 right-0 h-[1.5px] bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.7)] z-20 pointer-events-none"
-                            animate={{ top: ["0%", "100%", "0%"] }}
-                            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                          />
 
                           <div className="flex items-center justify-between border-b border-cyan-500/20 pb-3 mb-4.5">
                             <div className="flex items-center gap-2">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
   Search,
@@ -14,7 +14,6 @@ import {
   Bell,
   Trash2,
   Inbox,
-  Coins,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,7 +28,6 @@ import {
   markNotificationAsRead,
   clearNotifications,
 } from "@/lib/complaints";
-import { getTokenState } from "@/lib/tokenSystem";
 import type { Complaint, Notification } from "@/types";
 
 const priorityIcon = {
@@ -44,22 +42,39 @@ export default function CitizenDashboard() {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [selectedComplaint, setSelectedComplaint] = useState<string | null>(null);
 
+  // Search & Track Tab States
+  const [trackSearchId, setTrackSearchId] = useState("");
+  const [trackedComplaint, setTrackedComplaint] = useState<Complaint | null>(null);
+  const [trackError, setTrackError] = useState(false);
+
+  const handleSearchTrack = (idToSearch?: string) => {
+    const queryId = (idToSearch || trackSearchId).trim().toUpperCase();
+    if (!queryId) return;
+    const found = complaints.find((c) => c.id.toUpperCase() === queryId);
+    if (found) {
+      setTrackedComplaint(found);
+      setTrackError(false);
+    } else {
+      setTrackedComplaint(null);
+      setTrackError(true);
+    }
+  };
+
+  useEffect(() => {
+    if (trackSearchId) {
+      const found = complaints.find((c) => c.id.toUpperCase() === trackSearchId.trim().toUpperCase());
+      if (found) {
+        setTrackedComplaint(found);
+      }
+    }
+  }, [complaints, trackSearchId]);
+
+
+  const isHi = language === "hi";
+
   // Notification State
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
-
-  // Token System State
-  const [tokenState, setTokenState] = useState(() => getTokenState());
-
-  useEffect(() => {
-    const handleTokenChange = () => {
-      setTokenState(getTokenState());
-    };
-    window.addEventListener("janmitra-token-change", handleTokenChange);
-    return () => window.removeEventListener("janmitra-token-change", handleTokenChange);
-  }, []);
-
-  const isHi = language === "hi";
 
   // Sync notifications whenever complaints update
   useEffect(() => {
@@ -121,8 +136,16 @@ export default function CitizenDashboard() {
 
   const handleTrackComplaint = (id: string) => {
     refreshComplaints();
-    setSelectedComplaint(id);
-    setActiveTab("track");
+    setTrackSearchId(id);
+    const found = getComplaints().find((c) => c.id.toUpperCase() === id.toUpperCase());
+    if (found) {
+      setTrackedComplaint(found);
+      setTrackError(false);
+    } else {
+      setTrackedComplaint(null);
+      setTrackError(true);
+    }
+    setActiveTab("search-track");
   };
 
   const complaint = complaints.find((c) => c.id === selectedComplaint);
@@ -190,166 +213,10 @@ export default function CitizenDashboard() {
       <main className="min-h-screen pt-28 md:pt-32 pb-12 bg-[#05070f] text-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
-          {/* Top Info Banner & Telemetry Quick Stats (Floating Row) */}
-          <motion.div
-            className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-2xl bg-[#090d16]/40 border border-[#1f2937]/30 backdrop-blur-md"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-linear-to-br from-gov-blue to-ai-purple flex items-center justify-center shadow-lg shadow-gov-blue/20">
-                <Bot className="w-4.5 h-4.5 text-white" />
-              </div>
-              <div className="text-left">
-                <h1 className="text-lg font-black tracking-tight text-white">
-                  {isHi ? "नागरिक शिकायत पोर्टल" : "CITIZEN PORTAL"}
-                </h1>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                  {isHi ? "अपनी शिकायतें दर्ज करें और ट्रैक करें" : "File & track your complaints"}
-                </p>
-              </div>
-            </div>
 
-            {/* Interactive controls */}
-            <div className="flex items-center gap-3 relative justify-end">
-              {/* Token Tracker Pill */}
-              <div className="flex items-center gap-2 bg-[#090d16] border border-amber-500/20 px-3.5 py-1.5 rounded-xl shadow-inner transition-all duration-300 hover:border-amber-500/35">
-                <Coins className="w-4 h-4 text-amber-500 animate-pulse shrink-0" />
-                <div className="flex flex-col text-left">
-                  <span className="text-[9px] uppercase tracking-wider font-extrabold text-amber-500/90 leading-none">
-                    {isHi ? "दैनिक कोटा" : "Daily Tokens"}
-                  </span>
-                  <span className="text-xs font-black text-amber-200 mt-0.5 leading-none">
-                    {tokenState.tokensRemaining} / {tokenState.maxTokens}
-                  </span>
-                </div>
-                {/* Visual tiny progress bar */}
-                <div className="w-10 h-1 bg-slate-900 rounded-full overflow-hidden ml-1 border border-amber-500/10 hidden sm:block">
-                  <div 
-                    className="h-full bg-amber-500 rounded-full transition-all duration-300"
-                    style={{ width: `${(tokenState.tokensRemaining / tokenState.maxTokens) * 100}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Notification Bell Component */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowNotifications(!showNotifications)}
-                  className={`relative p-2 rounded-xl border transition-all cursor-pointer flex items-center justify-center active:scale-95 h-9 w-9 ${
-                    showNotifications 
-                      ? "bg-primary/10 text-primary border-primary/30" 
-                      : "bg-[#090d16] border-[#1f2937]/60 hover:bg-slate-900 hover:text-white text-gray-400"
-                  }`}
-                  aria-label="Notifications"
-                >
-                  <Bell className="w-4.5 h-4.5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4.5 h-4.5 bg-red-500 text-[9px] font-black text-white rounded-full flex items-center justify-center border border-background animate-pulse shadow-md">
-                      {unreadCount}
-                    </span>
-                  )}
-                </button>
-
-                {/* Notifications Dropdown */}
-                {showNotifications && (
-                  <>
-                    <div 
-                      className="fixed inset-0 z-40 cursor-default" 
-                      onClick={() => setShowNotifications(false)} 
-                    />
-                    <div className="absolute right-0 mt-3 w-80 max-h-[420px] overflow-y-auto z-50 rounded-2xl p-4 shadow-xl border border-[#1f2937]/80 bg-[#090d16] backdrop-blur-md animate-in fade-in slide-in-from-top-3 duration-200">
-                      <div className="flex items-center justify-between border-b border-[#1f2937]/50 pb-3 mb-3">
-                        <h4 className="font-bold text-xs text-white">
-                          {isHi ? "सूचनाएं" : "Notifications"}
-                        </h4>
-                        {notifications.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={handleClearAllNotifications}
-                            className="text-[10px] font-black text-red-500 hover:text-red-400 transition-colors flex items-center gap-1 cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            {isHi ? "साफ़ करें" : "Clear All"}
-                          </button>
-                        )}
-                      </div>
-
-                      {notifications.length === 0 ? (
-                        <div className="py-8 flex flex-col items-center justify-center text-center text-gray-500 gap-2">
-                          <Inbox className="w-8 h-8 opacity-40" />
-                          <p className="text-xs font-semibold">
-                            {isHi ? "कोई नई सूचना नहीं" : "No new notifications"}
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2.5">
-                          {notifications.map((n) => (
-                            <div
-                              key={n.id}
-                              onClick={() => handleNotificationClick(n)}
-                              className={`p-3 rounded-xl border transition-all cursor-pointer flex flex-col gap-1.5 text-left ${
-                                n.read
-                                  ? "bg-slate-950/40 border-[#1f2937]/50 hover:bg-slate-900/30"
-                                  : "bg-indigo-500/5 border-indigo-500/25 hover:bg-indigo-500/10 shadow-sm active-glow-primary hover:border-indigo-500/45"
-                              }`}
-                            >
-                              <div className="flex items-start justify-between gap-1.5">
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-900 text-gray-400 uppercase tracking-wider font-mono">
-                                  {n.complaintId}
-                                </span>
-                                <span className="text-[9px] text-gray-500 font-semibold">
-                                  {formatTime(n.timestamp)}
-                                </span>
-                              </div>
-                              <p className="text-xs font-bold text-gray-300 leading-normal">
-                                {isHi ? n.messageHi : n.message}
-                              </p>
-                              {!n.read && (
-                                <span className="text-[9px] font-black text-indigo-400 self-end animate-pulse">
-                                  {isHi ? "● नया" : "● New"}
-                                </span>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Language Toggler */}
-              <div className="flex items-center gap-1 bg-[#090d16] border border-[#1f2937]/60 p-1 rounded-xl shadow-inner w-fit h-9">
-                <button
-                  type="button"
-                  onClick={() => setLanguage("en")}
-                  className={`px-3.5 h-7 text-[10px] font-black rounded transition-all cursor-pointer ${
-                    language === "en"
-                      ? "bg-[#111827] text-white border border-[#1f2937]/80"
-                      : "text-gray-400 hover:text-white"
-                  }`}
-                >
-                  EN
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLanguage("hi")}
-                  className={`px-3.5 h-7 text-[10px] font-black rounded transition-all cursor-pointer ${
-                    language === "hi"
-                      ? "bg-[#111827] text-white border border-[#1f2937]/80"
-                      : "text-gray-400 hover:text-white"
-                  }`}
-                >
-                  हिन्दी
-                </button>
-              </div>
-            </div>
-          </motion.div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <div className="flex items-center justify-start border-b border-[#1f2937]/30 pb-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#1f2937]/30 pb-2">
               <TabsList className="bg-[#090d16] border border-[#1f2937]/45 p-1 rounded-xl h-11 gap-1.5 shadow-lg shadow-black/10">
                 <TabsTrigger
                   value="new"
@@ -365,7 +232,131 @@ export default function CitizenDashboard() {
                   <Search className="w-4 h-4" />
                   {dict.myComplaints.toUpperCase()}
                 </TabsTrigger>
+                <TabsTrigger
+                  value="search-track"
+                  className="gap-2 px-4 h-8.5 rounded-lg text-xs font-black transition-all duration-200 cursor-pointer data-[state=active]:bg-[#111827] data-[state=active]:text-white data-[state=active]:border data-[state=active]:border-[#1f2937]/80 hover:bg-slate-900/60 text-gray-400"
+                >
+                  <Search className="w-4 h-4" />
+                  {isHi ? "शिकायत ट्रैक करें" : "TRACK COMPLAINT"}
+                </TabsTrigger>
               </TabsList>
+
+              {/* Utility Panel: Notifications & Language Toggle */}
+              <div className="flex items-center gap-3 relative justify-end">
+                {/* Notification Bell Component */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowNotifications(!showNotifications)}
+                    className={`relative p-2 rounded-xl border transition-all cursor-pointer flex items-center justify-center active:scale-95 h-9 w-9 ${
+                      showNotifications 
+                        ? "bg-primary/10 text-primary border-primary/30" 
+                        : "bg-[#090d16] border-[#1f2937]/60 hover:bg-slate-900 hover:text-white text-gray-400"
+                    }`}
+                    aria-label="Notifications"
+                  >
+                    <Bell className="w-4.5 h-4.5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 w-4.5 h-4.5 bg-red-500 text-[9px] font-black text-white rounded-full flex items-center justify-center border border-background animate-pulse shadow-md">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Notifications Dropdown */}
+                  {showNotifications && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-40 cursor-default" 
+                        onClick={() => setShowNotifications(false)} 
+                      />
+                      <div className="absolute right-0 mt-3 w-80 max-h-[420px] overflow-y-auto z-50 rounded-2xl p-4 shadow-xl border border-[#1f2937]/80 bg-[#090d16] backdrop-blur-md animate-in fade-in slide-in-from-top-3 duration-200">
+                        <div className="flex items-center justify-between border-b border-[#1f2937]/50 pb-3 mb-3">
+                          <h4 className="font-bold text-xs text-white">
+                            {isHi ? "सूचनाएं" : "Notifications"}
+                          </h4>
+                          {notifications.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={handleClearAllNotifications}
+                              className="text-[10px] font-black text-red-500 hover:text-red-400 transition-colors flex items-center gap-1 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              {isHi ? "साफ़ करें" : "Clear All"}
+                            </button>
+                          )}
+                        </div>
+
+                        {notifications.length === 0 ? (
+                          <div className="py-8 flex flex-col items-center justify-center text-center text-gray-500 gap-2">
+                            <Inbox className="w-8 h-8 opacity-40" />
+                            <p className="text-xs font-semibold">
+                              {isHi ? "कोई नई सूचना नहीं" : "No new notifications"}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2.5">
+                            {notifications.map((n) => (
+                              <div
+                                key={n.id}
+                                onClick={() => handleNotificationClick(n)}
+                                className={`p-3 rounded-xl border transition-all cursor-pointer flex flex-col gap-1.5 text-left ${
+                                  n.read
+                                    ? "bg-slate-950/40 border-[#1f2937]/50 hover:bg-slate-900/30"
+                                    : "bg-indigo-500/5 border-indigo-500/25 hover:bg-indigo-500/10 shadow-sm active-glow-primary hover:border-indigo-500/45"
+                                }`}
+                              >
+                                <div className="flex items-start justify-between gap-1.5">
+                                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-900 text-gray-400 uppercase tracking-wider font-mono">
+                                    {n.complaintId}
+                                  </span>
+                                  <span className="text-[9px] text-gray-500 font-semibold">
+                                    {formatTime(n.timestamp)}
+                                  </span>
+                                </div>
+                                <p className="text-xs font-bold text-gray-300 leading-normal">
+                                  {isHi ? n.messageHi : n.message}
+                                </p>
+                                {!n.read && (
+                                  <span className="text-[9px] font-black text-indigo-400 self-end animate-pulse">
+                                    {isHi ? "● नया" : "● New"}
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Language Toggler */}
+                <div className="flex items-center gap-1 bg-[#090d16] border border-[#1f2937]/60 p-1 rounded-xl shadow-inner w-fit h-9">
+                  <button
+                    type="button"
+                    onClick={() => setLanguage("en")}
+                    className={`px-3.5 h-7 text-[10px] font-black rounded transition-all cursor-pointer ${
+                      language === "en"
+                        ? "bg-[#111827] text-white border border-[#1f2937]/80"
+                        : "text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    EN
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLanguage("hi")}
+                    className={`px-3.5 h-7 text-[10px] font-black rounded transition-all cursor-pointer ${
+                      language === "hi"
+                        ? "bg-[#111827] text-white border border-[#1f2937]/80"
+                        : "text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    हिन्दी
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* New Complaint Tab */}
@@ -560,6 +551,163 @@ export default function CitizenDashboard() {
                     </div>
                   )}
                 </div>
+              </div>
+            </TabsContent>
+
+            {/* Search and Track Tab */}
+            <TabsContent value="search-track">
+              <div className="max-w-2xl mx-auto space-y-6 text-left animate-in fade-in slide-in-from-bottom-4 duration-300">
+                {/* Search Bar Block */}
+                <div className="bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-6 sm:p-7 space-y-4 shadow-xl">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Search className="w-5 h-5 text-indigo-400" />
+                    <h3 className="font-extrabold text-sm uppercase tracking-wider text-white">
+                      {isHi ? "अपनी शिकायत ट्रैक करें" : "Track Your Complaint"}
+                    </h3>
+                  </div>
+                  
+                  <p className="text-xs text-gray-400 font-semibold leading-relaxed">
+                    {isHi 
+                      ? "अपनी शिकायत की वास्तविक समय में प्रगति देखने के लिए अपनी विशिष्ट शिकायत संख्या (जैसे, JM-2026-011) दर्ज करें।" 
+                      : "Enter your unique complaint number (e.g., JM-2026-011) to track its real-time progress and resolution status."}
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <input
+                      type="text"
+                      value={trackSearchId}
+                      onChange={(e) => setTrackSearchId(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSearchTrack();
+                      }}
+                      placeholder="JM-2026-011"
+                      className="flex-1 text-sm border border-[#1f2937]/80 focus:border-[#7c3aed]/60 focus:ring-1 focus:ring-[#7c3aed]/40 rounded-xl px-4 py-3 bg-[#070b13] text-gray-100 placeholder:text-gray-600 outline-none transition-all focus:shadow-[0_0_20px_rgba(124,58,237,0.15)] focus:scale-[1.002]"
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => handleSearchTrack()}
+                      className="rounded-xl bg-[#7c3aed] text-white hover:bg-[#6d28d9] px-6 font-bold cursor-pointer transition-all active:scale-95 py-3 h-auto text-xs uppercase"
+                    >
+                      {isHi ? "खोजें और ट्रैक करें" : "Search & Track"}
+                    </Button>
+                  </div>
+
+                  {trackError && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-xs font-bold text-red-400 pt-1 flex items-center gap-1.5"
+                    >
+                      <AlertTriangle className="w-4 h-4 shrink-0 animate-pulse" />
+                      {isHi 
+                        ? "शिकायत संख्या नहीं मिली। कृपया पुनः जांचें और सही नंबर दर्ज करें।" 
+                        : "Complaint ID not found. Please double-check and enter a valid ID."}
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* Tracked Results Area */}
+                <AnimatePresence mode="wait">
+                  {trackedComplaint ? (
+                    <motion.div
+                      key={trackedComplaint.id}
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -15 }}
+                      className="space-y-6"
+                    >
+                      {/* Details Header */}
+                      <div className="glass-premium rounded-2xl p-6 relative overflow-hidden border border-[#1f2937]/50 shadow-xl">
+                        <div className="absolute -right-12 -top-12 w-28 h-28 bg-indigo-500/5 rounded-full filter blur-xl pointer-events-none" />
+                        
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="font-mono text-sm font-bold text-muted-foreground/70">
+                            {trackedComplaint.id}
+                          </span>
+                          <Badge className={`priority-${trackedComplaint.priority} font-bold text-xs uppercase px-2.5 py-0.5`}>
+                            {getPriorityLabel(trackedComplaint.priority).toUpperCase()} {isHi ? "प्राथमिकता" : "PRIORITY"}
+                          </Badge>
+                        </div>
+                        <h2 className="text-xl font-bold tracking-tight text-white mb-2">
+                          {isHi ? trackedComplaint.titleHi : trackedComplaint.title}
+                        </h2>
+                        <p className="text-sm text-gray-400 leading-relaxed mb-4">
+                          {isHi ? trackedComplaint.descriptionHi : trackedComplaint.description}
+                        </p>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="bg-[#090d16]/30 rounded-xl p-4 border border-[#1f2937]/30">
+                            <div className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">
+                              {dict.department}
+                            </div>
+                            <div className="font-bold text-xs text-white">
+                              {isHi ? trackedComplaint.departmentHi : trackedComplaint.department}
+                            </div>
+                          </div>
+                          <div className="bg-[#090d16]/30 rounded-xl p-4 border border-[#1f2937]/30">
+                            <div className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">
+                              {isHi ? "क्षेत्र" : "Area"}
+                            </div>
+                            <div className="font-bold text-xs text-white">
+                              {translateArea(trackedComplaint.area)}
+                            </div>
+                          </div>
+                        </div>
+
+                        {trackedComplaint.assignedOfficer && (
+                          <div className="mt-4 bg-[#090d16]/20 rounded-xl p-3 border border-[#1f2937]/20 flex items-center gap-2">
+                            <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">
+                              {dict.assignedOfficer}:
+                            </span>
+                            <span className="text-xs font-extrabold text-gray-300">
+                              {trackedComplaint.assignedOfficer}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* AI Summary */}
+                      <div className="glass-card rounded-2xl p-6 bg-indigo-500/5 border border-indigo-500/10">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Bot className="w-5 h-5 text-indigo-400 animate-pulse" />
+                          <span className="font-bold text-sm text-white">{dict.aiSummary}</span>
+                          <Badge variant="outline" className="text-xs ml-auto border-indigo-500/30 text-indigo-400 bg-indigo-500/5 font-semibold">
+                            {Math.round(trackedComplaint.aiConfidence * 100)}% {dict.confidence}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-gray-300 leading-relaxed font-semibold bg-black/40 border border-indigo-500/10 rounded-xl p-4 shadow-inner">
+                          {isHi ? trackedComplaint.aiSummaryHi : trackedComplaint.aiSummary}
+                        </p>
+                      </div>
+
+                      {/* Timeline */}
+                      <div className="glass-card rounded-2xl p-6 border border-[#1f2937]/50">
+                        <h3 className="font-semibold text-sm text-white mb-4 flex items-center gap-2">
+                          <Eye className="w-4 h-4 text-indigo-400" />
+                          {isHi ? "शिकायत ट्रैकिंग टाइमलाइन" : "Grievance Progress Timeline"}
+                        </h3>
+                        <TrackingTimeline events={trackedComplaint.timeline} language={language} />
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="no-search"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="glass-card rounded-2xl p-12 text-center border border-[#1f2937]/30"
+                    >
+                      <Bot className="w-12 h-12 text-indigo-400/30 mx-auto mb-4 animate-pulse" />
+                      <h3 className="font-bold text-base text-gray-300 mb-2">
+                        {isHi ? "खोज परिणाम खाली" : "Awaiting Tracking Query"}
+                      </h3>
+                      <p className="text-xs text-gray-500 font-semibold max-w-sm mx-auto leading-relaxed">
+                        {isHi 
+                          ? "शिकायत की वर्तमान स्थिति और लाइव प्रशासनिक गतिविधियों को देखने के लिए ऊपर अपना नंबर दर्ज करें।" 
+                          : "Enter your ticket number above to display its active status and live administrative workflow logs."}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </TabsContent>
           </Tabs>

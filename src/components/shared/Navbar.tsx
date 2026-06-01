@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -57,7 +56,7 @@ export function Navbar() {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-[#05070f]/80 backdrop-blur-xl border-b border-[#1e293b]/40 shadow-[0_4px_30px_rgba(0,0,0,0.4)]">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/70 dark:bg-[#05070f]/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-[#1e293b]/40 shadow-[0_4px_30px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.4)]">
 
       {/* Main Nav Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -70,7 +69,7 @@ export function Navbar() {
               </div>
             </div>
             <div className="flex flex-col text-left">
-              <span className="text-base font-black tracking-tight text-white group-hover:text-blue-400 transition-colors duration-300">
+              <span className="text-base font-black tracking-tight text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
                 JANMITRA
               </span>
               <span className="text-[8.5px] font-bold text-gray-500 tracking-wider uppercase leading-none mt-0.5">
@@ -93,18 +92,18 @@ export function Navbar() {
 
             {/* Admin Portal Dropdown */}
             <DropdownMenu>
-              <DropdownMenuTrigger className="h-9 px-4 border border-slate-800 hover:border-slate-700 bg-[#090d16] hover:bg-slate-900 text-gray-200 hover:text-white shadow-[0_0_8px_rgba(255,255,255,0.02)] transition-all duration-300 text-xs font-black tracking-wider uppercase cursor-pointer rounded-lg gap-1.5 focus-visible:ring-0 flex items-center justify-center select-none outline-none">
-                <Shield className="w-3.5 h-3.5 text-gray-400" />
+              <DropdownMenuTrigger className="h-9 px-4 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white/50 dark:bg-[#090d16] hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-700 dark:text-gray-200 hover:text-slate-900 dark:hover:text-white shadow-[0_0_8px_rgba(0,0,0,0.02)] dark:shadow-[0_0_8px_rgba(255,255,255,0.02)] transition-all duration-300 text-xs font-black tracking-wider uppercase cursor-pointer rounded-lg gap-1.5 focus-visible:ring-0 flex items-center justify-center select-none outline-none">
+                <Shield className="w-3.5 h-3.5 text-slate-500 dark:text-gray-400" />
                 Admin Portal
                 <span className="ml-1 text-[8px] opacity-60">▼</span>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-[#05070f]/95 backdrop-blur-xl border border-slate-800/80 shadow-[0_10px_40px_rgba(0,0,0,0.6)] text-gray-200 rounded-xl p-1.5 min-w-[200px] mt-1 z-50">
-                <DropdownMenuItem render={<Link href="/officer" className="flex items-center gap-2.5 px-3 py-2 text-xs font-black uppercase text-gray-300 hover:text-white focus:text-white focus:bg-linear-to-r focus:from-blue-600/20 focus:to-violet-600/20 hover:bg-linear-to-r hover:from-blue-600/20 hover:to-violet-600/20 border border-transparent focus:border-violet-500/30 hover:border-violet-500/30 rounded-lg transition-all duration-200 cursor-pointer" />}>
-                  <LayoutDashboard className="w-4 h-4 text-sky-400" />
+              <DropdownMenuContent align="end" className="bg-white/95 dark:bg-[#05070f]/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 shadow-[0_10px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.6)] text-slate-800 dark:text-gray-200 rounded-xl p-1.5 min-w-[200px] mt-1 z-50">
+                <DropdownMenuItem render={<Link href="/officer" className="flex items-center gap-2.5 px-3 py-2 text-xs font-black uppercase text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white focus:text-slate-900 dark:focus:text-white focus:bg-linear-to-r focus:from-blue-600/10 dark:focus:from-blue-600/20 focus:to-violet-600/10 dark:focus:to-violet-600/20 hover:bg-linear-to-r hover:from-blue-600/10 dark:hover:from-blue-600/20 hover:to-violet-600/10 dark:hover:to-violet-600/20 border border-transparent focus:border-violet-500/20 dark:focus:border-violet-500/30 hover:border-violet-500/20 dark:hover:border-violet-500/30 rounded-lg transition-all duration-200 cursor-pointer" />}>
+                  <LayoutDashboard className="w-4 h-4 text-sky-550 dark:text-sky-400" />
                   Officer Console
                 </DropdownMenuItem>
-                <DropdownMenuItem render={<Link href="/admin" className="flex items-center gap-2.5 px-3 py-2 text-xs font-black uppercase text-gray-300 hover:text-white focus:text-white focus:bg-linear-to-r focus:from-blue-600/20 focus:to-violet-600/20 hover:bg-linear-to-r hover:from-blue-600/20 hover:to-violet-600/20 border border-transparent focus:border-violet-500/30 hover:border-violet-500/30 rounded-lg transition-all duration-200 cursor-pointer mt-1" />}>
-                  <BarChart3 className="w-4 h-4 text-pink-400" />
+                <DropdownMenuItem render={<Link href="/admin" className="flex items-center gap-2.5 px-3 py-2 text-xs font-black uppercase text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white focus:text-slate-900 dark:focus:text-white focus:bg-linear-to-r focus:from-blue-600/10 dark:focus:from-blue-600/20 focus:to-violet-600/10 dark:focus:to-violet-600/20 hover:bg-linear-to-r hover:from-blue-600/10 dark:hover:from-blue-600/20 hover:to-violet-600/10 dark:hover:to-violet-600/20 border border-transparent focus:border-violet-500/20 dark:focus:border-violet-500/30 hover:border-violet-500/20 dark:hover:border-violet-500/30 rounded-lg transition-all duration-200 cursor-pointer mt-1" />}>
+                  <BarChart3 className="w-4 h-4 text-pink-500 dark:text-pink-400" />
                   CAG Admin Panel
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -112,29 +111,23 @@ export function Navbar() {
 
             {session && (
               <div className="flex items-center gap-2.5 pl-1.5 border-l border-slate-800/80">
-                <Badge variant="outline" className="hidden lg:flex items-center gap-1.5 px-3 py-1 border-emerald-500/30 bg-emerald-500/5 text-xs font-extrabold text-emerald-400 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.08)]">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#10b981]" />
-                  {session.role === "admin" ? "CAG Admin" : "Officer Console"}
-                </Badge>
                 <Button
                   onClick={handleLogout}
-                  variant="ghost"
-                  className="gap-1.5 text-xs font-extrabold text-red-400 hover:text-red-300 bg-red-950/5 hover:bg-red-950/15 border border-red-500/20 hover:border-red-500/40 transition-all duration-300 cursor-pointer h-9 px-3.5 rounded-lg shadow-[0_0_10px_rgba(239,68,68,0.05)] group"
+                  className="h-9 px-4 bg-red-50 dark:bg-red-950/35 hover:bg-linear-to-r hover:from-red-600 hover:to-rose-600 text-red-600 dark:text-red-400 hover:text-white font-black tracking-wider uppercase border border-red-200 dark:border-red-500/30 hover:border-transparent rounded-lg transition-all duration-300 text-xs gap-2 cursor-pointer shadow-[0_2px_10px_rgba(239,68,68,0.05)] hover:shadow-[0_0_18px_rgba(239,68,68,0.3)] dark:hover:shadow-[0_0_18px_rgba(239,68,68,0.35)] hover:scale-[1.03] active:scale-[0.97] group"
                 >
-                  <LogOut className="w-3.5 h-3.5 text-red-400 transition-transform duration-300 group-hover:translate-x-0.5" />
+                  <LogOut className="w-3.5 h-3.5 text-red-600 dark:text-red-400 group-hover:text-white transition-transform duration-300 group-hover:translate-x-0.5" />
                   <span>Logout</span>
                 </Button>
               </div>
             )}
           </div>
 
-          {/* Mobile menu trigger + theme toggle */}
           <div className="flex md:hidden items-center gap-2">
             <ThemeToggle />
             <Button
               variant="ghost"
               size="icon"
-              className="text-gray-300 cursor-pointer hover:bg-slate-900 rounded-lg"
+              className="text-slate-700 dark:text-gray-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg"
               onClick={() => setOpen(!open)}
             >
               {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -143,14 +136,13 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile dropdown */}
       <AnimatePresence>
         {open && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-[#05070f]/95 backdrop-blur-lg border-t border-slate-800/60 overflow-hidden shadow-2xl"
+            className="md:hidden bg-white/95 dark:bg-[#05070f]/95 backdrop-blur-lg border-t border-slate-200/60 dark:border-slate-800/60 overflow-hidden shadow-2xl"
           >
             <div className="px-4 py-4 space-y-4">
               {/* File Complaint Link */}
@@ -162,20 +154,20 @@ export function Navbar() {
               </Link>
 
               {/* Admin Portal sub-section */}
-              <div className="space-y-2 pt-2 border-t border-slate-800/60">
+              <div className="space-y-2 pt-2 border-t border-slate-200/60 dark:border-slate-800/60">
                 <div className="text-[10px] font-black uppercase text-gray-500 tracking-widest px-2">
                   Admin Portal
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <Link href="/officer" onClick={() => setOpen(false)}>
-                    <Button variant="outline" className="w-full border-slate-800 bg-[#090d16] text-gray-300 hover:text-white justify-center gap-2 text-xs py-4.5 font-bold uppercase cursor-pointer rounded-lg">
-                      <LayoutDashboard className="w-3.5 h-3.5 text-sky-400" />
+                    <Button variant="outline" className="w-full border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-[#090d16] text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white justify-center gap-2 text-xs py-4.5 font-bold uppercase cursor-pointer rounded-lg">
+                      <LayoutDashboard className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400" />
                       Officer Login
                     </Button>
                   </Link>
                   <Link href="/admin" onClick={() => setOpen(false)}>
-                    <Button variant="outline" className="w-full border-slate-800 bg-[#090d16] text-gray-300 hover:text-white justify-center gap-2 text-xs py-4.5 font-bold uppercase cursor-pointer rounded-lg">
-                      <BarChart3 className="w-3.5 h-3.5 text-pink-400" />
+                    <Button variant="outline" className="w-full border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-[#090d16] text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white justify-center gap-2 text-xs py-4.5 font-bold uppercase cursor-pointer rounded-lg">
+                      <BarChart3 className="w-3.5 h-3.5 text-pink-500 dark:text-pink-400" />
                       Admin Login
                     </Button>
                   </Link>
@@ -183,22 +175,16 @@ export function Navbar() {
               </div>
 
               {session && (
-                <div className="pt-2 border-t border-slate-800/60 space-y-2">
-                  <div className="flex items-center gap-2 px-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#10b981]" />
-                    <span className="text-xs font-extrabold text-emerald-400 uppercase">
-                      Logged in: {session.role === "admin" ? "CAG Admin" : "Officer Console"}
-                    </span>
-                  </div>
+                <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800/60">
                   <Button
                     onClick={() => {
                       setOpen(false);
                       handleLogout();
                     }}
-                    className="w-full bg-red-950/20 text-red-400 border border-red-500/20 hover:bg-red-950/40 hover:text-red-300 font-bold gap-2 cursor-pointer py-4 text-xs uppercase rounded-lg"
+                    className="w-full bg-red-50 dark:bg-red-950/30 hover:bg-linear-to-r hover:from-red-600 hover:to-rose-600 text-red-600 dark:text-red-400 hover:text-white font-black tracking-wider uppercase border border-red-200 dark:border-red-500/30 hover:border-transparent rounded-lg transition-all duration-300 py-4.5 text-xs gap-2 cursor-pointer shadow-[0_2px_10px_rgba(239,68,68,0.05)] hover:shadow-[0_0_18px_rgba(239,68,68,0.3)] dark:hover:shadow-[0_0_18px_rgba(239,68,68,0.35)] hover:scale-[1.02] active:scale-[0.98] group"
                   >
-                    <LogOut className="w-4 h-4" />
-                    Logout
+                    <LogOut className="w-4 h-4 text-red-600 dark:text-red-400 group-hover:text-white transition-transform duration-300 group-hover:translate-x-0.5" />
+                    <span>Logout</span>
                   </Button>
                 </div>
               )}

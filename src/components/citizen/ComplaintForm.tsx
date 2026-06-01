@@ -223,24 +223,41 @@ export function ComplaintForm({
     }
   };
 
-  const detectLocation = useCallback(() => {
+  const detectLocation = useCallback(async () => {
+    const fetchAddress = async (lat: number, lng: number) => {
+      try {
+        const res = await fetch(`/api/geocode?lat=${lat}&lng=${lng}&lang=${language}`);
+        if (!res.ok) throw new Error("Geocode API failed");
+        const data = await res.json();
+        return data.area;
+      } catch (err) {
+        console.error("Geocoding fetch failed:", err);
+        return isHi ? "गोमती नगर, लखनऊ" : "Gomti Nagar, Lucknow";
+      }
+    };
+
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setLocation({
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-            area: isHi ? "गोमती नगर, लखनऊ" : "Gomti Nagar, Lucknow", // Simulated reverse geocode
-          });
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          const area = await fetchAddress(lat, lng);
+          setLocation({ lat, lng, area });
         },
-        () => {
-          setLocation({ lat: 26.8567, lng: 80.9462, area: isHi ? "लखनऊ, उत्तर प्रदेश" : "Lucknow, UP" });
+        async () => {
+          const lat = 26.8567;
+          const lng = 80.9462;
+          const area = await fetchAddress(lat, lng);
+          setLocation({ lat, lng, area });
         }
       );
     } else {
-      setLocation({ lat: 26.8567, lng: 80.9462, area: isHi ? "लखनऊ, उत्तर प्रदेश" : "Lucknow, UP" });
+      const lat = 26.8567;
+      const lng = 80.9462;
+      const area = await fetchAddress(lat, lng);
+      setLocation({ lat, lng, area });
     }
-  }, [isHi]);
+  }, [isHi, language]);
 
   // Speech Recording via Web Speech API (Client-side real-time transcript) with fallback to MediaRecorder & backend API
   const startVoiceRecording = useCallback(async () => {
@@ -280,8 +297,12 @@ export function ComplaintForm({
             recognition.stop();
           } catch (e) {}
 
-          if (event.error === "no-speech" || event.error === "not-allowed" || event.error === "permission") {
-            runMockFallback();
+          if (event.error === "no-speech") {
+            // Silence/pause detected. Stop recording state gracefully without replacing user input!
+            setIsRecording(false);
+          } else if (event.error === "not-allowed" || event.error === "permission") {
+            // Blocked, try MediaRecorder fallback
+            runMediaRecorderFallback();
           } else {
             runMediaRecorderFallback();
           }
@@ -314,7 +335,7 @@ export function ComplaintForm({
         let mimeType = "audio/webm";
         if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
           options = { mimeType: "audio/webm;codecs=opus" };
-          mimeType = "audio/webm";
+          mimeType = "audio/webm;codecs=opus";
         } else if (MediaRecorder.isTypeSupported("audio/webm")) {
           options = { mimeType: "audio/webm" };
           mimeType = "audio/webm";
@@ -360,7 +381,7 @@ export function ComplaintForm({
                 },
                 body: JSON.stringify({
                   audio: base64Audio,
-                  mimeType: mimeType,
+                  mimeType: mimeType.split(";")[0],
                 }),
               });
               
@@ -404,7 +425,7 @@ export function ComplaintForm({
         fallbackTimeoutRef.current = null;
       }, 3000);
     }
-  }, [isHi]);
+  }, [isHi, language]);
 
   const stopVoiceRecording = useCallback(() => {
     if (recognitionRef.current) {

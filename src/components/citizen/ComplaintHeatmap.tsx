@@ -79,9 +79,6 @@ export default function ComplaintHeatmap({
 
   return (
     <div className="relative w-full h-full min-h-[480px] rounded-2xl border border-border/30 overflow-hidden shadow-2xl bg-slate-950">
-      {/* Dynamic Laser Scanning Effect simulating AI diagnostics */}
-      <div className="holo-scanline" />
-
       {/* CartoDB Dark Heatmap Canvas */}
       <MapContainer
         center={LUCKNOW_CENTER}
