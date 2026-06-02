@@ -18,7 +18,21 @@ import {
   Zap,
   Sliders,
   Plus,
+  ShieldCheck,
+  LayoutDashboard,
+  Layers,
+  MapPin,
+  Fingerprint,
+  User,
+  LogOut,
+  Settings,
+  Bell,
+  Trash2,
+  Inbox,
+  X,
+  FileText,
 } from "lucide-react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/shared/Navbar";
@@ -65,8 +79,13 @@ export default function AdminDashboard() {
   const [mounted, setMounted] = useState(false);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
-
   const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [activeSidebarTab, setActiveSidebarTab] = useState("analytics");
+  
+  // Header Notification states
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Token System states
   const [maxTokens, setMaxTokens] = useState(3);
@@ -132,6 +151,12 @@ export default function AdminDashboard() {
     window.addEventListener("janmitra-db-change", handleSync);
     window.addEventListener("storage", handleSync);
 
+    // Initial notifications load
+    // Using empty array as placeholder until backend notification system is implemented
+    const notifs: any[] = [];
+    setNotifications(notifs);
+    setUnreadCount(0);
+
     return () => {
       window.removeEventListener("focus", handleTabSync);
       window.removeEventListener("visibilitychange", handleTabSync);
@@ -139,6 +164,16 @@ export default function AdminDashboard() {
       window.removeEventListener("storage", handleSync);
     };
   }, []);
+
+  const handleNotificationClick = (notification: any) => {
+    // Placeholder for mark as read functionality
+    setShowNotifications(false);
+  };
+
+  const handleClearAllNotifications = () => {
+    setNotifications([]);
+    setUnreadCount(0);
+  };
 
   if (!mounted || !stats || !analytics) {
     return (
@@ -162,52 +197,217 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <>
-      <Navbar />
-      <main className="min-h-screen pt-24 md:pt-28 pb-12 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <motion.div
-            className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-linear-to-br from-ai-purple to-ai-purple flex items-center justify-center shadow-md shadow-ai-purple/20">
-                <BarChart3 className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold">Admin Analytics</h1>
-                <p className="text-sm text-muted-foreground">
-                  AI-powered insights across all departments
-                </p>
-              </div>
+    <div className="min-h-screen flex bg-[#060b14]">
+      {/* ============================================ */}
+      {/* FULL HEIGHT LEFT SIDEBAR                     */}
+      <aside className="w-[260px] bg-[#0a1120] border-r border-border/10 hidden lg:flex flex-col fixed inset-y-0 left-0 z-50 shadow-2xl">
+        <div className="h-16 flex items-center px-6 border-b border-border/10 shrink-0">
+          <span className="text-xl font-black text-white flex items-center gap-2 tracking-tight">
+            <div className="w-8 h-8 bg-linear-to-br from-ai-purple to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-ai-purple/20">
+              <ShieldCheck className="w-5 h-5 text-white" />
             </div>
-            <Badge variant="outline" className="gap-1.5 px-3 py-1 font-bold border-ai-purple/35 bg-ai-purple/5 text-ai-purple">
-              <Brain className="w-3.5 h-3.5 text-ai-purple animate-pulse" />
-              AI Insights Engine Active
-            </Badge>
-          </motion.div>
+            JanMitra <span className="text-ai-purple text-[10px] uppercase ml-1 border border-ai-purple/30 px-1.5 py-0.5 rounded">Admin</span>
+          </span>
+        </div>
+        
+        <div className="flex-1 py-6 flex flex-col gap-2 px-3 overflow-y-auto custom-scrollbar">
+          <p className="text-[10px] font-black tracking-wider text-muted-foreground uppercase px-3 pb-2">
+            Admin Modules
+          </p>
+          {[
+            { id: "analytics", label: "Dashboard Analytics", icon: BarChart3 },
+            { id: "insights", label: "Predictive Insights", icon: Sparkles },
+            { id: "tokens", label: "Token Controls", icon: Coins },
+            { id: "registry", label: "Nodal Registry", icon: FileText },
+            { id: "settings", label: "System Settings", icon: Settings },
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveSidebarTab(item.id)}
+              className={`flex items-center justify-between w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all cursor-pointer group relative overflow-hidden ${
+                activeSidebarTab === item.id
+                  ? "bg-ai-purple text-white shadow-md shadow-ai-purple/20"
+                  : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
+              }`}
+            >
+              {activeSidebarTab === item.id && (
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-md" />
+              )}
+              <div className="flex items-center gap-3">
+                <item.icon className={`w-4.5 h-4.5 ${activeSidebarTab === item.id ? "text-white" : "text-muted-foreground group-hover:text-foreground"}`} />
+                {item.label}
+              </div>
+            </button>
+          ))}
+        </div>
+        
+        {/* User profile at bottom of sidebar */}
+        <div className="p-4 border-t border-border/10 shrink-0 bg-white/2">
+          <div className="flex items-center gap-3 px-2">
+            <div className="w-9 h-9 rounded-full bg-ai-purple/20 flex items-center justify-center border border-ai-purple/30 shrink-0">
+              <User className="w-4 h-4 text-ai-purple" />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-bold text-white truncate">System Admin</span>
+              <span className="text-[9px] text-muted-foreground uppercase tracking-wider truncate">Superuser</span>
+            </div>
+          </div>
+        </div>
+      </aside>
 
-          {/* Stats Row */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            {adminStats.map((stat, i) => {
-              const glowClass = 
-                stat.label === "Total Complaints" ? "hover:neon-glow-primary border-gov-blue/20 hover:border-gov-blue/40" :
-                stat.label === "Resolution Rate" ? "hover:neon-glow-success border-trust-green/20 hover:border-trust-green/40" :
-                stat.label === "Avg Resolution" ? "hover:neon-glow-ai border-ai-purple/20 hover:border-ai-purple/40" :
-                "hover:shadow-[0_0_15px_-3px_rgba(239,68,68,0.35)] border-danger-red/20 hover:border-danger-red/40";
-              
-              return (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.08 }}
-                >
-                  <Card className={`glass-premium border premium-glow-border relative overflow-hidden transition-all duration-300 hover:scale-[1.02] group ${glowClass}`}>
-                    <div
-                      className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full filter blur-xl opacity-15 pointer-events-none group-hover:scale-125 transition-transform duration-500"
+      {/* ============================================ */}
+      {/* MAIN CONTENT AREA                            */}
+      {/* ============================================ */}
+      <div className="flex-1 lg:pl-[260px] flex flex-col min-h-screen relative w-full">
+        
+        {/* TOP HEADER */}
+        <header className="h-16 border-b border-border/10 bg-[#060b14]/90 backdrop-blur-md sticky top-0 z-40 flex items-center justify-between px-6 lg:px-8 shrink-0">
+          <div className="flex items-center gap-3">
+             <h1 className="text-lg font-black tracking-tight text-foreground flex items-center gap-2">
+               {activeSidebarTab === "analytics" && "Dashboard Analytics"}
+               {activeSidebarTab === "insights" && "Predictive Insights"}
+               {activeSidebarTab === "tokens" && "Token Controls"}
+               {activeSidebarTab === "registry" && "Nodal Grievance Registry"}
+               {activeSidebarTab === "settings" && "System Settings"}
+             </h1>
+          </div>
+          
+          <div className="flex items-center gap-3 relative">
+             {/* Admin Notification Bell Dropdown */}
+             <div className="relative">
+               <button
+                 type="button"
+                 onClick={() => setShowNotifications(!showNotifications)}
+                 className={`relative p-2 rounded-xl border transition-all cursor-pointer flex items-center justify-center active:scale-95 ${
+                   showNotifications 
+                     ? "bg-ai-purple/10 text-ai-purple border-ai-purple/30" 
+                     : "bg-muted/30 border-border/30 hover:bg-muted/50 hover:text-foreground text-muted-foreground"
+                 }`}
+                 aria-label="System Alerts"
+               >
+                 <Bell className="w-4.5 h-4.5" />
+                 {unreadCount > 0 && (
+                   <span className="absolute -top-1 -right-1 w-4.5 h-4.5 bg-red-500 text-[9px] font-bold text-white rounded-full flex items-center justify-center border-2 border-background animate-pulse shadow-md">
+                     {unreadCount}
+                   </span>
+                 )}
+               </button>
+
+               {/* Notifications Dropdown */}
+               {showNotifications && (
+                 <>
+                   <div 
+                     className="fixed inset-0 z-40 cursor-default" 
+                     onClick={() => setShowNotifications(false)} 
+                   />
+                   <div className="absolute right-0 mt-3 w-[360px] max-h-[460px] overflow-y-auto z-50 glass-card rounded-2xl p-4.5 border border-white/8 bg-slate-950/95 backdrop-blur-xl animate-in fade-in slide-in-from-top-3 duration-250 select-none">
+                     <div className="flex items-center justify-between border-b border-white/8 pb-3 mb-3.5">
+                       <div className="flex items-center gap-2">
+                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                         <h4 className="font-black text-xs uppercase tracking-wider text-gray-200">
+                           System Alerts
+                         </h4>
+                       </div>
+                       <div className="flex items-center gap-3">
+                         {notifications.length > 0 && (
+                           <button
+                             type="button"
+                             onClick={handleClearAllNotifications}
+                             className="text-[10px] font-extrabold uppercase text-red-400 hover:text-red-300 transition-colors flex items-center gap-1 cursor-pointer"
+                           >
+                             <Trash2 className="w-3.5 h-3.5" />
+                             Clear All
+                           </button>
+                         )}
+                         <button
+                           type="button"
+                           onClick={() => setShowNotifications(false)}
+                           className="p-1 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer flex items-center justify-center"
+                           aria-label="Close alerts"
+                         >
+                           <X className="w-4 h-4" />
+                         </button>
+                       </div>
+                     </div>
+
+                     {notifications.length === 0 ? (
+                       <div className="py-12 flex flex-col items-center justify-center text-center text-gray-500 gap-3">
+                         <Inbox className="w-8 h-8 opacity-30 animate-bounce" />
+                         <p className="text-xs font-bold uppercase tracking-wider">
+                           No active alerts
+                         </p>
+                       </div>
+                     ) : (
+                       <div className="space-y-3">
+                         {notifications.map((n) => (
+                           <div
+                             key={n.id}
+                             onClick={() => handleNotificationClick(n)}
+                             className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col gap-2 ${
+                               n.read
+                                 ? "bg-white/2 border-white/5 hover:bg-white/5 hover:border-white/8"
+                                 : "bg-cyan-500/5 border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-500/30"
+                             }`}
+                           >
+                             <div className="flex items-start justify-between gap-1.5">
+                               <span className="text-[10px] font-mono font-black text-gray-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">
+                                 {n.complaintId}
+                               </span>
+                               <span className="text-[9.5px] text-gray-400 font-bold uppercase tracking-wide">
+                                 Just now
+                               </span>
+                             </div>
+                             <p className="text-xs font-semibold text-white/90 leading-relaxed">
+                               {n.message}
+                             </p>
+                             {!n.read && (
+                               <span className="text-[9.5px] font-black text-cyan-400 self-end animate-pulse uppercase tracking-wider">
+                                 ● New Alert
+                               </span>
+                             )}
+                           </div>
+                         ))}
+                       </div>
+                     )}
+                   </div>
+                 </>
+               )}
+             </div>
+
+             <a href="/" className="p-2 rounded-xl border border-border/30 bg-muted/30 hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all cursor-pointer flex items-center justify-center active:scale-95">
+               <LogOut className="w-4 h-4 ml-0.5" />
+             </a>
+          </div>
+        </header>
+
+        {/* CONTENT TABS */}
+        <main className="flex-1 p-6 lg:p-8 overflow-x-hidden">
+          {activeSidebarTab === "analytics" && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-8"
+            >
+              {/* Stats Row */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {adminStats.map((stat, i) => {
+                  const glowClass = 
+                    stat.label === "Total Complaints" ? "hover:neon-glow-primary border-gov-blue/20 hover:border-gov-blue/40" :
+                    stat.label === "Resolution Rate" ? "hover:neon-glow-success border-trust-green/20 hover:border-trust-green/40" :
+                    stat.label === "Avg Resolution" ? "hover:neon-glow-ai border-ai-purple/20 hover:border-ai-purple/40" :
+                    "hover:shadow-[0_0_15px_-3px_rgba(239,68,68,0.35)] border-danger-red/20 hover:border-danger-red/40";
+                  
+                  return (
+                    <motion.div
+                      key={stat.label}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.08 }}
+                    >
+                      <Card className={`glass-premium border premium-glow-border relative overflow-hidden transition-all duration-300 hover:scale-[1.02] group ${glowClass}`}>
+                        <div
+                          className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full filter blur-xl opacity-15 pointer-events-none group-hover:scale-125 transition-transform duration-500"
                       style={{ backgroundColor: stat.color }}
                     />
                     <CardContent className="p-5 relative z-10">
@@ -234,9 +434,18 @@ export default function AdminDashboard() {
 
           {/* Dynamic Charts Hookup */}
           <AnalyticsCharts data={analytics} />
+          </motion.div>
+          )}
 
-          {/* Bottom row: Department Efficiency + Predictions */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          {activeSidebarTab === "insights" && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-8"
+            >
+          {/* Department Efficiency + Predictions */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Department Performance */}
             <Card className="glass-premium border border-border/30 relative overflow-hidden shadow-xl shadow-black/5">
               <CardHeader className="pb-3">
@@ -287,7 +496,7 @@ export default function AdminDashboard() {
             </Card>
 
             {/* Predictive Insights */}
-            <Card className="glass-premium border border-ai-purple/20 neon-glow-ai relative overflow-hidden shadow-xl shadow-black/5 scanning-laser-container">
+            <Card className="glass-premium border border-border/30 relative overflow-hidden shadow-xl shadow-black/5">
               <div className="absolute right-0 top-0 w-24 h-24 bg-linear-to-bl from-ai-purple/10 to-transparent pointer-events-none rounded-bl-full" />
               <CardHeader className="pb-3 relative z-10">
                 <CardTitle className="text-lg flex items-center gap-2 font-bold text-foreground/90">
@@ -353,9 +562,17 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </div>
+          </motion.div>
+          )}
 
+          {activeSidebarTab === "tokens" && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
           {/* Daily Complaint Token System Controls */}
-          <div className="mt-8">
+          <div>
             <Card className="glass-premium border border-amber-500/20 relative overflow-hidden shadow-xl shadow-black/5 hover:shadow-amber-500/3 transition-all duration-300">
               <div className="absolute right-0 top-0 w-32 h-32 bg-linear-to-bl from-amber-500/5 to-transparent pointer-events-none rounded-bl-full" />
               <CardHeader className="pb-3 border-b border-border/10">
@@ -461,106 +678,140 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </div>
+          </motion.div>
+          )}
 
+          {activeSidebarTab === "registry" && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
           {/* Nodal Grievance Registry (Complaint List) */}
-          <div className="mt-8">
-            <Card className="glass-premium border border-border/30 relative overflow-hidden shadow-xl shadow-black/5 hover:neon-glow-primary transition-all duration-300">
-              <div className="absolute right-0 top-0 w-32 h-32 bg-linear-to-bl from-primary/5 to-transparent pointer-events-none rounded-bl-full" />
-              <CardHeader className="pb-3 border-b border-border/10">
-                <CardTitle className="text-lg flex items-center gap-2.5 font-bold text-foreground/90">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                    <Building2 className="w-4.5 h-4.5 text-primary" />
-                  </div>
-                  <div>
-                    <span>Nodal Grievance Registry</span>
-                    <p className="text-[11px] font-medium text-muted-foreground/80 mt-0.5">
-                      Consolidated citizen ticket ledger with dynamic department mapping & priority monitoring
-                    </p>
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto max-h-[400px] overflow-y-auto custom-scrollbar">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-border/10 text-[10px] font-black uppercase tracking-wider text-muted-foreground sticky top-0 bg-[#090d16]/90 z-10 backdrop-blur-md">
-                        <th className="py-3.5 px-6">Complaint No.</th>
-                        <th className="py-3.5 px-4">Citizen</th>
-                        <th className="py-3.5 px-4">Category & Nodal Niche</th>
-                        <th className="py-3.5 px-4">Assigned Department / Authority</th>
-                        <th className="py-3.5 px-4">Priority & Level</th>
-                        <th className="py-3.5 px-6 text-right">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/10">
-                      {complaints.length === 0 ? (
-                        <tr>
-                          <td colSpan={6} className="text-center py-12 text-xs font-bold text-muted-foreground">
-                            No registered complaints found in system ledger.
-                          </td>
-                        </tr>
-                      ) : (
-                        complaints.map((c) => (
-                          <tr key={c.id} className="hover:bg-muted/10 transition-colors text-xs font-semibold">
-                            <td className="py-4 px-6 font-mono font-black text-foreground/90">
-                              <span className="bg-primary/5 border border-primary/20 text-primary px-2.5 py-1 rounded-lg">
-                                {c.id}
-                              </span>
-                            </td>
-                            <td className="py-4 px-4">
-                              <div className="flex flex-col">
-                                <span className="font-extrabold text-foreground">{c.citizenName}</span>
-                                <span className="text-[10px] text-muted-foreground mt-0.5">{c.citizenPhone}</span>
-                              </div>
-                            </td>
-                            <td className="py-4 px-4">
-                              <div className="flex flex-col">
-                                <span className="font-extrabold text-foreground">{c.title}</span>
-                                <span className="text-[10px] mt-0.5 font-bold uppercase tracking-wider text-primary">{c.category}</span>
-                              </div>
-                            </td>
-                            <td className="py-4 px-4">
-                              <div className="flex flex-col">
-                                <span className="font-extrabold text-gray-300">{c.department}</span>
-                                <span className={`text-[10px] mt-0.5 font-bold ${c.escalationLevel > 0 ? "text-danger-red" : "text-muted-foreground"}`}>
-                                  {c.escalationLevel > 0 ? `ESCALATED TO: ${c.assignedOfficer}` : `Assigned: ${c.assignedOfficer}`}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="py-4 px-4">
-                              <div className="flex flex-col items-start gap-1">
-                                <Badge variant="outline" className={`priority-${c.priority} font-extrabold uppercase text-[9px] tracking-wider`}>
-                                  {c.priority}
-                                </Badge>
-                                {c.escalationLevel > 0 && (
-                                  <Badge variant="outline" className="bg-danger-red/10 border-danger-red/30 text-danger-red font-extrabold uppercase text-[9px] tracking-wider px-1.5">
-                                    Lvl {c.escalationLevel} Escalation
-                                  </Badge>
-                                )}
-                              </div>
-                            </td>
-                            <td className="py-4 px-6 text-right">
-                              <Badge className={`font-extrabold uppercase text-[9px] px-2 py-0.5 tracking-wider ${
-                                c.status === "resolved" 
-                                  ? "bg-emerald-500/10 border border-emerald-500/25 text-emerald-400"
-                                  : c.status === "escalated"
-                                  ? "bg-red-500/10 border border-red-500/25 text-red-400 animate-pulse"
-                                  : "bg-amber-500/10 border border-amber-500/25 text-amber-400"
-                              }`}>
-                                {c.status.replace(/_/g, " ")}
-                              </Badge>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+          {/* Nodal Grievance Registry (Premium Full-Width) */}
+          <div className="flex flex-col min-h-[calc(100vh-140px)] -mx-6 lg:-mx-8">
+            <div className="px-6 lg:px-8 pb-6 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-primary/20 to-ai-purple/20 flex items-center justify-center border border-primary/30 shadow-[0_0_20px_rgba(139,92,246,0.15)] relative overflow-hidden">
+                  <div className="absolute inset-0 bg-white/5 backdrop-blur-sm" />
+                  <Building2 className="w-6 h-6 text-primary relative z-10" />
                 </div>
-              </CardContent>
-            </Card>
+                <div>
+                  <h2 className="text-2xl font-black text-foreground tracking-tight flex items-center gap-2">
+                    Nodal Grievance Registry
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] uppercase font-bold tracking-widest ml-2 px-2 py-0.5">
+                      Live Ledger
+                    </Badge>
+                  </h2>
+                  <p className="text-sm font-medium text-muted-foreground mt-1 tracking-wide">
+                    Consolidated citizen ticket ledger with dynamic department mapping & priority monitoring
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-x-auto w-full">
+              <table className="w-full text-left border-collapse min-w-[900px]">
+                <thead>
+                  <tr className="bg-[#090d16]/95 backdrop-blur-xl border-y border-border/10 text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 sticky top-0 z-10">
+                    <th className="py-5 px-6 lg:px-8 whitespace-nowrap">Complaint ID</th>
+                    <th className="py-5 px-4">Citizen Identity</th>
+                    <th className="py-5 px-4 w-[25%]">Category & Subject</th>
+                    <th className="py-5 px-4">Assigned Authority</th>
+                    <th className="py-5 px-4">Priority Level</th>
+                    <th className="py-5 px-6 lg:px-8 text-right">Status Tracker</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/5">
+                  {complaints.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-16 text-sm font-bold text-muted-foreground">
+                        No registered complaints found in system ledger.
+                      </td>
+                    </tr>
+                  ) : (
+                    complaints.map((c) => (
+                      <tr key={c.id} className="hover:bg-white/2 transition-all duration-300 text-xs font-semibold group cursor-pointer">
+                        <td className="py-5 px-6 lg:px-8 font-mono font-black text-foreground/90 whitespace-nowrap">
+                          <span className="bg-muted/30 border border-border/20 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary group-hover:border-primary/30 transition-colors px-3 py-1.5 rounded-lg">
+                            {c.id}
+                          </span>
+                        </td>
+                        <td className="py-5 px-4">
+                          <div className="flex flex-col">
+                            <span className="font-extrabold text-foreground group-hover:text-white transition-colors">{c.citizenName}</span>
+                            <span className="text-[10px] text-muted-foreground mt-1 tracking-wider">{c.citizenPhone}</span>
+                          </div>
+                        </td>
+                        <td className="py-5 px-4">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-gray-300 leading-relaxed group-hover:text-white transition-colors">{c.title}</span>
+                            <span className="text-[9px] mt-1.5 font-black uppercase tracking-widest text-ai-purple flex items-center gap-1.5">
+                              <div className="w-1 h-1 rounded-full bg-ai-purple animate-pulse" />
+                              {c.category}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-5 px-4">
+                          <div className="flex flex-col">
+                            <span className="font-extrabold text-gray-300">{c.department}</span>
+                            <span className={`text-[10px] mt-1.5 font-bold tracking-wide ${c.escalationLevel > 0 ? "text-danger-red" : "text-muted-foreground"}`}>
+                              {c.escalationLevel > 0 ? `ESCALATED: ${c.assignedOfficer}` : `Assigned: ${c.assignedOfficer}`}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-5 px-4">
+                          <div className="flex flex-col items-start gap-1.5">
+                            <Badge variant="outline" className={`priority-${c.priority} font-extrabold uppercase text-[9px] tracking-wider px-2 py-0.5`}>
+                              {c.priority}
+                            </Badge>
+                            {c.escalationLevel > 0 && (
+                              <Badge variant="outline" className="bg-danger-red/10 border-danger-red/30 text-danger-red font-extrabold uppercase text-[8px] tracking-widest px-1.5">
+                                Lvl {c.escalationLevel} Escalation
+                              </Badge>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-5 px-6 lg:px-8 text-right">
+                          <Badge className={`font-extrabold uppercase text-[9px] px-2.5 py-1 tracking-wider border ${
+                            c.status === "resolved" 
+                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                              : c.status === "escalated"
+                              ? "bg-red-500/10 border-red-500/30 text-red-400 shadow-[0_0_10px_rgba(239,68,68,0.2)]"
+                              : "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                          }`}>
+                            {c.status.replace(/_/g, " ")}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      </main>
-    </>
+          </motion.div>
+          )}
+
+          {activeSidebarTab === "settings" && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex flex-col items-center justify-center py-24 text-center"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-muted/20 border border-border/30 flex items-center justify-center mb-4">
+                <Settings className="w-8 h-8 text-muted-foreground opacity-50" />
+              </div>
+              <h3 className="text-xl font-bold text-foreground">System Settings</h3>
+              <p className="text-sm text-muted-foreground mt-2 max-w-sm">
+                Global configuration and environment parameters are currently managed by infrastructure administrators.
+              </p>
+            </motion.div>
+          )}
+
+        </main>
+      </div>
+    </div>
   );
 }

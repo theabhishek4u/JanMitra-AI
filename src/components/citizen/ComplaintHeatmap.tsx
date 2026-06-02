@@ -176,8 +176,7 @@ export default function ComplaintHeatmap({
       </MapContainer>
 
       {/* Floating Tactical Panel (Search & Dynamic Filter Trigger) */}
-      <div className="absolute top-4 left-4 z-20 w-[280px] sm:w-[320px] transition-all duration-300">
-        <div className="glass-premium rounded-2xl p-3 border border-white/10 shadow-2xl flex flex-col gap-2.5 backdrop-blur-xl bg-slate-950/80">
+      <div className="absolute top-4 left-4 z-20 w-[280px] sm:w-[320px] transition-all duration-300 flex flex-col gap-2.5">
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -232,7 +231,7 @@ export default function ComplaintHeatmap({
 
           {/* Expandable Filter Sliders block */}
           {showFilters && (
-            <div className="pt-2 border-t border-white/5 space-y-2.5 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="p-3 glass-premium rounded-2xl border border-white/10 shadow-2xl backdrop-blur-xl bg-slate-950/90 space-y-2.5 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="space-y-1">
                 <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider block">Grievance Category</label>
                 <select
@@ -280,7 +279,6 @@ export default function ComplaintHeatmap({
               </div>
             </div>
           )}
-        </div>
       </div>
 
       {/* Floating Interactive Live Stats HUD overlay (Top-Right) */}

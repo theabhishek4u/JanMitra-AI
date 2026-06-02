@@ -42,6 +42,8 @@ import {
   Camera,
   Upload,
   UserCheck,
+  User,
+  LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -79,6 +81,9 @@ export default function OfficerDashboard() {
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [activeSubTab, setActiveSubTab] = useState<"queue" | "map">("queue");
+
+  // Sidebar Layout State
+  const [activeSidebarTab, setActiveSidebarTab] = useState<"dashboard" | "fraud" | "portal" | "map">("dashboard");
 
   // Notes state
   const [noteText, setNoteText] = useState("");
@@ -432,7 +437,7 @@ export default function OfficerDashboard() {
       color: "#3B82F6",
       change: "+12%",
       up: true,
-      glowClass: "hover:neon-glow-primary border-gov-blue/20 hover:border-gov-blue/40",
+      glowClass: "border-gov-blue/20 hover:border-gov-blue/40",
     },
     {
       title: "Pending Resolution",
@@ -441,7 +446,7 @@ export default function OfficerDashboard() {
       color: "#F59E0B",
       change: "-8%",
       up: false,
-      glowClass: "hover:shadow-[0_0_15px_-3px_rgba(245,158,11,0.35)] border-warning-amber/20 hover:border-warning-amber/40 active-glowing-card-amber",
+      glowClass: "border-warning-amber/20 hover:border-warning-amber/40 active-glowing-card-amber",
     },
     {
       title: "Resolved Grievances",
@@ -450,7 +455,7 @@ export default function OfficerDashboard() {
       color: "#10B981",
       change: "+23%",
       up: true,
-      glowClass: "hover:neon-glow-success border-trust-green/20 hover:border-trust-green/40",
+      glowClass: "border-trust-green/20 hover:border-trust-green/40",
     },
     {
       title: "High Priority Active",
@@ -459,7 +464,7 @@ export default function OfficerDashboard() {
       color: "#EF4444",
       change: "+5%",
       up: true,
-      glowClass: "hover:shadow-[0_0_15px_-3px_rgba(239,68,68,0.35)] border-danger-red/20 hover:border-danger-red/40 active-glowing-card-red",
+      glowClass: "border-danger-red/20 hover:border-danger-red/40 active-glowing-card-red",
     },
   ];
 
@@ -491,141 +496,201 @@ export default function OfficerDashboard() {
 
   return (
     <>
-      <Navbar />
-      <main className="min-h-screen pt-24 md:pt-28 pb-12 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <motion.div
-            className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-linear-to-br from-gov-blue to-gov-blue-light flex items-center justify-center shadow-md shadow-gov-blue/15">
-                <LayoutDashboard className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
-                  Officer Command Console
-                </h1>
-                <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                  <span className="text-sm font-semibold text-gray-400">Welcome,</span>
-                  <span className="text-sm font-black text-transparent bg-clip-text bg-linear-to-r from-blue-400 via-indigo-200 to-purple-400 drop-shadow-sm">
-                    Shri Rajesh Kumar
-                  </span>
-                  <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-sky-500/30 bg-sky-500/10 text-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.15)] select-none">
-                    Municipal Commissioner
-                  </span>
-                </div>
-              </div>
+    <div className="min-h-screen flex bg-[#060b14]">
+      <aside className="w-[260px] bg-[#0a1120] border-r border-border/10 hidden lg:flex flex-col fixed inset-y-0 left-0 z-50 shadow-2xl">
+        <div className="h-16 flex items-center px-6 border-b border-border/10 shrink-0">
+          <span className="text-xl font-black text-white flex items-center gap-2 tracking-tight">
+            <div className="w-8 h-8 bg-linear-to-br from-primary to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
+              <ShieldCheck className="w-5 h-5 text-white" />
             </div>
-            <div className="flex items-center gap-3 relative">
-
-              {/* Officer Notification Bell Dropdown */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowNotifications(!showNotifications)}
-                  className={`relative p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-center active:scale-95 ${
-                    showNotifications 
-                      ? "bg-primary/10 text-primary border-primary/30" 
-                      : "bg-muted/65 border-border/30 hover:bg-muted/85 hover:text-foreground text-muted-foreground"
-                  }`}
-                  aria-label="System Alerts"
-                >
-                  <Bell className="w-4 h-4" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4.5 h-4.5 bg-red-500 text-[9px] font-bold text-white rounded-full flex items-center justify-center border-2 border-background animate-pulse shadow-md">
-                      {unreadCount}
-                    </span>
-                  )}
-                </button>
-
-                {/* Notifications Dropdown */}
-                {showNotifications && (
-                  <>
-                    <div 
-                      className="fixed inset-0 z-40 cursor-default" 
-                      onClick={() => setShowNotifications(false)} 
-                    />
-                    <div className="absolute right-0 mt-3 w-[360px] max-h-[460px] overflow-y-auto z-50 glass-card rounded-2xl p-4.5 border border-white/8 bg-slate-950/95 backdrop-blur-xl animate-in fade-in slide-in-from-top-3 duration-250 select-none">
-                      <div className="flex items-center justify-between border-b border-white/8 pb-3 mb-3.5">
-                        <div className="flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                          <h4 className="font-black text-xs uppercase tracking-wider text-gray-200">
-                            System Alerts
-                          </h4>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          {notifications.length > 0 && (
-                            <button
-                              type="button"
-                              onClick={handleClearAllNotifications}
-                              className="text-[10px] font-extrabold uppercase text-red-400 hover:text-red-300 transition-colors flex items-center gap-1 cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              Clear All
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => setShowNotifications(false)}
-                            className="p-1 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer flex items-center justify-center"
-                            aria-label="Close alerts"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {notifications.length === 0 ? (
-                        <div className="py-12 flex flex-col items-center justify-center text-center text-gray-500 gap-3">
-                          <Inbox className="w-8 h-8 opacity-30 animate-bounce" />
-                          <p className="text-xs font-bold uppercase tracking-wider">
-                            No active alerts
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {notifications.map((n) => (
-                            <div
-                              key={n.id}
-                              onClick={() => handleNotificationClick(n)}
-                              className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col gap-2 ${
-                                n.read
-                                  ? "bg-white/2 border-white/5 hover:bg-white/5 hover:border-white/8"
-                                  : "bg-cyan-500/5 border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-500/30"
-                              }`}
-                            >
-                              <div className="flex items-start justify-between gap-1.5">
-                                <span className="text-[10px] font-mono font-black text-gray-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">
-                                  {n.complaintId}
-                                </span>
-                                <span className="text-[9.5px] text-gray-400 font-bold uppercase tracking-wide">
-                                  {formatTime(n.timestamp)}
-                                </span>
-                              </div>
-                              <p className="text-xs font-semibold text-white/90 leading-relaxed">
-                                {n.message}
-                              </p>
-                              {!n.read && (
-                                <span className="text-[9.5px] font-black text-cyan-400 self-end animate-pulse uppercase tracking-wider">
-                                  ● New Alert
-                                </span>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
+            JanMitra
+          </span>
+        </div>
+        
+        <div className="flex-1 py-6 flex flex-col gap-2 px-3 overflow-y-auto custom-scrollbar">
+          <p className="text-[10px] font-black tracking-wider text-muted-foreground uppercase px-3 pb-2">
+            Console Modules
+          </p>
+          {[
+            { id: "dashboard", label: "Dashboard Overview", icon: LayoutDashboard },
+            { id: "portal", label: "Grievance Portal", icon: Layers },
+            { id: "map", label: "Live Telemetry Map", icon: MapPin },
+            { id: "fraud", label: "Fraud Detection", icon: Fingerprint, alert: suspiciousComplaints.length > 0 },
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveSidebarTab(item.id as "map" | "dashboard" | "fraud" | "portal")}
+              className={`flex items-center justify-between w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all cursor-pointer group relative overflow-hidden ${
+                activeSidebarTab === item.id
+                  ? "bg-primary text-white shadow-md shadow-primary/20"
+                  : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
+              }`}
+            >
+              {activeSidebarTab === item.id && (
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-md" />
+              )}
+              <div className="flex items-center gap-3">
+                <item.icon className={`w-4.5 h-4.5 ${activeSidebarTab === item.id ? "text-white" : "text-muted-foreground group-hover:text-foreground"}`} />
+                {item.label}
               </div>
+              {item.alert && (
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
+              )}
+            </button>
+          ))}
+        </div>
+        
+        {/* User profile at bottom of sidebar */}
+        <div className="p-4 border-t border-border/10 shrink-0 bg-white/2">
+          <div className="flex items-center gap-3 px-2">
+            <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30 shrink-0">
+              <User className="w-4 h-4 text-primary" />
             </div>
-          </motion.div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-bold text-white truncate">Shri Rajesh Kumar</span>
+              <span className="text-[9px] text-muted-foreground uppercase tracking-wider truncate">Commissioner</span>
+            </div>
+          </div>
+        </div>
+      </aside>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      {/* ============================================ */}
+      {/* MAIN CONTENT AREA                            */}
+      {/* ============================================ */}
+      <div className="flex-1 lg:pl-[260px] flex flex-col min-h-screen relative w-full">
+        
+        {/* TOP HEADER */}
+        <header className="h-16 border-b border-border/10 bg-[#060b14]/90 backdrop-blur-md sticky top-0 z-40 flex items-center justify-between px-6 lg:px-8 shrink-0">
+          <div className="flex items-center gap-3">
+             <h1 className="text-lg font-black tracking-tight text-foreground flex items-center gap-2">
+               {activeSidebarTab === "dashboard" && "Dashboard Overview"}
+               {activeSidebarTab === "portal" && "Grievance Portal"}
+               {activeSidebarTab === "map" && "Live Telemetry Map"}
+               {activeSidebarTab === "fraud" && "Fraud Detection Engine"}
+             </h1>
+          </div>
+          
+           <div className="flex items-center gap-3 relative">
+             {/* Officer Notification Bell Dropdown */}
+             <div className="relative">
+               <button
+                 type="button"
+                 onClick={() => setShowNotifications(!showNotifications)}
+                 className={`relative p-2 rounded-xl border transition-all cursor-pointer flex items-center justify-center active:scale-95 ${
+                   showNotifications 
+                     ? "bg-primary/10 text-primary border-primary/30" 
+                     : "bg-muted/30 border-border/30 hover:bg-muted/50 hover:text-foreground text-muted-foreground"
+                 }`}
+                 aria-label="System Alerts"
+               >
+                 <Bell className="w-4.5 h-4.5" />
+                 {unreadCount > 0 && (
+                   <span className="absolute -top-1 -right-1 w-4.5 h-4.5 bg-red-500 text-[9px] font-bold text-white rounded-full flex items-center justify-center border-2 border-background animate-pulse shadow-md">
+                     {unreadCount}
+                   </span>
+                 )}
+               </button>
+
+               {/* Notifications Dropdown */}
+               {showNotifications && (
+                 <>
+                   <div 
+                     className="fixed inset-0 z-40 cursor-default" 
+                     onClick={() => setShowNotifications(false)} 
+                   />
+                   <div className="absolute right-0 mt-3 w-[360px] max-h-[460px] overflow-y-auto z-50 glass-card rounded-2xl p-4.5 border border-white/8 bg-slate-950/95 backdrop-blur-xl animate-in fade-in slide-in-from-top-3 duration-250 select-none">
+                     <div className="flex items-center justify-between border-b border-white/8 pb-3 mb-3.5">
+                       <div className="flex items-center gap-2">
+                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                         <h4 className="font-black text-xs uppercase tracking-wider text-gray-200">
+                           System Alerts
+                         </h4>
+                       </div>
+                       <div className="flex items-center gap-3">
+                         {notifications.length > 0 && (
+                           <button
+                             type="button"
+                             onClick={handleClearAllNotifications}
+                             className="text-[10px] font-extrabold uppercase text-red-400 hover:text-red-300 transition-colors flex items-center gap-1 cursor-pointer"
+                           >
+                             <Trash2 className="w-3.5 h-3.5" />
+                             Clear All
+                           </button>
+                         )}
+                         <button
+                           type="button"
+                           onClick={() => setShowNotifications(false)}
+                           className="p-1 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer flex items-center justify-center"
+                           aria-label="Close alerts"
+                         >
+                           <X className="w-4 h-4" />
+                         </button>
+                       </div>
+                     </div>
+
+                     {notifications.length === 0 ? (
+                       <div className="py-12 flex flex-col items-center justify-center text-center text-gray-500 gap-3">
+                         <Inbox className="w-8 h-8 opacity-30 animate-bounce" />
+                         <p className="text-xs font-bold uppercase tracking-wider">
+                           No active alerts
+                         </p>
+                       </div>
+                     ) : (
+                       <div className="space-y-3">
+                         {notifications.map((n) => (
+                           <div
+                             key={n.id}
+                             onClick={() => handleNotificationClick(n)}
+                             className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col gap-2 ${
+                               n.read
+                                 ? "bg-white/2 border-white/5 hover:bg-white/5 hover:border-white/8"
+                                 : "bg-cyan-500/5 border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-500/30"
+                             }`}
+                           >
+                             <div className="flex items-start justify-between gap-1.5">
+                               <span className="text-[10px] font-mono font-black text-gray-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">
+                                 {n.complaintId}
+                               </span>
+                               <span className="text-[9.5px] text-gray-400 font-bold uppercase tracking-wide">
+                                 {formatTime(n.timestamp)}
+                               </span>
+                             </div>
+                             <p className="text-xs font-semibold text-white/90 leading-relaxed">
+                               {n.message}
+                             </p>
+                             {!n.read && (
+                               <span className="text-[9.5px] font-black text-cyan-400 self-end animate-pulse uppercase tracking-wider">
+                                 ● New Alert
+                               </span>
+                             )}
+                           </div>
+                         ))}
+                       </div>
+                     )}
+                   </div>
+                 </>
+               )}
+             </div>
+
+             <a href="/" className="p-2 rounded-xl border border-border/30 bg-muted/30 hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all cursor-pointer flex items-center justify-center active:scale-95">
+               <LogOut className="w-4 h-4 ml-0.5" />
+             </a>
+          </div>
+        </header>
+
+        {/* CONTENT TABS */}
+        <main className="flex-1 p-6 lg:p-8 overflow-x-hidden">
+          {/* TAB 1: DASHBOARD OVERVIEW                    */}
+          {/* ============================================ */}
+          {activeSidebarTab === "dashboard" && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-8"
+            >
+              {/* Stats Cards */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {statCards.map((stat, i) => (
               <motion.div
                 key={stat.title}
@@ -786,7 +851,19 @@ export default function OfficerDashboard() {
               })}
             </div>
           </motion.div>
+            </motion.div>
+          )}
 
+          {/* ============================================ */}
+          {/* TAB 4: FRAUD DETECTION                       */}
+          {/* ============================================ */}
+          {activeSidebarTab === "fraud" && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-8"
+            >
           {/* ============================================ */}
           {/* AI Fraud Detection — Suspicious Complaints   */}
           {/* ============================================ */}
@@ -966,10 +1043,20 @@ export default function OfficerDashboard() {
               )}
             </AnimatePresence>
           </motion.div>
+            </motion.div>
+          )}
 
-          {/* Double Split-Pane Dashboard */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-            {/* Left Column: Complaint Queue & Heatmap (Col 5) */}
+          {/* ============================================ */}
+          {/* TAB 3: GRIEVANCE PORTAL                      */}
+          {/* ============================================ */}
+          {activeSidebarTab === "portal" && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch"
+            >
+            {/* Left Column: Complaint Queue (Col 5) */}
             <div className={`lg:col-span-5 flex flex-col h-[700px] lg:h-[780px] w-full ${selectedComplaintId ? "hidden lg:flex" : "flex"}`}>
               <Card className="glass-premium border border-border/30 h-full relative overflow-hidden flex flex-col shadow-xl shadow-black/5">
                 <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent" />
@@ -992,35 +1079,8 @@ export default function OfficerDashboard() {
                     </div>
                   </div>
 
-                  {/* Left Column Tabs Toggle */}
-                  <div className="flex items-center gap-1.5 bg-muted/65 p-1 rounded-xl border border-border/30 mb-3">
-                    <button
-                      onClick={() => setActiveSubTab("queue")}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                        activeSubTab === "queue"
-                          ? "bg-primary text-white shadow-md shadow-primary/20"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      <Layers className="w-3.5 h-3.5" />
-                      Active Queue
-                    </button>
-                    <button
-                      onClick={() => setActiveSubTab("map")}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                        activeSubTab === "map"
-                          ? "bg-primary text-white shadow-md shadow-primary/20"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      <MapPin className="w-3.5 h-3.5" />
-                      Lucknow Heatmap
-                    </button>
-                  </div>
-
-                  {/* Queue Filters (Only show when queue active) */}
-                  {activeSubTab === "queue" && (
-                    <div className="flex flex-col gap-2 mt-1">
+                  {/* Queue Filters */}
+                  <div className="flex flex-col gap-2 mt-1">
                       <div className="relative">
                         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <Input
@@ -1048,19 +1108,10 @@ export default function OfficerDashboard() {
                         ))}
                       </div>
                     </div>
-                  )}
                 </CardHeader>
 
                 <CardContent className="flex-1 overflow-hidden p-4 pt-1 flex flex-col">
-                  <AnimatePresence mode="wait">
-                    {activeSubTab === "queue" ? (
-                      <motion.div
-                        key="queue-list"
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -10 }}
-                        className="h-full overflow-y-auto space-y-2.5 pr-1.5 custom-scrollbar flex-1"
-                      >
+                  <div className="h-full overflow-y-auto space-y-2.5 pr-1.5 custom-scrollbar flex-1">
                         {filteredComplaints.length === 0 ? (
                           <div className="text-center py-12 text-sm text-muted-foreground flex flex-col items-center justify-center gap-3">
                             <span>No active grievances match current filter.</span>
@@ -1169,24 +1220,7 @@ export default function OfficerDashboard() {
                             );
                           })
                         )}
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="heatmap"
-                        initial={{ opacity: 0, x: 10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 10 }}
-                        className="h-full flex-1"
-                      >
-                        <ComplaintHeatmap
-                          onSelectComplaint={(id) => {
-                            setSelectedComplaintId(id);
-                            setActiveSubTab("queue");
-                          }}
-                        />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -1826,41 +1860,63 @@ export default function OfficerDashboard() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex-1 flex flex-col h-full overflow-hidden">
-                    {/* Right Panel Heatmap Header */}
-                    <div className="p-4 border-b border-border/25 bg-muted/10 shrink-0 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <MapPin className="w-4 h-4 text-primary" />
-                        </div>
-                        <span className="text-sm font-extrabold text-foreground/90">Lucknow Grievance Heatmap</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <span className="w-1.5 h-1.5 bg-trust-green rounded-full animate-pulse" />
-                        Live Tracking
-                      </div>
+                  <div className="flex-1 flex flex-col items-center justify-center h-full text-center p-8">
+                    <div className="w-20 h-20 bg-primary/5 rounded-3xl border border-primary/10 flex items-center justify-center mb-6 shadow-inner">
+                      <Search className="w-10 h-10 text-primary/40" />
                     </div>
-                    {/* Heatmap fills the right panel */}
-                    <div className="flex-1 overflow-hidden p-3">
-                      <ComplaintHeatmap
-                        onSelectComplaint={(id) => {
-                          setSelectedComplaintId(id);
-                          setActiveSubTab("queue");
-                        }}
-                      />
-                    </div>
-                    <div className="px-4 pb-3 pt-1 shrink-0">
-                      <p className="text-[10px] text-muted-foreground font-semibold text-center leading-normal">
-                        Click any marker on the map to inspect the grievance details • Select a complaint from the left panel for full analysis
-                      </p>
-                    </div>
+                    <h3 className="text-xl font-extrabold text-foreground/80 mb-2">No Grievance Selected</h3>
+                    <p className="text-sm text-muted-foreground max-w-sm leading-relaxed">
+                      Please select a grievance from the active queue on the left to view detailed analysis, timeline, and AI insights.
+                    </p>
                   </div>
                 )}
               </Card>
             </div>
-          </div>
-        </div>
-      </main>
+            </motion.div>
+          )}
+
+          {/* ============================================ */}
+          {/* TAB 4: LIVE MAP                              */}
+          {/* ============================================ */}
+          {activeSidebarTab === "map" && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              className="h-[800px] w-full glass-premium border border-border/30 rounded-2xl overflow-hidden shadow-2xl flex flex-col"
+            >
+              <div className="p-4 border-b border-border/25 bg-muted/10 shrink-0 flex items-center justify-between z-10 relative">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-trust-green/10 flex items-center justify-center">
+                    <MapPin className="w-5 h-5 text-trust-green" />
+                  </div>
+                  <span className="text-lg font-extrabold text-foreground/90">Live Telemetry Map</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs font-bold text-trust-green bg-trust-green/10 border border-trust-green/20 px-3 py-1.5 rounded-lg shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                  <span className="w-2 h-2 bg-trust-green rounded-full animate-pulse" />
+                  Real-time GPS Tracking
+                </div>
+              </div>
+              <div className="flex-1 w-full h-full relative z-0">
+                <ComplaintHeatmap
+                  onSelectComplaint={(id) => {
+                    setSelectedComplaintId(id);
+                    setActiveSidebarTab("portal");
+                    setActiveSubTab("queue");
+                  }}
+                />
+              </div>
+              <div className="px-4 pb-3 pt-3 shrink-0 bg-[#0a0e17] border-t border-border/10">
+                <p className="text-[10px] text-muted-foreground font-semibold text-center leading-normal">
+                  Click any marker on the map to inspect the grievance details • Select a complaint to jump to Portal
+                </p>
+              </div>
+            </motion.div>
+          )}
+
+        </main>
+      </div>
+    </div>
 
       {/* Proof Based Resolution Modal Overlay */}
       <AnimatePresence>
