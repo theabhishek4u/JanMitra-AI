@@ -4,7 +4,7 @@
 // Simulates SQL queries in browser memory and local storage.
 // Connects Citizen submissions, Officer decisions, and Admin metrics.
 
-import { Complaint, ComplaintStatus, DashboardStats, AnalyticsData, Priority, Notification } from "@/types";
+import { Complaint, ComplaintStatus, DashboardStats, AnalyticsData, Priority, Notification, ResolutionProof, CitizenVerification } from "@/types";
 import { mockComplaints } from "@/data/complaints";
 import { getDepartmentById, getDepartmentForCategory } from "@/data/departments";
 import { analyzeComplaintTrust } from "@/lib/fakeDetection";
@@ -106,6 +106,7 @@ export function initDatabase() {
 export function getComplaints(): Complaint[] {
   if (!isClient) return mockComplaints;
   initDatabase();
+  processAutoEscalations(); // Run auto-escalation engine
   const data = localStorage.getItem(LOCAL_STORAGE_KEY);
   const rawComplaints: Complaint[] = data ? JSON.parse(data) : mockComplaints;
 
@@ -327,11 +328,17 @@ export function updateComplaintStatus(
     defaultMsgEn = `Issue resolved completely. Resolution verified by department.`;
     defaultMsgHi = `समस्या का पूर्ण निवारण हो चुका है। विभाग द्वारा निवारण की पुष्टि की गई है।`;
     complaint.resolvedAt = now;
+  } else if (status === "pending_citizen_confirmation") {
+    defaultMsgEn = `Resolution proof submitted. Waiting for citizen confirmation.`;
+    defaultMsgHi = `समाधान प्रमाण प्रस्तुत किया गया। नागरिक पुष्टि की प्रतीक्षा में।`;
+  } else if (status === "reopened") {
+    defaultMsgEn = `Citizen rejected the resolution. Complaint has been reopened for re-investigation.`;
+    defaultMsgHi = `नागरिक ने समाधान अस्वीकार कर दिया है। शिकायत पुनः जांच हेतु खोल दी गई है।`;
   } else if (status === "escalated") {
     const nextLevel = complaint.escalationLevel + 1;
     let escalatedTo = "Senior Officer";
-    if (nextLevel === 2) escalatedTo = "Department Commissioner";
-    if (nextLevel >= 3) escalatedTo = "Uttar Pradesh Secretariat";
+    if (nextLevel === 2) escalatedTo = "District Authority";
+    if (nextLevel >= 3) escalatedTo = "State Authority";
     
     defaultMsgEn = `Ticket escalated to Level ${nextLevel} (${escalatedTo}) due to SLA threshold breach.`;
     defaultMsgHi = `SLA सीमा उल्लंघन के कारण शिकायत को स्तर ${nextLevel} (${escalatedTo}) पर प्रेषित किया गया।`;
@@ -366,18 +373,24 @@ export function updateComplaintStatus(
   let notifMessageEn = `Your grievance ${complaint.id} status has been updated to "${status.replace(/_/g, " ")}" by Officer.`;
   let notifMessageHi = `आपकी शिकायत ${complaint.id} की स्थिति अधिकारी द्वारा "${status}" में अपडेट की गई है।`;
 
-  if (status === "officer_reviewing") {
+  if (status === "resolved") {
+    notifMessageEn = `Excellent news! Your grievance ${complaint.id} has been fully resolved. Note: ${noteEn || "Issue fixed."}`;
+    notifMessageHi = `शानदार खबर! आपकी शिकायत ${complaint.id} का पूर्ण निवारण कर दिया गया है। टिप्पणी: ${noteHi || "समस्या हल।"}`;
+  } else if (status === "pending_citizen_confirmation") {
+    notifMessageEn = `🔔 Issue resolved? Officer has submitted resolution proof for grievance ${complaint.id}. Please confirm if the issue is fixed or not.`;
+    notifMessageHi = `🔔 समस्या हल? अधिकारी ने शिकायत ${complaint.id} का समाधान प्रमाण प्रस्तुत किया है। कृपया पुष्टि करें कि समस्या हल हुई या नहीं।`;
+  } else if (status === "reopened") {
+    notifMessageEn = `Your grievance ${complaint.id} has been reopened because you reported the issue is not yet resolved.`;
+    notifMessageHi = `आपकी शिकायत ${complaint.id} पुनः खोल दी गई है क्योंकि आपने बताया कि समस्या अभी तक हल नहीं हुई है।`;
+  } else if (status === "escalated") {
+    notifMessageEn = `Your grievance ${complaint.id} has been escalated to Level ${complaint.escalationLevel} for senior review.`;
+    notifMessageHi = `आपकी शिकायत ${complaint.id} को वरिष्ठ समीक्षा के लिए स्तर ${complaint.escalationLevel} पर प्रेषित किया गया है।`;
+  } else if (status === "officer_reviewing") {
     notifMessageEn = `Officer ${officerName || complaint.assignedOfficer} has started reviewing your grievance ${complaint.id}.`;
     notifMessageHi = `अधिकारी ${officerName || complaint.assignedOfficer} ने आपकी शिकायत ${complaint.id} की समीक्षा शुरू की है।`;
   } else if (status === "action_in_progress") {
     notifMessageEn = `Field action started for your grievance ${complaint.id}. Resolution team has been dispatched.`;
     notifMessageHi = `आपकी शिकायत ${complaint.id} पर मैदानी कार्रवाई शुरू हो गई है। समाधान दल रवाना कर दिया गया है।`;
-  } else if (status === "resolved") {
-    notifMessageEn = `Excellent news! Your grievance ${complaint.id} has been fully resolved. Note: ${noteEn || "Issue fixed."}`;
-    notifMessageHi = `शानदार खबर! आपकी शिकायत ${complaint.id} का पूर्ण निवारण कर दिया गया है। टिप्पणी: ${noteHi || "समस्या हल।"}`;
-  } else if (status === "escalated") {
-    notifMessageEn = `Your grievance ${complaint.id} has been escalated to Level ${complaint.escalationLevel} for senior review.`;
-    notifMessageHi = `आपकी शिकायत ${complaint.id} को वरिष्ठ समीक्षा के लिए स्तर ${complaint.escalationLevel} पर प्रेषित किया गया है।`;
   }
 
   addCitizenNotification(
@@ -627,5 +640,242 @@ export function getSuspiciousComplaints(): Complaint[] {
       c.trustAnalysis.trustLevel !== "high" &&
       !c.trustAnalysis.reviewedByOfficer
   );
+}
+
+// 12. Auto Escalation Engine (Governance Infrastructure)
+export function processAutoEscalations() {
+  if (!isClient) return;
+  const dbStr = localStorage.getItem(LOCAL_STORAGE_KEY);
+  if (!dbStr) return;
+  
+  const db = JSON.parse(dbStr) as Complaint[];
+  if (!db || db.length === 0) return;
+
+  let hasChanges = false;
+  const nowStr = new Date().toISOString();
+  const nowTime = new Date().getTime();
+
+  for (let i = 0; i < db.length; i++) {
+    const c = db[i];
+    if (c.status === "resolved") continue;
+
+    const createdTime = new Date(c.createdAt).getTime();
+    const daysPassed = (nowTime - createdTime) / (1000 * 60 * 60 * 24);
+
+    let targetLevel = 0;
+    let targetAssigned = c.assignedOfficer;
+    let targetAssignedHi = c.assignedOfficer;
+    
+    if (daysPassed >= 15) {
+      targetLevel = 3;
+      targetAssigned = "State Authority";
+      targetAssignedHi = "राज्य प्राधिकरण";
+    } else if (daysPassed >= 7) {
+      targetLevel = 2;
+      targetAssigned = "District Authority";
+      targetAssignedHi = "जिला प्राधिकरण";
+    } else if (daysPassed >= 3) {
+      targetLevel = 1;
+      targetAssigned = "Senior Officer";
+      targetAssignedHi = "वरिष्ठ अधिकारी";
+    }
+
+    if (targetLevel > (c.escalationLevel || 0)) {
+      hasChanges = true;
+      c.escalationLevel = targetLevel;
+      c.status = "escalated";
+      c.assignedOfficer = targetAssigned;
+      
+      // Disable active timeline events
+      c.timeline.forEach((t) => (t.isActive = false));
+      
+      const msgEn = `Ticket auto-escalated to Level ${targetLevel} (${targetAssigned}) as it remained unresolved for ${Math.floor(daysPassed)} days.`;
+      const msgHi = `शिकायत ${Math.floor(daysPassed)} दिनों से अनसुलझी होने के कारण इसे स्तर ${targetLevel} (${targetAssignedHi}) पर स्वतः प्रेषित कर दिया गया है।`;
+      
+      c.timeline.push({
+        id: `t-esc-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        status: "escalated",
+        message: msgEn,
+        messageHi: msgHi,
+        timestamp: nowStr,
+        isActive: true,
+      });
+      
+      c.updatedAt = nowStr;
+
+      // Ensure Citizen is notified
+      addCitizenNotification(
+        "escalation",
+        `Auto-Escalation: Your grievance ${c.id} escalated to ${targetAssigned}.`,
+        `स्वतः एस्केलेशन: आपकी शिकायत ${c.id} को ${targetAssignedHi} को भेज दिया गया है।`,
+        c.id
+      );
+
+      // Ensure Admin/Officer is notified of severe breaches
+      if (targetLevel >= 2) {
+         addOfficerNotification(
+           "escalation",
+           `URGENT ESCALATION: Complaint ${c.id} breached ${Math.floor(daysPassed)} days SLA. Assigned to ${targetAssigned}.`,
+           `अति आवश्यक एस्केलेशन: शिकायत ${c.id} ${Math.floor(daysPassed)} दिनों से अनसुलझी। ${targetAssignedHi} को प्रेषित।`,
+           c.id
+         );
+      }
+    }
+  }
+
+  if (hasChanges) {
+    saveDatabase(db);
+    // Important: we just save it directly. Re-triggering the event can cause loop if not careful, 
+    // but processAutoEscalations runs on getComplaints which won't infinite loop because hasChanges is false next time.
+  }
+}
+
+// 13. Submit Resolution Proof (Officer submits proof of work done)
+export function submitResolutionProof(
+  id: string,
+  proofPhotoUrl: string,
+  noteEn: string,
+  noteHi: string,
+  officerName: string
+): Complaint | undefined {
+  const db = getComplaints();
+  const index = db.findIndex((c) => c.id === id);
+  if (index === -1) return undefined;
+
+  const complaint = db[index];
+  const now = new Date().toISOString();
+
+  // Save proof
+  complaint.resolutionProof = {
+    photoUrl: proofPhotoUrl,
+    note: noteEn,
+    noteHi,
+    submittedAt: now,
+    officerName,
+  };
+
+  // Update status to pending citizen confirmation
+  complaint.status = "pending_citizen_confirmation";
+  complaint.updatedAt = now;
+
+  // Disable active timeline events
+  complaint.timeline.forEach((t) => (t.isActive = false));
+  
+  complaint.timeline.push({
+    id: `t-proof-${Date.now()}`,
+    status: "pending_citizen_confirmation",
+    message: `Resolution proof submitted by ${officerName}. "${noteEn}" — Awaiting citizen confirmation.`,
+    messageHi: `${officerName} द्वारा समाधान प्रमाण प्रस्तुत: "${noteHi}" — नागरिक पुष्टि की प्रतीक्षा में।`,
+    timestamp: now,
+    isActive: true,
+  });
+
+  db[index] = complaint;
+  saveDatabase(db);
+
+  if (isClient) {
+    window.dispatchEvent(new CustomEvent("janmitra-db-change"));
+  }
+
+  // Notify citizen
+  addCitizenNotification(
+    "resolution",
+    `🔔 Officer has submitted resolution proof for complaint ${complaint.id}. Please confirm: Is the issue fixed? You can accept or reject with photo evidence.`,
+    `🔔 अधिकारी ने शिकायत ${complaint.id} का समाधान प्रमाण दिया है। कृपया बताएं: क्या समस्या हल हुई? आप स्वीकार या अस्वीकार कर सकते हैं।`,
+    complaint.id
+  );
+
+  return complaint;
+}
+
+// 14. Citizen Verify Resolution (Citizen confirms or rejects)
+export function citizenVerifyResolution(
+  id: string,
+  verified: boolean,
+  feedback: string,
+  feedbackHi: string,
+  rejectionPhotoUrl?: string
+): Complaint | undefined {
+  const db = getComplaints();
+  const index = db.findIndex((c) => c.id === id);
+  if (index === -1) return undefined;
+
+  const complaint = db[index];
+  const now = new Date().toISOString();
+
+  complaint.citizenVerification = {
+    verified,
+    feedback,
+    feedbackHi,
+    photoUrl: rejectionPhotoUrl,
+    submittedAt: now,
+  };
+
+  // Disable active timeline events
+  complaint.timeline.forEach((t) => (t.isActive = false));
+
+  if (verified) {
+    // Citizen confirmed — mark resolved
+    complaint.status = "resolved";
+    complaint.resolvedAt = now;
+    complaint.timeline.push({
+      id: `t-cver-${Date.now()}`,
+      status: "resolved",
+      message: `✅ Citizen confirmed: Issue is resolved. "${feedback}"`,
+      messageHi: `✅ नागरिक द्वारा पुष्टि: समस्या हल हो गई है। "${feedbackHi}"`,
+      timestamp: now,
+      isActive: true,
+    });
+
+    // Notify officer
+    addOfficerNotification(
+      "resolution",
+      `✅ Citizen CONFIRMED resolution for ${complaint.id}. Case closed successfully.`,
+      `✅ नागरिक ने शिकायत ${complaint.id} के समाधान की पुष्टि की। मामला सफलतापूर्वक बंद।`,
+      complaint.id
+    );
+  } else {
+    // Citizen rejected — reopen complaint
+    complaint.status = "reopened";
+    complaint.resolvedAt = undefined;
+    complaint.citizenVerification.photoUrl = rejectionPhotoUrl;
+    
+    complaint.timeline.push({
+      id: `t-crej-${Date.now()}`,
+      status: "reopened",
+      message: `❌ Citizen REJECTED resolution: "${feedback}". Complaint reopened for re-investigation.`,
+      messageHi: `❌ नागरिक ने समाधान अस्वीकार किया: "${feedbackHi}"। शिकायत पुनः जांच हेतु खोली गई।`,
+      timestamp: now,
+      isActive: true,
+    });
+
+    // Auto-escalate on rejection (serious governance)
+    complaint.escalationLevel = Math.max(complaint.escalationLevel, 1);
+    complaint.assignedOfficer = "Senior Officer";
+
+    // Notify officer
+    addOfficerNotification(
+      "escalation",
+      `🚨 Citizen REJECTED resolution for ${complaint.id}: "${feedback}". Complaint REOPENED and auto-escalated to Senior Officer.`,
+      `🚨 नागरिक ने शिकायत ${complaint.id} का समाधान अस्वीकार किया: "${feedbackHi}"। शिकायत पुनः खोली गई और वरिष्ठ अधिकारी को भेजी गई।`,
+      complaint.id
+    );
+  }
+
+  complaint.updatedAt = now;
+  db[index] = complaint;
+  saveDatabase(db);
+
+  if (isClient) {
+    window.dispatchEvent(new CustomEvent("janmitra-db-change"));
+  }
+
+  return complaint;
+}
+
+// 15. Get complaints pending citizen confirmation
+export function getPendingVerificationComplaints(): Complaint[] {
+  const db = getComplaints();
+  return db.filter((c) => c.status === "pending_citizen_confirmation");
 }
 

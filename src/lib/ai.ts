@@ -43,6 +43,8 @@ export function classifyComplaint(text: string): AIClassification {
     urgency,
     department: department?.name || "General Administration",
     departmentHi: department?.nameHi || "सामान्य प्रशासन",
+    ward: detectWard(text).en,
+    wardHi: detectWard(text).hi,
     summary: englishSummary,
     summaryHi: hindiSummary,
     confidence,
@@ -57,7 +59,7 @@ function detectPriority(text: string): Priority {
     "collapse", "sparking", "broken", "health", "children", "hospital",
     "खतरनाक", "आपातकालीन", "तत्काल", "मौत", "दुर्घटना", "आग", "बाढ़",
     "चिंगारी", "बच्चे", "अस्पताल", "टूटी", "बहुत", "खतरा", "गंभीर",
-    "उफन", "भर गया", "बहुत बड़ा",
+    "उफन", "भर गया", "बहुत बड़ा", "तीन दिन", "teen din", "pani nahi", "पानी नहीं"
   ];
 
   const mediumKeywords = [
@@ -97,6 +99,15 @@ function detectFraudRisk(text: string): number {
 
   if (text.length < 10) return 0.5;
   return 0.05;
+}
+
+function detectWard(text: string): { en: string; hi: string } {
+  const lowerText = text.toLowerCase();
+  if (lowerText.includes("gomti") || text.includes("गोमती")) return { en: "Gomti Nagar Ward", hi: "गोमती नगर वार्ड" };
+  if (lowerText.includes("hazratganj") || text.includes("हजरतगंज")) return { en: "Hazratganj Ward", hi: "हजरतगंज वार्ड" };
+  if (lowerText.includes("indira") || text.includes("इंदिरा")) return { en: "Indira Nagar Ward", hi: "इंदिरा नगर वार्ड" };
+  if (lowerText.includes("aliganj") || text.includes("अलीगंज")) return { en: "Aliganj Ward", hi: "अलीगंज वार्ड" };
+  return { en: "Auto-detected from GPS", hi: "जीपीएस द्वारा स्वतः प्राप्त" };
 }
 
 function generateSummary(text: string, category: string, department: string): string {

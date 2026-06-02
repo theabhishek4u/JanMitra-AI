@@ -487,8 +487,8 @@ export default function AdminDashboard() {
                         <th className="py-3.5 px-6">Complaint No.</th>
                         <th className="py-3.5 px-4">Citizen</th>
                         <th className="py-3.5 px-4">Category & Nodal Niche</th>
-                        <th className="py-3.5 px-4">Assigned Department</th>
-                        <th className="py-3.5 px-4">Priority</th>
+                        <th className="py-3.5 px-4">Assigned Department / Authority</th>
+                        <th className="py-3.5 px-4">Priority & Level</th>
                         <th className="py-3.5 px-6 text-right">Status</th>
                       </tr>
                     </thead>
@@ -520,12 +520,24 @@ export default function AdminDashboard() {
                               </div>
                             </td>
                             <td className="py-4 px-4">
-                              <span className="font-extrabold text-gray-300">{c.department}</span>
+                              <div className="flex flex-col">
+                                <span className="font-extrabold text-gray-300">{c.department}</span>
+                                <span className={`text-[10px] mt-0.5 font-bold ${c.escalationLevel > 0 ? "text-danger-red" : "text-muted-foreground"}`}>
+                                  {c.escalationLevel > 0 ? `ESCALATED TO: ${c.assignedOfficer}` : `Assigned: ${c.assignedOfficer}`}
+                                </span>
+                              </div>
                             </td>
                             <td className="py-4 px-4">
-                              <Badge variant="outline" className={`priority-${c.priority} font-extrabold uppercase text-[9px] tracking-wider`}>
-                                {c.priority}
-                              </Badge>
+                              <div className="flex flex-col items-start gap-1">
+                                <Badge variant="outline" className={`priority-${c.priority} font-extrabold uppercase text-[9px] tracking-wider`}>
+                                  {c.priority}
+                                </Badge>
+                                {c.escalationLevel > 0 && (
+                                  <Badge variant="outline" className="bg-danger-red/10 border-danger-red/30 text-danger-red font-extrabold uppercase text-[9px] tracking-wider px-1.5">
+                                    Lvl {c.escalationLevel} Escalation
+                                  </Badge>
+                                )}
+                              </div>
                             </td>
                             <td className="py-4 px-6 text-right">
                               <Badge className={`font-extrabold uppercase text-[9px] px-2 py-0.5 tracking-wider ${

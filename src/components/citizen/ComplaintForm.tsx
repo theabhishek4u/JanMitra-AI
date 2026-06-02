@@ -54,6 +54,7 @@ export function ComplaintForm({
   const [processingStep, setProcessingStep] = useState(0);
   const [photo, setPhoto] = useState<string | null>(null);
   const [photoName, setPhotoName] = useState<string>("");
+  const [userPriority, setUserPriority] = useState<"Auto" | "Normal" | "Important" | "Emergency">("Auto");
   
   // Image Diagnostic Scan states
   const [isScanningImage, setIsScanningImage] = useState(false);
@@ -146,17 +147,19 @@ export function ComplaintForm({
   }, [isHi]);
 
   const dict = {
-    describeTitle: isHi ? "अपनी शिकायत का विवरण दें" : "Describe Your Complaint",
+    describeTitle: isHi ? "🚨 अपनी समस्या दर्ज करें" : "🚨 Report Your Issue",
+    subtitleText: isHi ? "आज आप किस समस्या का सामना कर रहे हैं?" : "What problem are you facing today?",
     voiceRecording: isHi ? "ऑडियो इनपुट रिकॉर्डिंग चालू..." : "Recording Audio Input...",
-    voiceInput: isHi ? "आवाज द्वारा इनपुट" : "Voice Input",
-    uploadPhoto: isHi ? "तस्वीर अपलोड करें" : "Upload Photo",
-    photoAttached: isHi ? "तस्वीर संलग्न है" : "Photo Attached",
-    detectLocation: isHi ? "स्थान का पता लगाएं" : "Detect Location",
+    voiceInput: isHi ? "🎤 अपनी शिकायत बोलें" : "🎤 Speak Complaint",
+    uploadPhoto: isHi ? "📷 फोटो जोड़ें" : "📷 Add Photo",
+    photoAttached: isHi ? "📷 तस्वीर संलग्न है" : "📷 Photo Attached",
+    detectLocation: isHi ? "📍 स्वतः स्थान पता करें" : "📍 Auto Detect Location",
     pinnedArea: isHi ? "रिवर्स-जियोकोडेड पिन किया गया क्षेत्र" : "Reverse-Geocoded Pinned Area",
     yourDetails: isHi ? "आपका विवरण" : "Your Details",
     namePlaceholder: isHi ? "आपका नाम" : "Your Name",
     phonePlaceholder: isHi ? "फ़ोन नंबर" : "Phone Number",
-    submitBtn: isHi ? "जमा करें और AI से विश्लेषण करें" : "Submit & Analyze with AI",
+    submitBtn: isHi ? " शिकायत जमा करें" : "Submit Complaint",
+    submitSubText: isHi ? "AI स्वचालित रूप से सही विभाग को शिकायत भेजेगा" : "AI will automatically route to correct department",
     analyzingTitle: isHi ? "AI आपकी शिकायत का विश्लेषण कर रहा है" : "AI is Analyzing Your Complaint",
     analyzingDesc: isHi ? "वास्तविक समय में श्रेणियों का वर्गीकरण, तात्कालिकता का पता लगाना और विभाग आवंटन..." : "Classifying categories, detecting urgency & routing in real-time...",
     successTitle: isHi ? "शिकायत सफलतापूर्वक दर्ज की गई!" : "Complaint Registered Successfully!",
@@ -175,6 +178,11 @@ export function ComplaintForm({
     fileAnother: isHi ? "एक और शिकायत दर्ज करें" : "File Another Complaint",
     trackThis: isHi ? "शिकायत ट्रैक करें" : "Track This Complaint",
     placeholderText: isHi ? "समस्या का विस्तार से वर्णन करें (जैसे, गोमती नगर मुख्य मार्ग पर 3 दिनों से स्ट्रीट लाइट खराब है...)" : "Describe the issue in detail (e.g., Streetlight broken on Main Road Gomti Nagar for 3 days...)",
+    selectPriority: isHi ? "प्राथमिकता चुनें" : "Select Priority",
+    priorityAuto: isHi ? "ऑटो (AI तय करेगा)" : "Auto-Detect",
+    priorityNormal: isHi ? "सामान्य" : "Normal",
+    priorityImportant: isHi ? "महत्वपूर्ण" : "Important",
+    priorityEmergency: isHi ? "आपातकालीन" : "Emergency",
   };
 
   const handlePhotoUploadClick = () => {
@@ -462,7 +470,7 @@ export function ComplaintForm({
     if (!text.trim()) return;
 
     const currentTokenState = getTokenState();
-    const isEmergency = isEmergencyComplaint(text);
+    const isEmergency = isEmergencyComplaint(text) || userPriority === "Emergency";
 
     // If 0 tokens remaining and it is not an emergency, block it immediately
     if (currentTokenState.tokensRemaining <= 0 && !isEmergency) {
@@ -475,7 +483,8 @@ export function ComplaintForm({
     setTokenAlert(null);
 
     // Call real Gemini proxy route and start visual steps
-    const apiResultPromise = classifyComplaintAI(text, photo);
+    const enhancedText = userPriority === "Auto" ? text : `${text}\n[User Selected Priority: ${userPriority}]`;
+    const apiResultPromise = classifyComplaintAI(enhancedText, photo);
 
     const steps = [
       () => setProcessingStep(1), // Understanding text
@@ -493,8 +502,17 @@ export function ComplaintForm({
     try {
       const result = await apiResultPromise;
 
+      // Force priority based on explicit user selection, otherwise let AI handle it
+      if (userPriority === "Emergency") {
+        result.priority = "high";
+      } else if (userPriority === "Important") {
+        result.priority = "medium";
+      } else if (userPriority === "Normal") {
+        result.priority = "low";
+      }
+
       // Deduct token now that we have classified and confirmed
-      const tokenResult = consumeToken(text, result.category);
+      const tokenResult = consumeToken(enhancedText, result.category);
       
       if (!tokenResult.allowed) {
         setStep("input");
@@ -583,10 +601,12 @@ export function ComplaintForm({
           >
             {/* Complaint text */}
             <div className="bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-6 sm:p-7 space-y-4">
-              <div className="flex items-center gap-2 mb-1">
-                <FileText className="w-5 h-5 text-[#7c3aed]" />
-                <h3 className="font-extrabold text-sm uppercase tracking-wider text-white">{dict.describeTitle}</h3>
-                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{isHi ? "(अंग्रेजी भी समर्थित)" : "(Hindi Supported)"}</span>
+              <div className="flex flex-col gap-1 mb-2">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-extrabold text-lg tracking-wider text-white">{dict.describeTitle}</h3>
+                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{isHi ? "(अंग्रेजी भी समर्थित)" : "(Hindi Supported)"}</span>
+                </div>
+                <p className="text-sm text-gray-400 font-medium">{dict.subtitleText}</p>
               </div>
 
               {/* Dynamic Token Tracker UI */}
@@ -689,7 +709,6 @@ export function ComplaintForm({
                     </>
                   ) : (
                     <>
-                      <Mic className="w-3.5 h-3.5 text-indigo-400" />
                       {dict.voiceInput}
                     </>
                   )}
@@ -710,7 +729,6 @@ export function ComplaintForm({
                   onClick={handlePhotoUploadClick}
                   className={`gap-2 rounded-xl font-black text-xs uppercase transition-all active:scale-95 cursor-pointer bg-[#0c101f] border border-[#1f2937] text-gray-300 hover:text-white hover:bg-slate-900 h-9 px-4`}
                 >
-                  <Upload className={`w-3.5 h-3.5 ${photo ? "text-indigo-400 animate-pulse" : "text-gray-400"}`} />
                   {photo ? dict.photoAttached : dict.uploadPhoto}
                 </Button>
 
@@ -721,7 +739,6 @@ export function ComplaintForm({
                   className="gap-2 ml-auto rounded-xl font-black text-xs uppercase transition-all hover:bg-slate-900 bg-[#0c101f] border border-[#1f2937] text-gray-300 hover:text-white active:scale-95 cursor-pointer h-9 px-4"
                   onClick={detectLocation}
                 >
-                  <MapPin className="w-3.5 h-3.5 text-indigo-400" />
                   {location ? location.area : dict.detectLocation}
                 </Button>
               </div>
@@ -754,6 +771,36 @@ export function ComplaintForm({
                   </div>
                 </motion.div>
               )}
+            </div>
+
+            {/* Priority Selector */}
+            <div className="bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-6 sm:p-7 space-y-4">
+              <h3 className="font-extrabold text-sm uppercase tracking-wider text-white flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-[#7c3aed]" />
+                {dict.selectPriority}
+              </h3>
+              <div className="flex flex-wrap gap-3">
+                {[
+                  { id: "Auto", label: dict.priorityAuto, icon: "✨" },
+                  { id: "Normal", label: dict.priorityNormal, icon: "○" },
+                  { id: "Important", label: dict.priorityImportant, icon: "🟠" },
+                  { id: "Emergency", label: dict.priorityEmergency, icon: "🔴" }
+                ].map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setUserPriority(p.id as "Auto" | "Normal" | "Important" | "Emergency")}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all text-sm font-bold ${
+                      userPriority === p.id 
+                        ? "border-indigo-500 bg-indigo-500/10 text-white shadow-[0_0_15px_rgba(99,102,241,0.2)]" 
+                        : "border-[#1f2937] bg-[#070b13] text-gray-400 hover:text-gray-200 hover:border-gray-600"
+                    }`}
+                  >
+                    <span>{p.icon}</span>
+                    {p.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Personal details */}
@@ -838,18 +885,20 @@ export function ComplaintForm({
             )}
 
             {/* Submit */}
-            <Button
-              type="button"
-              onClick={handleSubmit}
-              disabled={!text.trim() || (tokenState.tokensRemaining <= 0 && !isEmergencyComplaint(text))}
-              className="w-full h-12 rounded-xl bg-linear-to-r from-[#4f46e5] via-[#7c3aed] to-[#db2777] hover:bg-right text-white shadow-xl shadow-[#7c3aed]/25 hover:shadow-[#7c3aed]/45 hover:scale-[1.01] active:scale-[0.99] transition-all duration-500 text-base font-extrabold group cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <div className="flex items-center justify-center gap-2 uppercase tracking-wider text-xs font-black">
-                <Sparkles className="w-4.5 h-4.5 text-white" />
-                <span>Submit & Analyze with AI</span>
-                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </Button>
+            <div className="flex flex-col items-center gap-2 pt-2">
+              <Button
+                type="button"
+                onClick={handleSubmit}
+                disabled={!text.trim() || (tokenState.tokensRemaining <= 0 && !isEmergencyComplaint(text))}
+                className="w-full h-12 rounded-xl bg-linear-to-r from-[#4f46e5] via-[#7c3aed] to-[#db2777] hover:bg-right text-white shadow-xl shadow-[#7c3aed]/25 hover:shadow-[#7c3aed]/45 hover:scale-[1.01] active:scale-[0.99] transition-all duration-500 text-base font-extrabold group cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <div className="flex items-center justify-center gap-2 uppercase tracking-wider text-xs font-black">
+                  <span>{dict.submitBtn}</span>
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </Button>
+              <span className="text-[11px] text-gray-500 font-medium">{dict.submitSubText}</span>
+            </div>
           </motion.div>
         )}
 
@@ -1039,6 +1088,14 @@ export function ComplaintForm({
                   <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">{dict.estResolution}</div>
                   <div className="font-bold text-sm text-foreground/90">{classification.predictedResolutionDays} {dict.days}</div>
                   <div className="text-[11px] text-muted-foreground/80 font-medium">{isHi ? "सामान्य प्रसंस्करण समय सीमा" : classification.urgency}</div>
+                </div>
+
+                <div className="bg-muted/30 rounded-xl p-4 border border-border/20 transition-all hover:bg-muted/40 sm:col-span-2">
+                  <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">{isHi ? "वार्ड (Ward)" : "Ward"}</div>
+                  <div className="font-bold text-sm text-foreground/90 flex items-center gap-1.5">
+                    <MapPin className="w-4 h-4 text-trust-green" />
+                    {classification.wardHi ? (isHi ? classification.wardHi : classification.ward) : (location?.area || (isHi ? "जीपीएस द्वारा स्वतः प्राप्त" : "Auto-detected from GPS"))}
+                  </div>
                 </div>
               </div>
             </div>

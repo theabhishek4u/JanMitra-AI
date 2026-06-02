@@ -23,14 +23,34 @@ export interface ComplaintTrustAnalysis {
   officerVerdict?: "safe" | "spam";
 }
 
+// Resolution Proof (Officer submits proof of work done)
+export interface ResolutionProof {
+  photoUrl: string;
+  note: string;
+  noteHi: string;
+  submittedAt: string;
+  officerName: string;
+}
+
+// Citizen Verification (Citizen confirms or rejects resolution)
+export interface CitizenVerification {
+  verified: boolean; // true = citizen confirmed fix, false = citizen rejected
+  feedback: string;
+  feedbackHi: string;
+  photoUrl?: string; // citizen can upload photo if "not solved"
+  submittedAt: string;
+}
+
 export type ComplaintStatus =
   | "submitted"
   | "ai_analyzing"
   | "department_assigned"
   | "officer_reviewing"
   | "action_in_progress"
+  | "pending_citizen_confirmation"
   | "resolved"
-  | "escalated";
+  | "escalated"
+  | "reopened";
 
 export type Priority = "high" | "medium" | "low";
 
@@ -76,6 +96,8 @@ export interface AIClassification {
   urgency: string;
   department: string;
   departmentHi: string;
+  ward?: string;
+  wardHi?: string;
   summary: string;
   summaryHi: string;
   confidence: number;
@@ -125,6 +147,8 @@ export interface Complaint {
   isHotspot?: boolean;
   hotspotCount?: number;
   trustAnalysis?: ComplaintTrustAnalysis;
+  resolutionProof?: ResolutionProof;
+  citizenVerification?: CitizenVerification;
 }
 
 export interface DashboardStats {

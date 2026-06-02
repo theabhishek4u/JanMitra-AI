@@ -39,6 +39,9 @@ import {
   Route,
   Lightbulb,
   Scale,
+  Camera,
+  Upload,
+  UserCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -57,6 +60,7 @@ import {
   clearNotifications,
   getSuspiciousComplaints,
   updateComplaintVerdict,
+  submitResolutionProof,
 } from "@/lib/complaints";
 import type { Complaint, ComplaintStatus, DashboardStats, Notification, TrustLevel } from "@/types";
 
@@ -92,6 +96,13 @@ export default function OfficerDashboard() {
   // Interactive scanner state overrides
   const [scanSpeed, setScanSpeed] = useState<"slow" | "normal" | "hyper">("normal");
   const [isAudioPlaying, setIsAudioPlaying] = useState(true);
+
+  // Proof Based Resolution Modal State
+  const [showProofModal, setShowProofModal] = useState(false);
+  const [proofPhoto, setProofPhoto] = useState<string | null>(null);
+  const [proofPhotoName, setProofPhotoName] = useState("");
+  const [proofNote, setProofNote] = useState("");
+  const [isSubmittingProof, setIsSubmittingProof] = useState(false);
 
   // Sync notifications whenever complaints update
   useEffect(() => {
@@ -292,9 +303,11 @@ export default function OfficerDashboard() {
       case "officer_reviewing":
         return "Dispatch Technical Field Force";
       case "action_in_progress":
-        return "Declare Grievance Fully Resolved";
+        return "Submit Resolution Proof \u0026 Request Citizen Confirmation";
       case "escalated":
         return "Commence Officer Verification Review";
+      case "reopened":
+        return "Dispatch Technical Field Force";
       default:
         return "";
     }
@@ -311,9 +324,11 @@ export default function OfficerDashboard() {
       case "officer_reviewing":
         return "action_in_progress";
       case "action_in_progress":
-        return "resolved";
+        return "pending_citizen_confirmation"; // Now goes to proof flow
       case "escalated":
         return "officer_reviewing";
+      case "reopened":
+        return "action_in_progress";
       default:
         return null;
     }
@@ -321,6 +336,13 @@ export default function OfficerDashboard() {
 
   const handleAdvanceStatus = () => {
     if (!selectedComplaint) return;
+
+    // If current status is action_in_progress, open proof modal instead
+    if (selectedComplaint.status === "action_in_progress") {
+      setShowProofModal(true);
+      return;
+    }
+
     const next = getNextStatus(selectedComplaint.status);
     if (!next) return;
 
@@ -332,6 +354,37 @@ export default function OfficerDashboard() {
       `कमांड कंसोल नियंत्रण द्वारा स्थिति स्वचालित रूप से ${next} में परिवर्तित की गई।`
     );
     refreshData();
+  };
+
+  const handleSubmitProof = () => {
+    if (!selectedComplaint || !proofNote.trim()) return;
+    setIsSubmittingProof(true);
+
+    submitResolutionProof(
+      selectedComplaint.id,
+      proofPhoto || "",
+      proofNote,
+      `अधिकारी टिप्पणी: ${proofNote}`,
+      "Shri Rajesh Kumar"
+    );
+
+    setShowProofModal(false);
+    setProofPhoto(null);
+    setProofPhotoName("");
+    setProofNote("");
+    setIsSubmittingProof(false);
+    refreshData();
+  };
+
+  const handleProofPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setProofPhotoName(file.name);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setProofPhoto(ev.target?.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleManualEscalate = () => {
@@ -1072,6 +1125,14 @@ export default function OfficerDashboard() {
                                     >
                                       {c.priority} priority
                                     </Badge>
+                                    {c.escalationLevel > 0 && (
+                                      <span className="bg-orange-500/10 border border-orange-500/25 text-orange-500 px-2 py-0.5 rounded-md text-[8px] font-extrabold uppercase animate-pulse flex items-center gap-0.5">
+                                        ⚠️ ESCALATED (L{c.escalationLevel})
+                                      </span>
+                                    )}
+                                    <span className="bg-white/5 border border-white/10 text-gray-400 px-2 py-0.5 rounded-md text-[8px] font-extrabold uppercase flex items-center gap-0.5">
+                                      👤 {c.assignedOfficer || "Local Officer"}
+                                    </span>
                                     {c.isHotspot && (
                                       <span className="bg-red-500/10 border border-red-500/25 text-red-500 px-2 py-0.5 rounded-md text-[8px] font-extrabold uppercase animate-pulse flex items-center gap-0.5">
                                         🔥 HOTSPOT
@@ -1560,19 +1621,21 @@ export default function OfficerDashboard() {
 
                       {/* Interactive Status Transition timeline */}
                       <div className="space-y-4">
-                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Grievance Step Status Control (6 Stages)</span>
+                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Grievance Step Status Control (7 Stages)</span>
                         <div className="flex items-center justify-between relative px-2">
                           {/* Progress bar line */}
                           <div className="absolute top-1/2 left-2 right-2 h-0.5 bg-border/20 -translate-y-1/2 z-0" />
                           
-                          {/* 6 status states */}
-                          {(["submitted", "ai_analyzing", "department_assigned", "officer_reviewing", "action_in_progress", "resolved"] as ComplaintStatus[]).map((st, i) => {
-                            const statuses = ["submitted", "ai_analyzing", "department_assigned", "officer_reviewing", "action_in_progress", "resolved"];
-                            const currentIdx = statuses.indexOf(selectedComplaint.status);
+                          {/* 7 status states */}
+                          {(["submitted", "ai_analyzing", "department_assigned", "officer_reviewing", "action_in_progress", "pending_citizen_confirmation", "resolved"] as ComplaintStatus[]).map((st, i) => {
+                            const statuses = ["submitted", "ai_analyzing", "department_assigned", "officer_reviewing", "action_in_progress", "pending_citizen_confirmation", "resolved"];
+                            const currentStatus = selectedComplaint.status === "reopened" ? "action_in_progress" : selectedComplaint.status;
+                            const currentIdx = statuses.indexOf(currentStatus);
                             const thisIdx = statuses.indexOf(st);
                             
                             const isCompleted = thisIdx < currentIdx || selectedComplaint.status === "resolved";
-                            const isActive = st === selectedComplaint.status;
+                            const isActive = st === currentStatus;
+                            const isPending = st === "pending_citizen_confirmation";
 
                             return (
                               <div key={st} className="flex flex-col items-center z-10 relative">
@@ -1580,6 +1643,8 @@ export default function OfficerDashboard() {
                                   className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
                                     isCompleted
                                       ? "bg-trust-green border-trust-green text-white"
+                                      : isActive && isPending
+                                      ? "bg-warning-amber border-warning-amber text-black scale-110 shadow-[0_0_10px_rgba(245,158,11,0.5)] animate-pulse"
                                       : isActive
                                       ? "bg-primary border-primary text-white scale-110 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
                                       : "bg-card border-border text-muted-foreground"
@@ -1587,12 +1652,16 @@ export default function OfficerDashboard() {
                                 >
                                   {isCompleted ? (
                                     <CheckCircle2 className="w-3.5 h-3.5" />
+                                  ) : isPending && isActive ? (
+                                    <UserCheck className="w-3 h-3" />
                                   ) : (
                                     <span className="text-[9px] font-bold font-mono">{i + 1}</span>
                                   )}
                                 </div>
-                                <span className={`text-[8px] font-extrabold capitalize mt-1.5 tracking-wider hidden sm:block ${isActive ? "text-primary font-black" : "text-muted-foreground"}`}>
-                                  {st.replace(/_/g, " ")}
+                                <span className={`text-[7px] font-extrabold capitalize mt-1.5 tracking-wider hidden sm:block max-w-[60px] text-center leading-tight ${
+                                  isActive ? (isPending ? "text-warning-amber font-black" : "text-primary font-black") : "text-muted-foreground"
+                                }`}>
+                                  {st === "pending_citizen_confirmation" ? "Citizen Confirm" : st.replace(/_/g, " ")}
                                 </span>
                               </div>
                             );
@@ -1601,14 +1670,51 @@ export default function OfficerDashboard() {
 
                         {/* Interactive Status Advancer Actions Panel */}
                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-muted/20 border border-border/10 p-3.5 rounded-2xl">
-                          {selectedComplaint.status !== "resolved" ? (
+                          {selectedComplaint.status === "resolved" ? (
+                            <div className="w-full flex items-center justify-center gap-2 py-2 text-trust-green font-bold text-sm bg-trust-green/5 border border-trust-green/20 rounded-xl">
+                              <CheckCircle2 className="w-4 h-4" />
+                              Grievance Completely Resolved & Citizen Verified ✅
+                            </div>
+                          ) : selectedComplaint.status === "pending_citizen_confirmation" ? (
+                            <div className="w-full flex flex-col items-center gap-2 py-3 text-warning-amber font-bold text-sm bg-warning-amber/5 border border-warning-amber/20 rounded-xl">
+                              <div className="flex items-center gap-2">
+                                <UserCheck className="w-4 h-4 animate-pulse" />
+                                Awaiting Citizen Confirmation
+                              </div>
+                              <span className="text-[10px] text-muted-foreground font-semibold">
+                                Resolution proof has been submitted. Citizen must verify if the issue is fixed.
+                              </span>
+                            </div>
+                          ) : selectedComplaint.status === "reopened" ? (
+                            <>
+                              <div className="flex-1 flex items-center gap-2 py-2 text-danger-red font-bold text-xs bg-danger-red/5 border border-danger-red/20 rounded-xl px-3">
+                                <AlertTriangle className="w-4 h-4 animate-bounce" />
+                                <div>
+                                  <div>Citizen Rejected Resolution — Complaint Reopened</div>
+                                  <span className="text-[10px] text-muted-foreground font-semibold">Auto-escalated to Senior Officer for re-investigation.</span>
+                                </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                className="text-xs h-10 rounded-xl bg-linear-to-r from-gov-blue via-primary to-ai-purple text-white font-extrabold shadow-md cursor-pointer hover:shadow-primary/30"
+                                onClick={handleAdvanceStatus}
+                              >
+                                <Zap className="w-3.5 h-3.5 mr-1.5 animate-pulse" />
+                                {getNextStatusText(selectedComplaint.status)}
+                              </Button>
+                            </>
+                          ) : (
                             <>
                               <Button
                                 size="sm"
                                 className="flex-1 text-xs h-10 rounded-xl bg-linear-to-r from-gov-blue via-primary to-ai-purple text-white font-extrabold shadow-md cursor-pointer hover:shadow-primary/30"
                                 onClick={handleAdvanceStatus}
                               >
-                                <Zap className="w-3.5 h-3.5 mr-1.5 animate-pulse" />
+                                {selectedComplaint.status === "action_in_progress" ? (
+                                  <Camera className="w-3.5 h-3.5 mr-1.5" />
+                                ) : (
+                                  <Zap className="w-3.5 h-3.5 mr-1.5 animate-pulse" />
+                                )}
                                 {getNextStatusText(selectedComplaint.status)}
                               </Button>
                               
@@ -1622,11 +1728,6 @@ export default function OfficerDashboard() {
                                 Escalation Override
                               </Button>
                             </>
-                          ) : (
-                            <div className="w-full flex items-center justify-center gap-2 py-2 text-trust-green font-bold text-sm bg-trust-green/5 border border-trust-green/20 rounded-xl">
-                              <CheckCircle2 className="w-4 h-4" />
-                              Grievance Completely Resolved & Closed
-                            </div>
                           )}
                         </div>
                       </div>
@@ -1760,6 +1861,138 @@ export default function OfficerDashboard() {
           </div>
         </div>
       </main>
+
+      {/* Proof Based Resolution Modal Overlay */}
+      <AnimatePresence>
+        {showProofModal && (
+          <motion.div
+            className="fixed inset-0 z-100 flex items-center justify-center bg-black/70 backdrop-blur-md p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowProofModal(false)}
+          >
+            <motion.div
+              className="bg-[#0a0e17] border border-primary/25 rounded-3xl w-full max-w-lg p-7 space-y-5 shadow-2xl shadow-primary/10 relative overflow-hidden"
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Decorative glow */}
+              <div className="absolute -right-20 -top-20 w-60 h-60 bg-primary/5 rounded-full filter blur-[80px] pointer-events-none" />
+              
+              {/* Close button */}
+              <button
+                type="button"
+                onClick={() => setShowProofModal(false)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              {/* Header */}
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-linear-to-br from-trust-green/20 to-primary/20 border border-trust-green/30 flex items-center justify-center shadow-lg">
+                  <Camera className="w-5 h-5 text-trust-green" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white tracking-tight">Submit Resolution Proof</h3>
+                  <p className="text-[10px] text-gray-400 font-bold">Anti-corruption evidence protocol • Citizen must confirm</p>
+                </div>
+              </div>
+
+              {/* Complaint Reference */}
+              {selectedComplaint && (
+                <div className="bg-white/3 border border-white/8 rounded-xl p-3 flex items-center gap-3">
+                  <span className="text-[10px] font-mono font-black text-gray-500 bg-white/5 px-2 py-1 rounded-lg border border-white/10">{selectedComplaint.id}</span>
+                  <span className="text-xs font-bold text-gray-300 truncate">{selectedComplaint.title}</span>
+                </div>
+              )}
+
+              {/* Photo Upload */}
+              <div className="space-y-2">
+                <label className="text-[10px] text-gray-400 font-black uppercase tracking-wider flex items-center gap-1.5">
+                  <Camera className="w-3.5 h-3.5" />
+                  Upload Resolution Photo (Proof of Work Done)
+                </label>
+                
+                {proofPhoto ? (
+                  <div className="relative rounded-2xl overflow-hidden border border-trust-green/30 h-44">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={proofPhoto} alt="Resolution Proof" className="w-full h-full object-cover" />
+                    <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between bg-black/60 backdrop-blur-sm rounded-xl px-3 py-1.5">
+                      <span className="text-[9px] font-bold text-trust-green truncate">{proofPhotoName}</span>
+                      <button
+                        type="button"
+                        onClick={() => { setProofPhoto(null); setProofPhotoName(""); }}
+                        className="text-[9px] font-black text-red-400 hover:text-red-300 cursor-pointer"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center h-36 rounded-2xl border-2 border-dashed border-white/10 bg-white/2 hover:bg-white/4 hover:border-primary/25 transition-all cursor-pointer group">
+                    <Upload className="w-8 h-8 text-gray-600 group-hover:text-primary/60 transition-colors mb-2" />
+                    <span className="text-xs font-bold text-gray-500 group-hover:text-gray-400">Click to upload photo evidence</span>
+                    <span className="text-[10px] text-gray-600 mt-0.5">JPG, PNG • Max 5MB</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProofPhotoUpload}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+
+              {/* Resolution Note */}
+              <div className="space-y-2">
+                <label className="text-[10px] text-gray-400 font-black uppercase tracking-wider flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5" />
+                  Resolution Description (Required)
+                </label>
+                <Textarea
+                  placeholder="Describe what was done to resolve the issue. e.g., 'Manhole covered with concrete slab, drainage cleared, area sanitized...'"
+                  value={proofNote}
+                  onChange={(e) => setProofNote(e.target.value)}
+                  className="text-xs min-h-[80px] rounded-xl bg-white/3 border border-white/10 focus-visible:ring-1 focus-visible:ring-primary/45 text-gray-200 placeholder:text-gray-600"
+                />
+              </div>
+
+              {/* Info Card */}
+              <div className="bg-warning-amber/5 border border-warning-amber/15 rounded-xl p-3 flex items-start gap-2">
+                <UserCheck className="w-4 h-4 text-warning-amber shrink-0 mt-0.5" />
+                <div className="text-[10px] text-gray-400 font-semibold leading-relaxed">
+                  <span className="text-warning-amber font-black">Anti-Corruption Protocol:</span> After submission, the citizen will receive a notification to confirm whether the issue is actually fixed. If rejected, the complaint will be automatically reopened and escalated.
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowProofModal(false)}
+                  className="flex-1 text-xs h-11 rounded-xl border-white/10 text-gray-400 hover:text-white hover:bg-white/5 font-bold cursor-pointer"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  disabled={!proofNote.trim() || isSubmittingProof}
+                  onClick={handleSubmitProof}
+                  className="flex-1 text-xs h-11 rounded-xl bg-linear-to-r from-trust-green via-emerald-500 to-teal-500 text-white font-black shadow-lg shadow-trust-green/20 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5 hover:shadow-trust-green/30"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  Submit Proof & Request Confirmation
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

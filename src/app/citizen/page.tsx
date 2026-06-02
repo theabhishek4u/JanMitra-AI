@@ -14,6 +14,10 @@ import {
   Bell,
   Trash2,
   Inbox,
+  Camera,
+  Upload,
+  ShieldCheck,
+  X as XIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,6 +31,7 @@ import {
   getCitizenNotifications,
   markNotificationAsRead,
   clearNotifications,
+  citizenVerifyResolution,
 } from "@/lib/complaints";
 import type { Complaint, Notification } from "@/types";
 
@@ -46,6 +51,12 @@ export default function CitizenDashboard() {
   const [trackSearchId, setTrackSearchId] = useState("");
   const [trackedComplaint, setTrackedComplaint] = useState<Complaint | null>(null);
   const [trackError, setTrackError] = useState(false);
+
+  // Citizen Verification State
+  const [verifyFeedback, setVerifyFeedback] = useState("");
+  const [rejectPhoto, setRejectPhoto] = useState<string | null>(null);
+  const [rejectPhotoName, setRejectPhotoName] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
 
   const handleSearchTrack = (idToSearch?: string) => {
     const queryId = (idToSearch || trackSearchId).trim().toUpperCase();
@@ -134,6 +145,34 @@ export default function CitizenDashboard() {
     setComplaints(getComplaints());
   };
 
+  const handleVerifyResolution = (complaintId: string, verified: boolean) => {
+    if (!verifyFeedback.trim() && !verified) return;
+    setIsVerifying(true);
+    citizenVerifyResolution(
+      complaintId,
+      verified,
+      verifyFeedback || (verified ? "Issue is fixed, thank you!" : "Issue not resolved."),
+      verifyFeedback || (verified ? "समस्या हल हो गई, धन्यवाद!" : "समस्या अभी हल नहीं हुई।"),
+      verified ? undefined : rejectPhoto || undefined
+    );
+    setVerifyFeedback("");
+    setRejectPhoto(null);
+    setRejectPhotoName("");
+    setIsVerifying(false);
+    refreshComplaints();
+  };
+
+  const handleRejectPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setRejectPhotoName(file.name);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setRejectPhoto(ev.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleTrackComplaint = (id: string) => {
     refreshComplaints();
     setTrackSearchId(id);
@@ -187,6 +226,10 @@ export default function CitizenDashboard() {
         return isHi ? "निवारण पूर्ण" : "Resolved";
       case "escalated":
         return isHi ? "उच्चाधिकारी को प्रेषित" : "Escalated";
+      case "pending_citizen_confirmation":
+        return isHi ? "आपकी पुष्टि की प्रतीक्षा" : "Awaiting Your Confirmation";
+      case "reopened":
+        return isHi ? "पुनः खोली गई" : "Reopened";
       default:
         return s.replace(/_/g, " ");
     }
@@ -419,8 +462,10 @@ export default function CitizenDashboard() {
                                 backgroundColor:
                                   c.status === "resolved"
                                     ? "#10B981"
-                                    : c.status === "escalated"
+                                    : c.status === "escalated" || c.status === "reopened"
                                     ? "#EF4444"
+                                    : c.status === "pending_citizen_confirmation"
+                                    ? "#F59E0B"
                                     : "#F59E0B",
                               }}
                             />
@@ -531,6 +576,123 @@ export default function CitizenDashboard() {
 
                       {/* AI Agent Autonomous Action Panel */}
                       <AIAgentFollowUpPanel complaint={complaint} language={language} />
+
+                      {/* 🚨 Citizen Verification Panel (Proof Based Resolution) */}
+                      {complaint.status === "pending_citizen_confirmation" && complaint.resolutionProof && (
+                        <motion.div
+                          className="rounded-2xl border-2 border-warning-amber/30 bg-warning-amber/3 p-6 space-y-4 relative overflow-hidden"
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                        >
+                          <div className="absolute -right-16 -top-16 w-40 h-40 bg-warning-amber/5 rounded-full filter blur-[60px] pointer-events-none" />
+                          
+                          <div className="flex items-center gap-2">
+                            <ShieldCheck className="w-5 h-5 text-warning-amber animate-pulse" />
+                            <span className="font-black text-sm text-white">
+                              {isHi ? "🔔 क्या समस्या हल हो गई? पुष्टि करें" : "🔔 Is the issue resolved? Confirm below"}
+                            </span>
+                          </div>
+
+                          {/* Officer's Proof */}
+                          <div className="bg-black/20 border border-white/8 rounded-xl p-4 space-y-3">
+                            <div className="text-[10px] text-gray-400 font-black uppercase tracking-wider">
+                              {isHi ? "अधिकारी का समाधान प्रमाण" : "Officer's Resolution Proof"}
+                            </div>
+                            {complaint.resolutionProof.photoUrl && (
+                              <div className="rounded-xl overflow-hidden border border-white/10 max-h-[200px]">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={complaint.resolutionProof.photoUrl} alt="Resolution Proof" className="w-full h-full object-cover" />
+                              </div>
+                            )}
+                            <p className="text-xs text-gray-300 font-semibold leading-relaxed bg-white/3 rounded-lg p-3 border border-white/5">
+                              "{complaint.resolutionProof.note}"
+                            </p>
+                            <div className="text-[10px] text-gray-500 font-semibold">
+                              — {complaint.resolutionProof.officerName} • {new Date(complaint.resolutionProof.submittedAt).toLocaleString("en-IN")}
+                            </div>
+                          </div>
+
+                          {/* Feedback input */}
+                          <div className="space-y-2">
+                            <textarea
+                              placeholder={isHi ? "अपनी प्रतिक्रिया दें (वैकल्पिक)..." : "Your feedback (optional for confirm, required for reject)..."}
+                              value={verifyFeedback}
+                              onChange={(e) => setVerifyFeedback(e.target.value)}
+                              className="w-full text-xs min-h-[60px] rounded-xl bg-white/3 border border-white/10 focus:border-primary/40 focus:ring-1 focus:ring-primary/30 text-gray-200 placeholder:text-gray-600 p-3 outline-none transition-all resize-none"
+                            />
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex gap-3">
+                            <Button
+                              size="sm"
+                              disabled={isVerifying}
+                              onClick={() => handleVerifyResolution(complaint.id, true)}
+                              className="flex-1 text-xs h-11 rounded-xl bg-linear-to-r from-trust-green via-emerald-500 to-teal-500 text-white font-black shadow-lg shadow-trust-green/20 cursor-pointer flex items-center justify-center gap-1.5 hover:shadow-trust-green/30 active:scale-95 transition-all"
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                              {isHi ? "✅ हाँ, समस्या हल हो गई" : "✅ Yes, Issue is Fixed"}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={isVerifying || !verifyFeedback.trim()}
+                              onClick={() => handleVerifyResolution(complaint.id, false)}
+                              className="flex-1 text-xs h-11 rounded-xl border-danger-red/30 text-danger-red hover:bg-danger-red/5 font-black cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 transition-all disabled:opacity-40"
+                            >
+                              <AlertTriangle className="w-4 h-4" />
+                              {isHi ? "❌ नहीं, अभी नहीं हुई" : "❌ Not Solved"}
+                            </Button>
+                          </div>
+
+                          {/* Photo upload for rejection */}
+                          <div className="space-y-1.5">
+                            <span className="text-[9px] text-gray-500 font-bold">
+                              {isHi ? "अस्वीकार के लिए फोटो प्रमाण अपलोड करें (वैकल्पिक)" : "Upload photo proof for rejection (optional)"}
+                            </span>
+                            {rejectPhoto ? (
+                              <div className="flex items-center gap-2 bg-white/5 rounded-lg p-2 border border-white/10">
+                                <Camera className="w-3.5 h-3.5 text-trust-green" />
+                                <span className="text-[10px] text-gray-300 font-bold truncate flex-1">{rejectPhotoName}</span>
+                                <button type="button" onClick={() => { setRejectPhoto(null); setRejectPhotoName(""); }} className="text-[9px] text-red-400 font-black cursor-pointer">
+                                  {isHi ? "हटाएं" : "Remove"}
+                                </button>
+                              </div>
+                            ) : (
+                              <label className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-white/10 bg-white/2 hover:bg-white/4 cursor-pointer transition-all text-[10px] text-gray-500 font-bold">
+                                <Upload className="w-3.5 h-3.5" />
+                                {isHi ? "क्लिक करें और फोटो चुनें" : "Click to attach photo"}
+                                <input type="file" accept="image/*" onChange={handleRejectPhotoUpload} className="hidden" />
+                              </label>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {/* Citizen Verification Result (if already verified) */}
+                      {complaint.citizenVerification && (
+                        <div className={`rounded-2xl p-4 border ${
+                          complaint.citizenVerification.verified
+                            ? "border-trust-green/25 bg-trust-green/3"
+                            : "border-danger-red/25 bg-danger-red/3"
+                        }`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            {complaint.citizenVerification.verified ? (
+                              <CheckCircle2 className="w-4 h-4 text-trust-green" />
+                            ) : (
+                              <AlertTriangle className="w-4 h-4 text-danger-red" />
+                            )}
+                            <span className={`text-xs font-black ${
+                              complaint.citizenVerification.verified ? "text-trust-green" : "text-danger-red"
+                            }`}>
+                              {complaint.citizenVerification.verified
+                                ? (isHi ? "✅ आपने पुष्टि की: समस्या हल हो गई" : "✅ You confirmed: Issue is resolved")
+                                : (isHi ? "❌ आपने अस्वीकार किया: समस्या अभी हल नहीं हुई" : "❌ You rejected: Issue not yet resolved")}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-gray-400 font-semibold">"{complaint.citizenVerification.feedback}"</p>
+                        </div>
+                      )}
 
                       {/* Timeline */}
                       <div className="glass-card rounded-2xl p-6">
@@ -679,6 +841,134 @@ export default function CitizenDashboard() {
                           {isHi ? trackedComplaint.aiSummaryHi : trackedComplaint.aiSummary}
                         </p>
                       </div>
+
+                      {/* AI Agent Autonomous Action Panel */}
+                      <AIAgentFollowUpPanel complaint={trackedComplaint} language={language} />
+
+                      {/* 🚨 Citizen Verification Panel (Proof Based Resolution) */}
+                      {trackedComplaint.status === "pending_citizen_confirmation" && trackedComplaint.resolutionProof && (
+                        <motion.div
+                          className="rounded-2xl border-2 border-warning-amber/30 bg-warning-amber/3 p-6 space-y-4 relative overflow-hidden"
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                        >
+                          <div className="absolute -right-16 -top-16 w-40 h-40 bg-warning-amber/5 rounded-full filter blur-[60px] pointer-events-none" />
+                          
+                          <div className="flex items-center gap-2">
+                            <ShieldCheck className="w-5 h-5 text-warning-amber animate-pulse" />
+                            <span className="font-black text-sm text-white">
+                              {isHi ? "🔔 क्या समस्या हल हो गई? पुष्टि करें" : "🔔 Is the issue resolved? Confirm below"}
+                            </span>
+                          </div>
+
+                          {/* Officer's Proof */}
+                          <div className="bg-black/20 border border-white/8 rounded-xl p-4 space-y-3">
+                            <div className="text-[10px] text-gray-400 font-black uppercase tracking-wider">
+                              {isHi ? "अधिकारी का समाधान प्रमाण" : "Officer's Resolution Proof"}
+                            </div>
+                            {trackedComplaint.resolutionProof.photoUrl && (
+                              <div className="rounded-xl overflow-hidden border border-white/10 max-h-[200px]">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={trackedComplaint.resolutionProof.photoUrl} alt="Resolution Proof" className="w-full h-full object-cover" />
+                              </div>
+                            )}
+                            <p className="text-xs text-gray-300 font-semibold leading-relaxed bg-white/3 rounded-lg p-3 border border-white/5">
+                              "{trackedComplaint.resolutionProof.note}"
+                            </p>
+                            <div className="text-[10px] text-gray-500 font-semibold">
+                              — {trackedComplaint.resolutionProof.officerName} • {new Date(trackedComplaint.resolutionProof.submittedAt).toLocaleString("en-IN")}
+                            </div>
+                          </div>
+
+                          {/* Feedback input */}
+                          <div className="space-y-2">
+                            <textarea
+                              placeholder={isHi ? "अपनी प्रतिक्रिया दें (वैकल्पिक)..." : "Your feedback (optional for confirm, required for reject)..."}
+                              value={verifyFeedback}
+                              onChange={(e) => setVerifyFeedback(e.target.value)}
+                              className="w-full text-xs min-h-[60px] rounded-xl bg-white/3 border border-white/10 focus:border-primary/40 focus:ring-1 focus:ring-primary/30 text-gray-200 placeholder:text-gray-600 p-3 outline-none transition-all resize-none"
+                            />
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex gap-3">
+                            <Button
+                              size="sm"
+                              disabled={isVerifying}
+                              onClick={() => {
+                                handleVerifyResolution(trackedComplaint.id, true);
+                                // Local state update for immediate feedback on the search tab
+                                setTrackedComplaint(prev => prev ? {...prev, status: "resolved"} as any : null);
+                              }}
+                              className="flex-1 text-xs h-11 rounded-xl bg-linear-to-r from-trust-green via-emerald-500 to-teal-500 text-white font-black shadow-lg shadow-trust-green/20 cursor-pointer flex items-center justify-center gap-1.5 hover:shadow-trust-green/30 active:scale-95 transition-all"
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                              {isHi ? "✅ हाँ, समस्या हल हो गई" : "✅ Yes, Issue is Fixed"}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={isVerifying || !verifyFeedback.trim()}
+                              onClick={() => {
+                                handleVerifyResolution(trackedComplaint.id, false);
+                                // Local state update for immediate feedback on the search tab
+                                setTrackedComplaint(prev => prev ? {...prev, status: "reopened"} as any : null);
+                              }}
+                              className="flex-1 text-xs h-11 rounded-xl border-danger-red/30 text-danger-red hover:bg-danger-red/5 font-black cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 transition-all disabled:opacity-40"
+                            >
+                              <AlertTriangle className="w-4 h-4" />
+                              {isHi ? "❌ नहीं, अभी नहीं हुई" : "❌ Not Solved"}
+                            </Button>
+                          </div>
+
+                          {/* Photo upload for rejection */}
+                          <div className="space-y-1.5">
+                            <span className="text-[9px] text-gray-500 font-bold">
+                              {isHi ? "अस्वीकार के लिए फोटो प्रमाण अपलोड करें (वैकल्पिक)" : "Upload photo proof for rejection (optional)"}
+                            </span>
+                            {rejectPhoto ? (
+                              <div className="flex items-center gap-2 bg-white/5 rounded-lg p-2 border border-white/10">
+                                <Camera className="w-3.5 h-3.5 text-trust-green" />
+                                <span className="text-[10px] text-gray-300 font-bold truncate flex-1">{rejectPhotoName}</span>
+                                <button type="button" onClick={() => { setRejectPhoto(null); setRejectPhotoName(""); }} className="text-[9px] text-red-400 font-black cursor-pointer">
+                                  {isHi ? "हटाएं" : "Remove"}
+                                </button>
+                              </div>
+                            ) : (
+                              <label className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-white/10 bg-white/2 hover:bg-white/4 cursor-pointer transition-all text-[10px] text-gray-500 font-bold">
+                                <Upload className="w-3.5 h-3.5" />
+                                {isHi ? "क्लिक करें और फोटो चुनें" : "Click to attach photo"}
+                                <input type="file" accept="image/*" onChange={handleRejectPhotoUpload} className="hidden" />
+                              </label>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {/* Citizen Verification Result (if already verified) */}
+                      {trackedComplaint.citizenVerification && (
+                        <div className={`rounded-2xl p-4 border ${
+                          trackedComplaint.citizenVerification.verified
+                            ? "border-trust-green/25 bg-trust-green/3"
+                            : "border-danger-red/25 bg-danger-red/3"
+                        }`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            {trackedComplaint.citizenVerification.verified ? (
+                              <CheckCircle2 className="w-4 h-4 text-trust-green" />
+                            ) : (
+                              <AlertTriangle className="w-4 h-4 text-danger-red" />
+                            )}
+                            <span className={`text-xs font-black ${
+                              trackedComplaint.citizenVerification.verified ? "text-trust-green" : "text-danger-red"
+                            }`}>
+                              {trackedComplaint.citizenVerification.verified
+                                ? (isHi ? "✅ आपने पुष्टि की: समस्या हल हो गई" : "✅ You confirmed: Issue is resolved")
+                                : (isHi ? "❌ आपने अस्वीकार किया: समस्या अभी हल नहीं हुई" : "❌ You rejected: Issue not yet resolved")}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-gray-400 font-semibold">"{trackedComplaint.citizenVerification.feedback}"</p>
+                        </div>
+                      )}
 
                       {/* Timeline */}
                       <div className="glass-card rounded-2xl p-6 border border-[#1f2937]/50">
