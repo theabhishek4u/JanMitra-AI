@@ -9,6 +9,8 @@ import {
   Wrench,
   CheckCircle2,
   AlertTriangle,
+  Clock,
+  RotateCcw,
 } from "lucide-react";
 import type { TimelineEvent, ComplaintStatus } from "@/types";
 
@@ -21,8 +23,10 @@ const statusConfig: Record<
   department_assigned: { icon: Building2, color: "#F59E0B", label: "Department Assigned", labelHi: "विभाग आवंटित" },
   officer_reviewing: { icon: Eye, color: "#06B6D4", label: "Officer Reviewing", labelHi: "अधिकारी समीक्षा" },
   action_in_progress: { icon: Wrench, color: "#F97316", label: "Action In Progress", labelHi: "कार्य प्रगति पर" },
+  pending_citizen_confirmation: { icon: Clock, color: "#F59E0B", label: "Awaiting Your Confirmation", labelHi: "आपकी पुष्टि की प्रतीक्षा" },
   resolved: { icon: CheckCircle2, color: "#10B981", label: "Resolved", labelHi: "शिकायत का निवारण" },
   escalated: { icon: AlertTriangle, color: "#EF4444", label: "Escalated", labelHi: "उच्चाधिकारी को प्रेषित" },
+  reopened: { icon: RotateCcw, color: "#EF4444", label: "Reopened", labelHi: "पुनः खोली गई" },
 };
 
 export function TrackingTimeline({
@@ -37,7 +41,7 @@ export function TrackingTimeline({
   return (
     <div className="relative pl-2">
       {/* Premium Thick Neon Trace Pipe */}
-      <div className="absolute left-[27px] top-2 bottom-2 w-[3px] rounded-full bg-gradient-to-b from-gov-blue via-ai-purple to-trust-green opacity-90 shadow-[0_0_12px_rgba(124,58,237,0.35)]" />
+      <div className="absolute left-[27px] top-2 bottom-2 w-[3px] rounded-full bg-linear-to-b from-gov-blue via-ai-purple to-trust-green opacity-90 shadow-[0_0_12px_rgba(124,58,237,0.35)]" />
 
       <div className="space-y-8">
         {events.map((event, i) => {
@@ -53,7 +57,7 @@ export function TrackingTimeline({
               transition={{ delay: i * 0.12, duration: 0.5, ease: "easeOut" }}
             >
               {/* Pulse & Glow Timeline Node */}
-              <div className="relative z-10 flex-shrink-0">
+              <div className="relative z-10 shrink-0">
                 <motion.div
                   className="w-[38px] h-[38px] rounded-xl flex items-center justify-center transition-shadow shadow-lg"
                   style={{
