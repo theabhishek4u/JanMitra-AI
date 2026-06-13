@@ -49,10 +49,15 @@ export function Navbar() {
   }, []);
 
   const handleLogout = () => {
+    const role = session?.role;
     clearAuthSession();
     setSession(null);
     window.dispatchEvent(new Event("storage"));
-    window.location.href = "/login";
+    if (role === "citizen") {
+      window.location.href = "/citizen";
+    } else {
+      window.location.href = "/login";
+    }
   };
 
   return (

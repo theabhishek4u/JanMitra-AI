@@ -8,6 +8,7 @@ export interface AuthSession {
   authenticatedAt: string;
   id?: string;
   name?: string;
+  mobile?: string;
 }
 
 // Keeping these for legacy compat if any components read them directly
@@ -118,4 +119,94 @@ export function clearAuthSession() {
   if (typeof window === "undefined") return;
   localStorage.removeItem("janmitra_auth");
   eraseCookie("janmitra_auth");
+}
+
+export async function registerCitizen(name: string, email: string, mobile: string, password: string): Promise<{ success: boolean; error?: string; session?: AuthSession }> {
+  try {
+    const cleanEmail = email.toLowerCase().trim();
+    const cleanMobile = mobile.trim();
+
+    // Check if email already exists
+    const { data: existingEmail } = await supabase
+      .from("citizens")
+      .select("id")
+      .eq("email", cleanEmail)
+      .maybeSingle();
+
+    if (existingEmail) {
+      return { success: false, error: "Email ID is already registered." };
+    }
+
+    // Check if mobile already exists
+    const { data: existingMobile } = await supabase
+      .from("citizens")
+      .select("id")
+      .eq("mobile", cleanMobile)
+      .maybeSingle();
+
+    if (existingMobile) {
+      return { success: false, error: "Mobile number is already registered." };
+    }
+
+    // Insert new citizen
+    const { data: newCitizen, error } = await supabase
+      .from("citizens")
+      .insert({
+        name: name.trim(),
+        email: cleanEmail,
+        mobile: cleanMobile,
+        password: password,
+      })
+      .select()
+      .single();
+
+    if (error || !newCitizen) {
+      return { success: false, error: error?.message || "Registration failed." };
+    }
+
+    const session: AuthSession = {
+      role: "citizen",
+      email: newCitizen.email,
+      name: newCitizen.name,
+      id: newCitizen.id,
+      mobile: newCitizen.mobile,
+      authenticatedAt: new Date().toISOString(),
+    };
+
+    return { success: true, session };
+  } catch (err: any) {
+    return { success: false, error: err.message || "An unexpected error occurred." };
+  }
+}
+
+export async function loginCitizen(identifier: string, password: string): Promise<{ success: boolean; error?: string; session?: AuthSession }> {
+  try {
+    const cleanId = identifier.trim();
+    const { data: citizen, error } = await supabase
+      .from("citizens")
+      .select("*")
+      .or(`email.eq.${cleanId.toLowerCase()},mobile.eq.${cleanId}`)
+      .maybeSingle();
+
+    if (error || !citizen) {
+      return { success: false, error: "Invalid credentials or account does not exist." };
+    }
+
+    if (citizen.password !== password) {
+      return { success: false, error: "Incorrect security credentials." };
+    }
+
+    const session: AuthSession = {
+      role: "citizen",
+      email: citizen.email,
+      name: citizen.name,
+      id: citizen.id,
+      mobile: citizen.mobile,
+      authenticatedAt: new Date().toISOString(),
+    };
+
+    return { success: true, session };
+  } catch (err: any) {
+    return { success: false, error: err.message || "An unexpected error occurred." };
+  }
 }

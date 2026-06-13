@@ -126,10 +126,12 @@ function mapComplaint(row: any, updates: any[] = []): Complaint {
   };
 }
 
-export async function getComplaints(): Promise<Complaint[]> {
-  const { data: complaints, error: cErr } = await supabase
-    .from("complaints")
-    .select("*");
+export async function getComplaints(citizenId?: string): Promise<Complaint[]> {
+  let query = supabase.from("complaints").select("*");
+  if (citizenId) {
+    query = query.eq("citizen_id", citizenId);
+  }
+  const { data: complaints, error: cErr } = await query;
     
   if (cErr || !complaints) return [];
 

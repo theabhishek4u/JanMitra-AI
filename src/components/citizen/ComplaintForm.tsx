@@ -30,6 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { classifyComplaintAI } from "@/lib/ai";
 import { addComplaint } from "@/lib/complaints";
 import { getTokenState, consumeToken, isEmergencyComplaint } from "@/lib/tokenSystem";
+import { getAuthSession } from "@/lib/auth";
 import type { AIClassification, Complaint } from "@/types";
 
 export function ComplaintForm({ 
@@ -64,6 +65,17 @@ export function ComplaintForm({
   const [tokenState, setTokenState] = useState(() => getTokenState());
   const [tokenAlert, setTokenAlert] = useState<string | null>(null);
   const [isEmergencyBypass, setIsEmergencyBypass] = useState(false);
+
+  const [session, setSession] = useState<any>(null);
+
+  useEffect(() => {
+    const activeSession = getAuthSession();
+    if (activeSession && activeSession.role === "citizen") {
+      setSession(activeSession);
+      setName(activeSession.name || "");
+      setPhone(activeSession.mobile || "");
+    }
+  }, []);
 
   useEffect(() => {
     const handleTokenChange = () => {
@@ -534,8 +546,9 @@ export function ComplaintForm({
         latitude: location?.lat || 26.8467,
         longitude: location?.lng || 80.9462,
         area: location?.area || "Gomti Nagar, Lucknow",
-        citizenName: name || "Demo Citizen",
-        citizenPhone: phone || "+91 99999 88888",
+        citizenId: session?.id || null,
+        citizenName: name || session?.name || "Demo Citizen",
+        citizenPhone: phone || session?.mobile || "+91 99999 88888",
         imageUrl: photo || undefined,
         aiSummary: result.summary,
         aiSummaryHi: result.summaryHi,
@@ -808,32 +821,34 @@ export function ComplaintForm({
             </div>
 
             {/* Personal details */}
-            <div className="bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-6 sm:p-7 space-y-4">
-              <h3 className="font-extrabold text-sm uppercase tracking-wider text-white flex items-center gap-2">
-                <User className="w-5 h-5 text-[#7c3aed]" />
-                {dict.yourDetails}
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="relative group text-left">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors z-10" />
-                  <Input
-                    placeholder={dict.namePlaceholder}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="pl-10 border border-[#1f2937]/80 focus:border-[#7c3aed]/60 focus:ring-1 focus:ring-[#7c3aed]/40 rounded-xl bg-[#070b13] text-gray-200 h-11 transition-all duration-300 focus:scale-[1.005]"
-                  />
-                </div>
-                <div className="relative group text-left">
-                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors z-10" />
-                  <Input
-                    placeholder={dict.phonePlaceholder}
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="pl-10 border border-[#1f2937]/80 focus:border-[#7c3aed]/60 focus:ring-1 focus:ring-[#7c3aed]/40 rounded-xl bg-[#070b13] text-gray-200 h-11 transition-all duration-300 focus:scale-[1.005]"
-                  />
+            {!session && (
+              <div className="bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-6 sm:p-7 space-y-4">
+                <h3 className="font-extrabold text-sm uppercase tracking-wider text-white flex items-center gap-2">
+                  <User className="w-5 h-5 text-[#7c3aed]" />
+                  {dict.yourDetails}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="relative group text-left">
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors z-10" />
+                    <Input
+                      placeholder={dict.namePlaceholder}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="pl-10 border border-[#1f2937]/80 focus:border-[#7c3aed]/60 focus:ring-1 focus:ring-[#7c3aed]/40 rounded-xl bg-[#070b13] text-gray-200 h-11 transition-all duration-300 focus:scale-[1.005]"
+                    />
+                  </div>
+                  <div className="relative group text-left">
+                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors z-10" />
+                    <Input
+                      placeholder={dict.phonePlaceholder}
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="pl-10 border border-[#1f2937]/80 focus:border-[#7c3aed]/60 focus:ring-1 focus:ring-[#7c3aed]/40 rounded-xl bg-[#070b13] text-gray-200 h-11 transition-all duration-300 focus:scale-[1.005]"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Token alerts and bypass indicators */}
             {tokenState.tokensRemaining <= 0 && (

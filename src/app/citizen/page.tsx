@@ -18,9 +18,18 @@ import {
   Upload,
   ShieldCheck,
   X as XIcon,
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  Lock,
+  EyeOff,
+  Loader2,
+  TrendingUp,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/shared/Navbar";
 import { ComplaintForm } from "@/components/citizen/ComplaintForm";
@@ -32,7 +41,15 @@ import {
   markNotificationAsRead,
   clearNotifications,
   citizenVerifyResolution,
+  getComplaintById,
 } from "@/lib/complaints";
+import {
+  getAuthSession,
+  setAuthSession,
+  clearAuthSession,
+  registerCitizen,
+  loginCitizen,
+} from "@/lib/auth";
 import type { Complaint, Notification } from "@/types";
 
 const priorityIcon = {
@@ -58,6 +75,20 @@ export default function CitizenDashboard() {
   const [rejectPhotoName, setRejectPhotoName] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
 
+  // Citizen Auth States
+  const [session, setSession] = useState<any>(null);
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Form Inputs
+  const [authName, setAuthName] = useState("");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authMobile, setAuthMobile] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authConfirmPassword, setAuthConfirmPassword] = useState("");
+
   const handleSearchTrack = (idToSearch?: string) => {
     const queryId = (idToSearch || trackSearchId).trim().toUpperCase();
     if (!queryId) return;
@@ -71,6 +102,77 @@ export default function CitizenDashboard() {
     }
   };
 
+  const handleAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+
+    const cleanEmail = authEmail.trim();
+    const cleanPassword = authPassword;
+
+    if (authMode === "signup") {
+      const cleanName = authName.trim();
+      const cleanMobile = authMobile.trim();
+      const cleanConfirm = authConfirmPassword;
+
+      if (!cleanName || !cleanEmail || !cleanMobile || !cleanPassword) {
+        setAuthError("All fields are required.");
+        return;
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(cleanEmail)) {
+        setAuthError("Please enter a valid email address.");
+        return;
+      }
+
+      if (cleanMobile.length < 10 || isNaN(Number(cleanMobile))) {
+        setAuthError("Please enter a valid 10-digit mobile number.");
+        return;
+      }
+
+      if (cleanPassword.length < 4) {
+        setAuthError("Password must be at least 4 characters long.");
+        return;
+      }
+
+      if (cleanPassword !== cleanConfirm) {
+        setAuthError("Passwords do not match.");
+        return;
+      }
+
+      setAuthLoading(true);
+      const res = await registerCitizen(cleanName, cleanEmail, cleanMobile, cleanPassword);
+      setAuthLoading(false);
+
+      if (res.success && res.session) {
+        setAuthSession(res.session);
+        setSession(res.session);
+        window.dispatchEvent(new Event("storage"));
+        getComplaints(res.session.id).then(setComplaints);
+      } else {
+        setAuthError(res.error || "Registration failed.");
+      }
+    } else {
+      if (!cleanEmail || !cleanPassword) {
+        setAuthError("Credentials cannot be empty.");
+        return;
+      }
+
+      setAuthLoading(true);
+      const res = await loginCitizen(cleanEmail, cleanPassword);
+      setAuthLoading(false);
+
+      if (res.success && res.session) {
+        setAuthSession(res.session);
+        setSession(res.session);
+        window.dispatchEvent(new Event("storage"));
+        getComplaints(res.session.id).then(setComplaints);
+      } else {
+        setAuthError(res.error || "Invalid login credentials.");
+      }
+    }
+  };
+
   useEffect(() => {
     if (trackSearchId) {
       const found = complaints.find((c) => c.id.toUpperCase() === trackSearchId.trim().toUpperCase());
@@ -79,7 +181,6 @@ export default function CitizenDashboard() {
       }
     }
   }, [complaints, trackSearchId]);
-
 
   const isHi = language === "hi";
 
@@ -118,16 +219,29 @@ export default function CitizenDashboard() {
 
   // Load complaints dynamically on mount and listen to real-time local storage edits
   useEffect(() => {
-    getComplaints().then(setComplaints);
-
-    const handleSync = () => {
-      getComplaints().then(setComplaints);
+    const checkSession = () => {
+      const activeSession = getAuthSession();
+      if (activeSession && activeSession.role === "citizen") {
+        setSession(activeSession);
+        getComplaints(activeSession.id).then(setComplaints);
+      } else {
+        setSession(null);
+        setComplaints([]);
+      }
     };
-    window.addEventListener("janmitra-db-change", handleSync);
-    window.addEventListener("storage", handleSync);
+
+    checkSession();
+
+    window.addEventListener("janmitra-db-change", checkSession);
+    window.addEventListener("storage", checkSession);
+    window.addEventListener("focus", checkSession);
+    window.addEventListener("visibilitychange", checkSession);
+
     return () => {
-      window.removeEventListener("janmitra-db-change", handleSync);
-      window.removeEventListener("storage", handleSync);
+      window.removeEventListener("janmitra-db-change", checkSession);
+      window.removeEventListener("storage", checkSession);
+      window.removeEventListener("focus", checkSession);
+      window.removeEventListener("visibilitychange", checkSession);
     };
   }, []);
 
@@ -142,7 +256,8 @@ export default function CitizenDashboard() {
   }, []);
 
   const refreshComplaints = async () => {
-    const data = await getComplaints();
+    const activeSession = getAuthSession();
+    const data = await getComplaints(activeSession && activeSession.role === "citizen" ? activeSession.id : undefined);
     setComplaints(data);
   };
 
@@ -177,8 +292,7 @@ export default function CitizenDashboard() {
   const handleTrackComplaint = async (id: string) => {
     await refreshComplaints();
     setTrackSearchId(id);
-    const data = await getComplaints();
-    const found = data.find((c) => c.id.toUpperCase() === id.toUpperCase());
+    const found = await getComplaintById(id);
     if (found) {
       setTrackedComplaint(found);
       setTrackError(false);
@@ -257,10 +371,207 @@ export default function CitizenDashboard() {
       <Navbar />
       <main className="min-h-screen pt-28 md:pt-32 pb-12 bg-[#05070f] text-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
+          {!session && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="max-w-md mx-auto space-y-6 pt-4 text-left"
+            >
+              {/* Logo / Header inside the form */}
+              <div className="text-center space-y-2 mb-6">
+                <div className="mx-auto w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center border border-indigo-500/20 shadow-xl">
+                  <User className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-2xl font-black text-white">
+                  {authMode === "login" 
+                    ? (isHi ? "नागरिक पोर्टल लॉगिन" : "Citizen Portal Login") 
+                    : (isHi ? "नागरिक पंजीकरण" : "Citizen Registration")}
+                </h2>
+                <p className="text-xs text-gray-400 font-semibold leading-relaxed">
+                  {authMode === "login"
+                    ? (isHi ? "शिकायत दर्ज करने और ट्रैक करने के लिए लॉगिन करें" : "Log in to report and track your civic complaints")
+                    : (isHi ? "शिकायत निवारण प्रणाली में शामिल होने के लिए रजिस्टर करें" : "Sign up to join the smart grievance resolution portal")}
+                </p>
+              </div>
 
+              {/* Mode Toggle Selector */}
+              <div className="flex bg-[#090d16] border border-[#1f2937]/60 p-1 rounded-xl shadow-inner h-11">
+                <button
+                  type="button"
+                  onClick={() => { setAuthMode("login"); setAuthError(null); }}
+                  className={`flex-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    authMode === "login"
+                      ? "bg-[#111827] text-white border border-[#1f2937]/80"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  {isHi ? "लॉगिन करें" : "Sign In"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setAuthMode("signup"); setAuthError(null); }}
+                  className={`flex-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    authMode === "signup"
+                      ? "bg-[#111827] text-white border border-[#1f2937]/80"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  {isHi ? "नया खाता बनाएं" : "Register"}
+                </button>
+              </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              {/* Form Frame */}
+              <div className="bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+                <div className="absolute -right-16 -top-16 w-32 h-32 bg-[#7c3aed]/5 rounded-full filter blur-xl pointer-events-none" />
+                
+                <form onSubmit={handleAuthSubmit} className="space-y-4">
+                  {authError && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-red-950/20 border border-red-500/20 text-red-300 text-xs font-bold px-4 py-3 rounded-xl flex items-start gap-2"
+                    >
+                      <AlertTriangle className="w-4.5 h-4.5 text-red-500 shrink-0 mt-0.5" />
+                      <span>{authError}</span>
+                    </motion.div>
+                  )}
+
+                  {authMode === "signup" && (
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider pl-1.5">
+                        {isHi ? "आपका नाम" : "Full Name"}
+                      </label>
+                      <div className="relative">
+                        <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                        <Input
+                          type="text"
+                          value={authName}
+                          onChange={(e) => setAuthName(e.target.value)}
+                          placeholder={isHi ? "उदा. अमित कुमार" : "e.g. Amit Kumar"}
+                          className="pl-10.5 h-11 bg-[#05070f] border-[#1f2937]/80 rounded-xl text-gray-100 placeholder:text-gray-600 focus:border-[#7c3aed]/60"
+                          required
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider pl-1.5">
+                      {authMode === "login" 
+                        ? (isHi ? "ईमेल या मोबाइल नंबर" : "Email ID or Mobile Number")
+                        : (isHi ? "ईमेल पता" : "Email Address")}
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                      <Input
+                        type="text"
+                        value={authEmail}
+                        onChange={(e) => setAuthEmail(e.target.value)}
+                        placeholder={authMode === "login"
+                          ? (isHi ? "उदा. amit@gmail.com या 9876543210" : "e.g. amit@gmail.com or 9876543210")
+                          : (isHi ? "उदा. amit@gmail.com" : "e.g. amit@gmail.com")}
+                        className="pl-10.5 h-11 bg-[#05070f] border-[#1f2937]/80 rounded-xl text-gray-100 placeholder:text-gray-600 focus:border-[#7c3aed]/60"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {authMode === "signup" && (
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider pl-1.5">
+                        {isHi ? "मोबाइल नंबर" : "Mobile Number"}
+                      </label>
+                      <div className="relative">
+                        <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                        <Input
+                          type="tel"
+                          value={authMobile}
+                          onChange={(e) => setAuthMobile(e.target.value)}
+                          placeholder="e.g. 9876543210"
+                          maxLength={10}
+                          className="pl-10.5 h-11 bg-[#05070f] border-[#1f2937]/80 rounded-xl text-gray-100 placeholder:text-gray-600 focus:border-[#7c3aed]/60"
+                          required
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider pl-1.5">
+                      {isHi ? "सुरक्षा पासवर्ड" : "Password"}
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        value={authPassword}
+                        onChange={(e) => setAuthPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="pl-10.5 pr-10.5 h-11 bg-[#05070f] border-[#1f2937]/80 rounded-xl text-gray-100 placeholder:text-gray-600 focus:border-[#7c3aed]/60"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 cursor-pointer p-0.5"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {authMode === "signup" && (
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider pl-1.5">
+                        {isHi ? "पासवर्ड की पुष्टि करें" : "Confirm Password"}
+                      </label>
+                      <div className="relative">
+                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          value={authConfirmPassword}
+                          onChange={(e) => setAuthConfirmPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="pl-10.5 h-11 bg-[#05070f] border-[#1f2937]/80 rounded-xl text-gray-100 placeholder:text-gray-600 focus:border-[#7c3aed]/60"
+                          required
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <Button
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full h-11 rounded-xl bg-[#7c3aed] text-white hover:bg-[#6d28d9] font-bold cursor-pointer transition-all active:scale-95 text-xs uppercase tracking-wider mt-4 flex items-center justify-center gap-2"
+                  >
+                    {authLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        {isHi ? "सत्यापित किया जा रहा है..." : "Authenticating..."}
+                      </>
+                    ) : (
+                      <>
+                        <ShieldCheck className="w-4 h-4" />
+                        {authMode === "login" 
+                          ? (isHi ? "लॉगिन करें और प्रवेश करें" : "Sign In & Enter Portal")
+                          : (isHi ? "खाता बनाएं और लॉगिन करें" : "Create Account & Sign In")}
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </div>
+
+              {/* Secure Notice Footer */}
+              <div className="text-[10px] text-gray-500 font-semibold text-center flex items-center justify-center gap-1.5 py-2">
+                <Lock className="w-3.5 h-3.5 text-indigo-400" />
+                <span>{isHi ? "सुरक्षित एसएसएल एन्क्रिप्टेड कनेक्शन" : "Secure SSL encrypted database connection"}</span>
+              </div>
+            </motion.div>
+          )}
+
+          {session && (
+            <>
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#1f2937]/30 pb-2">
               <TabsList className="bg-[#090d16] border border-[#1f2937]/45 p-1 rounded-xl h-11 gap-1.5 shadow-lg shadow-black/10">
                 <TabsTrigger
@@ -283,6 +594,13 @@ export default function CitizenDashboard() {
                 >
                   <Search className="w-4 h-4" />
                   {isHi ? "शिकायत ट्रैक करें" : "TRACK COMPLAINT"}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="profile"
+                  className="gap-2 px-4 h-8.5 rounded-lg text-xs font-black transition-all duration-200 cursor-pointer data-[state=active]:bg-[#111827] data-[state=active]:text-white data-[state=active]:border data-[state=active]:border-[#1f2937]/80 hover:bg-slate-900/60 text-gray-400"
+                >
+                  <User className="w-4 h-4" />
+                  {isHi ? "मेरी प्रोफ़ाइल" : "MY PROFILE"}
                 </TabsTrigger>
               </TabsList>
 
@@ -1002,6 +1320,105 @@ export default function CitizenDashboard() {
                 </AnimatePresence>
               </div>
             </TabsContent>
+
+            {/* Profile Tab */}
+            <TabsContent value="profile">
+              <div className="max-w-4xl mx-auto space-y-6 text-left animate-in fade-in slide-in-from-bottom-4 duration-300">
+                {/* Profile Overview Card */}
+                <div className="bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-6 sm:p-8 relative overflow-hidden shadow-xl">
+                  <div className="absolute -right-16 -top-16 w-36 h-36 bg-[#7c3aed]/10 rounded-full filter blur-xl pointer-events-none" />
+                  
+                  <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+                    <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center border border-indigo-500/20 shadow-2xl relative">
+                      <User className="w-8 h-8 text-white" />
+                      <div className="absolute -bottom-1 -right-1 w-4.5 h-4.5 bg-emerald-500 rounded-full border-2 border-[#05070f] flex items-center justify-center">
+                        <ShieldCheck className="w-2.5 h-2.5 text-white" />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-1 text-center sm:text-left flex-1">
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
+                        <h2 className="text-2xl font-black text-white leading-none">
+                          {session?.name}
+                        </h2>
+                        <Badge variant="outline" className="border-indigo-500/30 text-indigo-400 bg-indigo-500/5 font-black uppercase text-[9.5px] px-2.5 py-0.5 tracking-wider rounded-md">
+                          Verified Citizen
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-gray-400 font-bold flex items-center justify-center sm:justify-start gap-1.5 pt-1.5">
+                        <Mail className="w-3.5 h-3.5 text-gray-500" />
+                        {session?.email}
+                      </p>
+                      <p className="text-xs text-gray-400 font-bold flex items-center justify-center sm:justify-start gap-1.5 pt-0.5">
+                        <Phone className="w-3.5 h-3.5 text-gray-500" />
+                        {session?.mobile || "+91 99999 88888"}
+                      </p>
+                    </div>
+
+                    <div className="text-xs font-bold text-gray-400 bg-[#070b13]/60 border border-[#1f2937]/50 rounded-xl px-4 py-2.5 flex items-center gap-2 self-center">
+                      <Calendar className="w-4 h-4 text-indigo-400" />
+                      <span>
+                        Registered: {session?.authenticatedAt ? new Date(session.authenticatedAt).toLocaleDateString("en-IN", { month: "long", year: "numeric" }) : "June 2026"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Profile Stats Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                  <div className="bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-5 hover:border-indigo-500/20 transition-all text-left">
+                    <span className="text-[10px] text-gray-500 font-black uppercase tracking-wider block">Total Grievances</span>
+                    <span className="text-3xl font-black text-white block mt-1">{complaints.length}</span>
+                    <span className="text-[9px] text-gray-400 font-semibold block mt-0.5">Filed via portal</span>
+                  </div>
+
+                  <div className="bg-[#090d16]/30 border border-emerald-500/10 rounded-2xl p-5 hover:border-emerald-500/30 transition-all text-left">
+                    <span className="text-[10px] text-emerald-400/80 font-black uppercase tracking-wider block">Resolved Grievances</span>
+                    <span className="text-3xl font-black text-emerald-400 block mt-1">
+                      {complaints.filter(c => c.status === "resolved").length}
+                    </span>
+                    <span className="text-[9px] text-gray-400 font-semibold block mt-0.5">Verified resolutions</span>
+                  </div>
+
+                  <div className="bg-[#090d16]/30 border border-amber-500/10 rounded-2xl p-5 hover:border-amber-500/30 transition-all text-left">
+                    <span className="text-[10px] text-amber-400/80 font-black uppercase tracking-wider block">Active Unresolved</span>
+                    <span className="text-3xl font-black text-amber-400 block mt-1">
+                      {complaints.filter(c => c.status !== "resolved").length}
+                    </span>
+                    <span className="text-[9px] text-gray-400 font-semibold block mt-0.5 font-sans">In queue / processing</span>
+                  </div>
+                </div>
+
+                {/* Recent Activity Section */}
+                <div className="bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-6 sm:p-7 space-y-4">
+                  <h3 className="font-extrabold text-sm uppercase tracking-wider text-white flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-indigo-400" />
+                    Recent Citizen Activity Log
+                  </h3>
+                  {complaints.length === 0 ? (
+                    <p className="text-xs text-gray-500 font-semibold py-2">No activity recorded yet.</p>
+                  ) : (
+                    <div className="space-y-3 pt-1">
+                      {complaints.slice(0, 5).map((c) => (
+                        <div key={c.id} className="flex items-center justify-between border-b border-[#1f2937]/30 pb-2.5 last:border-0 last:pb-0">
+                          <div className="space-y-1">
+                            <span className="text-[9px] font-mono font-bold text-indigo-400 bg-indigo-950/40 border border-indigo-500/20 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                              {c.id}
+                            </span>
+                            <span className="text-xs font-bold text-gray-200 ml-2.5">
+                              {isHi ? c.titleHi : c.title}
+                            </span>
+                          </div>
+                          <Badge variant="outline" className={`text-[9px] font-extrabold uppercase px-2 py-0.5 ${c.status === "resolved" ? "border-emerald-500/20 text-emerald-400 bg-emerald-500/5" : "border-amber-500/20 text-amber-400 bg-amber-500/5"}`}>
+                            {getStatusLabel(c.status)}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
           </Tabs>
 
           {/* Redesigned Hero and Civic Stats Card Section */}
@@ -1095,6 +1512,7 @@ export default function CitizenDashboard() {
               </div>
             </div>
           </motion.div>
+          </>)}
         </div>
       </main>
     </>
