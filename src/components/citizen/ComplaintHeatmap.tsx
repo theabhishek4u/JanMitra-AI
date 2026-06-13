@@ -37,7 +37,7 @@ export default function ComplaintHeatmap({
 
   useEffect(() => {
     setMounted(true);
-    setComplaints(getComplaints());
+    getComplaints().then(setComplaints);
   }, []);
 
   if (!mounted) {

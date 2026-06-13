@@ -118,10 +118,10 @@ export default function CitizenDashboard() {
 
   // Load complaints dynamically on mount and listen to real-time local storage edits
   useEffect(() => {
-    setComplaints(getComplaints());
+    getComplaints().then(setComplaints);
 
     const handleSync = () => {
-      setComplaints(getComplaints());
+      getComplaints().then(setComplaints);
     };
     window.addEventListener("janmitra-db-change", handleSync);
     window.addEventListener("storage", handleSync);
@@ -141,14 +141,15 @@ export default function CitizenDashboard() {
     }
   }, []);
 
-  const refreshComplaints = () => {
-    setComplaints(getComplaints());
+  const refreshComplaints = async () => {
+    const data = await getComplaints();
+    setComplaints(data);
   };
 
-  const handleVerifyResolution = (complaintId: string, verified: boolean) => {
+  const handleVerifyResolution = async (complaintId: string, verified: boolean) => {
     if (!verifyFeedback.trim() && !verified) return;
     setIsVerifying(true);
-    citizenVerifyResolution(
+    await citizenVerifyResolution(
       complaintId,
       verified,
       verifyFeedback || (verified ? "Issue is fixed, thank you!" : "Issue not resolved."),
@@ -173,10 +174,11 @@ export default function CitizenDashboard() {
     reader.readAsDataURL(file);
   };
 
-  const handleTrackComplaint = (id: string) => {
-    refreshComplaints();
+  const handleTrackComplaint = async (id: string) => {
+    await refreshComplaints();
     setTrackSearchId(id);
-    const found = getComplaints().find((c) => c.id.toUpperCase() === id.toUpperCase());
+    const data = await getComplaints();
+    const found = data.find((c) => c.id.toUpperCase() === id.toUpperCase());
     if (found) {
       setTrackedComplaint(found);
       setTrackError(false);

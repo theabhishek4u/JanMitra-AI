@@ -521,7 +521,7 @@ export function ComplaintForm({
       }
 
       // Add to dynamic localStorage Database Store
-      const newComplaint = addComplaint({
+      const newComplaint = await addComplaint({
         title: text.split(/[.।\n]/)[0].slice(0, 60) || "Civic Issue",
         titleHi: isHi ? "नागरिक समस्या दर्ज" : "Civic Issue Reported",
         description: text,
@@ -541,6 +541,10 @@ export function ComplaintForm({
         aiSummaryHi: result.summaryHi,
         aiConfidence: result.confidence,
       });
+
+      if (!newComplaint) {
+        throw new Error("Failed to create complaint in database.");
+      }
 
       setClassification(result);
       setCreatedComplaintId(newComplaint.id);
@@ -614,7 +618,7 @@ export function ComplaintForm({
                 <div className="flex items-center gap-2">
                   <Coins className="w-4 h-4 text-amber-500 animate-pulse" />
                   <span className="text-xs font-bold text-gray-400">
-                    {isHi ? "दैनिक शिकायत कोटा:" : "Daily Complaint Quota:"}
+                    {isHi ? "शेष शिकायतें:" : "Complaints Remaining:"}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">

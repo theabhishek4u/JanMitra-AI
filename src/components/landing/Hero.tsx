@@ -16,9 +16,11 @@ import {
   Activity,
   Search,
   FileText,
-  CheckCircle2
+  CheckCircle2,
+  LayoutDashboard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getAuthSession } from "@/lib/auth";
 
 interface TicketState {
   id: string;
@@ -77,6 +79,11 @@ const mockTicketCycle: TicketState[] = [
 export function Hero() {
   const [currentStep, setCurrentStep] = useState(0);
   const [complaintCount, setComplaintCount] = useState(200);
+  const [session, setSession] = useState<{ role: string; email: string } | null>(null);
+
+  useEffect(() => {
+    setSession(getAuthSession());
+  }, []);
 
   // Cycle the live ticket representation
   useEffect(() => {
@@ -176,26 +183,41 @@ export function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <Link href="/citizen">
-                <Button
-                  size="lg"
-                  className="relative overflow-hidden z-10 bg-linear-to-r from-gov-blue to-gov-blue-light text-white shadow-xl shadow-gov-blue/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 h-13 px-8 text-base font-semibold group rounded-full cursor-pointer before:absolute before:inset-0 before:z-[-1] before:bg-linear-to-r before:from-blue-600 before:via-violet-600 before:to-pink-600 before:scale-x-0 hover:before:scale-x-100 before:origin-left before:transition-transform before:duration-500"
-                >
-                  <Bot className="w-5 h-5 mr-2 animate-pulse" />
-                  File a Complaint
-                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-              <Link href="/citizen?tab=track">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="relative overflow-hidden z-10 bg-[#090d16]/40 border-2 border-slate-800/80 text-gray-200 hover:text-white hover:border-violet-500/50 shadow-lg shadow-black/25 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 h-13 px-8 text-base font-semibold rounded-full cursor-pointer before:absolute before:inset-0 before:z-[-1] before:bg-linear-to-r before:from-blue-950/50 before:to-violet-950/50 before:scale-x-0 hover:before:scale-x-100 before:origin-left before:transition-transform before:duration-500"
-                >
-                  <Search className="w-5 h-5 mr-2 text-ai-purple" />
-                  My Complaints
-                </Button>
-              </Link>
+              {session ? (
+                <Link href={session.role === "admin" ? "/admin" : session.role === "officer" ? "/officer" : "/citizen"}>
+                  <Button
+                    size="lg"
+                    className="relative overflow-hidden z-10 bg-linear-to-r from-blue-600 via-violet-600 to-indigo-600 text-white shadow-xl shadow-gov-blue/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 h-13 px-8 text-base font-semibold group rounded-full cursor-pointer before:absolute before:inset-0 before:z-[-1] before:bg-linear-to-r before:from-blue-600 before:via-violet-600 before:to-pink-600 before:scale-x-0 hover:before:scale-x-100 before:origin-left before:transition-transform before:duration-500"
+                  >
+                    <LayoutDashboard className="w-5 h-5 mr-2 text-white animate-pulse" />
+                    Go to Dashboard
+                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link href="/citizen">
+                    <Button
+                      size="lg"
+                      className="relative overflow-hidden z-10 bg-linear-to-r from-gov-blue to-gov-blue-light text-white shadow-xl shadow-gov-blue/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 h-13 px-8 text-base font-semibold group rounded-full cursor-pointer before:absolute before:inset-0 before:z-[-1] before:bg-linear-to-r before:from-blue-600 before:via-violet-600 before:to-pink-600 before:scale-x-0 hover:before:scale-x-100 before:origin-left before:transition-transform before:duration-500"
+                    >
+                      <Bot className="w-5 h-5 mr-2 animate-pulse" />
+                      File a Complaint
+                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </Link>
+                  <Link href="/citizen?tab=track">
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="relative overflow-hidden z-10 bg-[#090d16]/40 border-2 border-slate-800/80 text-gray-200 hover:text-white hover:border-violet-500/50 shadow-lg shadow-black/25 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 h-13 px-8 text-base font-semibold rounded-full cursor-pointer before:absolute before:inset-0 before:z-[-1] before:bg-linear-to-r before:from-blue-950/50 before:to-violet-950/50 before:scale-x-0 hover:before:scale-x-100 before:origin-left before:transition-transform before:duration-500"
+                    >
+                      <Search className="w-5 h-5 mr-2 text-ai-purple" />
+                      My Complaints
+                    </Button>
+                  </Link>
+                </>
+              )}
             </motion.div>
 
             {/* Premium Trust Indicators / Live Nodal Stats Row */}
