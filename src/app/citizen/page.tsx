@@ -587,33 +587,36 @@ export default function CitizenDashboard() {
               </div>
 
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#1f2937]/30 pb-2">
-              <TabsList className="hidden sm:flex bg-[#090d16] border border-[#1f2937]/45 p-1 rounded-xl h-11 gap-1.5 shadow-lg shadow-black/10">
-                <TabsTrigger
-                  value="new"
-                  className="gap-2 px-4 h-8.5 rounded-lg text-xs font-black transition-all duration-200 cursor-pointer data-[state=active]:bg-[#111827] data-[state=active]:text-white data-[state=active]:border data-[state=active]:border-[#1f2937]/80 hover:bg-slate-900/60 text-gray-400"
-                >
-                  <Plus className="w-4 h-4" />
-                  {dict.newComplaint.toUpperCase()}
-                </TabsTrigger>
-                <TabsTrigger
-                  value="track"
-                  className="gap-2 px-4 h-8.5 rounded-lg text-xs font-black transition-all duration-200 cursor-pointer data-[state=active]:bg-[#111827] data-[state=active]:text-white data-[state=active]:border data-[state=active]:border-[#1f2937]/80 hover:bg-slate-900/60 text-gray-400"
-                >
-                  <Search className="w-4 h-4" />
-                  {dict.myComplaints.toUpperCase()}
-                </TabsTrigger>
-                <TabsTrigger
-                  value="search-track"
-                  className="gap-2 px-4 h-8.5 rounded-lg text-xs font-black transition-all duration-200 cursor-pointer data-[state=active]:bg-[#111827] data-[state=active]:text-white data-[state=active]:border data-[state=active]:border-[#1f2937]/80 hover:bg-slate-900/60 text-gray-400"
-                >
-                  <Search className="w-4 h-4" />
-                  {isHi ? "शिकायत ट्रैक करें" : "TRACK COMPLAINT"}
-                </TabsTrigger>
-              </TabsList>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1f2937]/30 pb-4">
+                  {/* Desktop alignment spacer to balance the utilities on the right */}
+                  <div className="hidden sm:block w-44 shrink-0" />
 
-              {/* Utility Panel: Notifications & Language Toggle */}
-              <div className="flex items-center gap-3 relative justify-end w-full sm:w-auto">
+                  <TabsList className="hidden sm:flex bg-[#070b15]/80 border border-[#1f2937]/65 p-1 rounded-2xl h-12 gap-1.5 shadow-2xl mx-auto backdrop-blur-md">
+                    <TabsTrigger
+                      value="new"
+                      className="gap-2 px-5 h-9.5 rounded-xl text-xs font-black transition-all duration-300 cursor-pointer data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600/90 data-[state=active]:to-violet-600/90 data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(99,102,241,0.25)] hover:bg-[#111827]/60 text-gray-400 hover:text-gray-200"
+                    >
+                      <Plus className="w-4 h-4 shrink-0" />
+                      {dict.newComplaint.toUpperCase()}
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="track"
+                      className="gap-2 px-5 h-9.5 rounded-xl text-xs font-black transition-all duration-300 cursor-pointer data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600/90 data-[state=active]:to-violet-600/90 data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(99,102,241,0.25)] hover:bg-[#111827]/60 text-gray-400 hover:text-gray-200"
+                    >
+                      <FileText className="w-4 h-4 shrink-0" />
+                      {dict.myComplaints.toUpperCase()}
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="search-track"
+                      className="gap-2 px-5 h-9.5 rounded-xl text-xs font-black transition-all duration-300 cursor-pointer data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600/90 data-[state=active]:to-violet-600/90 data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(99,102,241,0.25)] hover:bg-[#111827]/60 text-gray-400 hover:text-gray-200"
+                    >
+                      <Search className="w-4 h-4 shrink-0" />
+                      {isHi ? "शिकायत ट्रैक करें" : "TRACK COMPLAINT"}
+                    </TabsTrigger>
+                  </TabsList>
+
+                  {/* Utility Panel: Notifications & Language Toggle */}
+                  <div className="flex items-center gap-3 relative justify-end w-full sm:w-44 shrink-0">
                 {/* Notification Bell Component */}
                 <div className="relative">
                   <button

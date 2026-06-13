@@ -91,23 +91,25 @@ export function Navbar() {
             </Link>
 
             {/* Admin Portal Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger className="h-9 px-4 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white/50 dark:bg-[#090d16] hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-700 dark:text-gray-200 hover:text-slate-900 dark:hover:text-white shadow-[0_0_8px_rgba(0,0,0,0.02)] dark:shadow-[0_0_8px_rgba(255,255,255,0.02)] transition-all duration-300 text-xs font-black tracking-wider uppercase cursor-pointer rounded-full gap-1.5 focus-visible:ring-0 flex items-center justify-center select-none outline-none">
-                <Shield className="w-3.5 h-3.5 text-slate-500 dark:text-gray-400" />
-                Admin Portal
-                <span className="ml-1 text-[8px] opacity-60">▼</span>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-white/95 dark:bg-[#05070f]/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 shadow-[0_10px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.6)] text-slate-800 dark:text-gray-200 rounded-xl p-1.5 min-w-[200px] mt-1 z-50">
-                <DropdownMenuItem render={<Link href="/officer" className="flex items-center gap-2.5 px-3 py-2 text-xs font-black uppercase text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white focus:text-slate-900 dark:focus:text-white focus:bg-linear-to-r focus:from-blue-600/10 dark:focus:from-blue-600/20 focus:to-violet-600/10 dark:focus:to-violet-600/20 hover:bg-linear-to-r hover:from-blue-600/10 dark:hover:from-blue-600/20 hover:to-violet-600/10 dark:hover:to-violet-600/20 border border-transparent focus:border-violet-500/20 dark:focus:border-violet-500/30 hover:border-violet-500/20 dark:hover:border-violet-500/30 rounded-lg transition-all duration-200 cursor-pointer" />}>
-                  <LayoutDashboard className="w-4 h-4 text-sky-550 dark:text-sky-400" />
-                  Officer Console
-                </DropdownMenuItem>
-                <DropdownMenuItem render={<Link href="/admin" className="flex items-center gap-2.5 px-3 py-2 text-xs font-black uppercase text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white focus:text-slate-900 dark:focus:text-white focus:bg-linear-to-r focus:from-blue-600/10 dark:focus:from-blue-600/20 focus:to-violet-600/10 dark:focus:to-violet-600/20 hover:bg-linear-to-r hover:from-blue-600/10 dark:hover:from-blue-600/20 hover:to-violet-600/10 dark:hover:to-violet-600/20 border border-transparent focus:border-violet-500/20 dark:focus:border-violet-500/30 hover:border-violet-500/20 dark:hover:border-violet-500/30 rounded-lg transition-all duration-200 cursor-pointer mt-1" />}>
-                  <BarChart3 className="w-4 h-4 text-pink-500 dark:text-pink-400" />
-                  CAG Admin Panel
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {(!session || session.role !== "citizen") && (
+              <DropdownMenu>
+                <DropdownMenuTrigger className="h-9 px-4 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white/50 dark:bg-[#090d16] hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-700 dark:text-gray-200 hover:text-slate-900 dark:hover:text-white shadow-[0_0_8px_rgba(0,0,0,0.02)] dark:shadow-[0_0_8px_rgba(255,255,255,0.02)] transition-all duration-300 text-xs font-black tracking-wider uppercase cursor-pointer rounded-full gap-1.5 focus-visible:ring-0 flex items-center justify-center select-none outline-none">
+                  <Shield className="w-3.5 h-3.5 text-slate-500 dark:text-gray-400" />
+                  Admin Portal
+                  <span className="ml-1 text-[8px] opacity-60">▼</span>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-white/95 dark:bg-[#05070f]/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 shadow-[0_10px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.6)] text-slate-800 dark:text-gray-200 rounded-xl p-1.5 min-w-[200px] mt-1 z-50">
+                  <DropdownMenuItem render={<Link href="/officer" className="flex items-center gap-2.5 px-3 py-2 text-xs font-black uppercase text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white focus:text-slate-900 dark:focus:text-white focus:bg-linear-to-r focus:from-blue-600/10 dark:focus:from-blue-600/20 focus:to-violet-600/10 dark:focus:to-violet-600/20 hover:bg-linear-to-r hover:from-blue-600/10 dark:hover:from-blue-600/20 hover:to-violet-600/10 dark:hover:to-violet-600/20 border border-transparent focus:border-violet-500/20 dark:focus:border-violet-500/30 hover:border-violet-500/20 dark:hover:border-violet-500/30 rounded-lg transition-all duration-200 cursor-pointer" />}>
+                    <LayoutDashboard className="w-4 h-4 text-sky-550 dark:text-sky-400" />
+                    Officer Console
+                  </DropdownMenuItem>
+                  <DropdownMenuItem render={<Link href="/admin" className="flex items-center gap-2.5 px-3 py-2 text-xs font-black uppercase text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white focus:text-slate-900 dark:focus:text-white focus:bg-linear-to-r focus:from-blue-600/10 dark:focus:from-blue-600/20 focus:to-violet-600/10 dark:focus:to-violet-600/20 hover:bg-linear-to-r hover:from-blue-600/10 dark:hover:from-blue-600/20 hover:to-violet-600/10 dark:hover:to-violet-600/20 border border-transparent focus:border-violet-500/20 dark:focus:border-violet-500/30 hover:border-violet-500/20 dark:hover:border-violet-500/30 rounded-lg transition-all duration-200 cursor-pointer mt-1" />}>
+                    <BarChart3 className="w-4 h-4 text-pink-500 dark:text-pink-400" />
+                    CAG Admin Panel
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
             {/* Go to Dashboard button (only visible on landing page '/') */}
             {session && pathname === "/" && (
@@ -165,25 +167,27 @@ export function Navbar() {
               </Link>
 
               {/* Admin Portal sub-section */}
-              <div className="space-y-2 pt-2 border-t border-slate-200/60 dark:border-slate-800/60">
-                <div className="text-[10px] font-black uppercase text-gray-500 tracking-widest px-2">
-                  Admin Portal
+              {(!session || session.role !== "citizen") && (
+                <div className="space-y-2 pt-2 border-t border-slate-200/60 dark:border-slate-800/60">
+                  <div className="text-[10px] font-black uppercase text-gray-500 tracking-widest px-2">
+                    Admin Portal
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link href="/officer" onClick={() => setOpen(false)}>
+                      <Button variant="outline" className="w-full border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-[#090d16] text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white justify-center gap-2 text-xs py-4.5 font-bold uppercase cursor-pointer rounded-full">
+                        <LayoutDashboard className="w-3.5 h-3.5 text-sky-550 dark:text-sky-400" />
+                        Officer Login
+                      </Button>
+                    </Link>
+                    <Link href="/admin" onClick={() => setOpen(false)}>
+                      <Button variant="outline" className="w-full border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-[#090d16] text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white justify-center gap-2 text-xs py-4.5 font-bold uppercase cursor-pointer rounded-full">
+                        <BarChart3 className="w-3.5 h-3.5 text-pink-500 dark:text-pink-400" />
+                        Admin Login
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <Link href="/officer" onClick={() => setOpen(false)}>
-                    <Button variant="outline" className="w-full border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-[#090d16] text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white justify-center gap-2 text-xs py-4.5 font-bold uppercase cursor-pointer rounded-full">
-                      <LayoutDashboard className="w-3.5 h-3.5 text-sky-550 dark:text-sky-400" />
-                      Officer Login
-                    </Button>
-                  </Link>
-                  <Link href="/admin" onClick={() => setOpen(false)}>
-                    <Button variant="outline" className="w-full border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-[#090d16] text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white justify-center gap-2 text-xs py-4.5 font-bold uppercase cursor-pointer rounded-full">
-                      <BarChart3 className="w-3.5 h-3.5 text-pink-500 dark:text-pink-400" />
-                      Admin Login
-                    </Button>
-                  </Link>
-                </div>
-              </div>
+              )}
 
               {/* Go to Dashboard button (only visible on landing page '/') */}
               {session && pathname === "/" && (
