@@ -23,6 +23,9 @@
     5. *Generating administrative officer summary...*
 *   **GIS Geolocation Pinning:** Real-time citizen location tracking via the browser Geolocation API with interactive OpenStreetMap integration, reverse-geocoding coordinates directly to localized zones (e.g. *Gomti Nagar, Lucknow*).
 *   **Holographic Tracking Timeline:** Complete transparency from `Submitted ➔ AI Analyzing ➔ Department Assigned ➔ Officer Reviewing ➔ Action In Progress ➔ Resolved`.
+*   **Premium Color-Coded Priority Cards:** Redesigned the priority selector with card-styled elements (Auto, Normal, Urgent, Critical) containing smooth micro-animations and glowing gradient accent lines.
+*   **Centered Desktop Tab Navigation:** Completely centered horizontal tabs List (`New Complaint`, `My Complaints`, `Track Complaint`) featuring Indigo-to-Violet gradient active indicators, glowing dropshadows, and custom icons to separate context beautifully.
+*   **Smart Citizen Clean-Navigation:** Hides administrative and officer options when signed in as a citizen, showing only citizen-specific actions (File Complaint, Logout) for a clean dashboard view.
 
 ### 2. 👮 Officer Command Console
 *   **Automated Department Queues:** Custom-routed task dashboards for Nagar Nigam, Jal Nigam, PWD, and UPPCL officers, built with advanced search, category filtration, and sorting.
@@ -30,16 +33,24 @@
 *   **Consolidated Ticket Merging:** Prevent duplicate dispatches by merging overlapping nearby complaints from identical geographic blocks into a single parent ticket.
 *   **Dynamic Response & Resolution Notes:** Officers can provide custom bilingual updates (English & Hindi) which instantly synchronize to the citizen's tracking portal.
 
-### 3. 🔒 Secure Role-Based Authentication Gates
-*   **Cryptographic Accessway Grid:** A gorgeous, glassmorphic role selection grid (`/login`) featuring animated overlays, default credentials banners, and password decryption HUD accents.
-*   **Active Session Badges:** Cards display pulsing green `Active Session` indicators and bypass authorization forms, allowing users to "Resume Dashboard Session" directly if local sessions are cached.
-*   **Client-Side Route Guards:** Deep-linked dashboard pages (`/officer` and `/admin`) are locked behind mount guards. Unauthorized visitors are securely redirected to `/login?role=officer` or `/login?role=admin`.
+### 3. 🔒 Secure Database-Backed Citizen Authentication
+*   **Citizen Sign-Up & Login Gates:** Citizen user registration and authentication checks are verified directly against a persistent cloud database table (`public.citizens`), protecting data integrity.
+*   **Cryptographic Accessway Grid:** A gorgeous, glassmorphic role selection grid (`/login`) featuring animated overlays, default credentials banners, and password decryption HUD accents for officers/admins.
+*   **Active Session Badges:** Dashboard views display pulsing green `Active Session` indicators, bypassing forms to let users resume cached sessions.
 *   **Cross-Tab Session Synchronization:** Custom Storage event triggers synchronize the Navbar status instantly across all browser tabs on login and logout.
 
 ### 4. 📊 Admin Console & Predictive Governance
-*   **Rich Recharts Visualizations:** Modern administrative telemetry featuring active area charts (monthly trends), pie charts (category breakdowns), and performance bar charts.
+*   **Rich Recharts Visualizations:** Modern administrative telemetry showing active area charts (monthly trends), pie charts (category breakdowns), and performance bar charts.
 *   **Dynamic Spatial Hotspot Clustering:** Grievances in identical areas automatically group to flag structural civic bottlenecks.
 *   **Inter-Department Efficiency Matrix:** Visual performance statistics tracking average resolution times (SLAs) and department-specific resolution ratios.
+
+### 5. ☁️ Supabase Cloud & PostgreSQL Database Integration
+*   **Relational Storage Layer:** Migrated from volatile browser memory to a persistent Supabase PostgreSQL cloud database, keeping all states dynamically synced across multiple client connections.
+*   **Robust Table Relational Schemas:**
+    *   `public.citizens`: Holds verified user profiles (names, emails, phones, and passwords).
+    *   `public.complaints`: Stores all civic grievances (visual attachments, coordinates, AI routing data, urgency, and nodal officer details).
+    *   `public.complaint_updates`: Manages timeline updates linked as foreign key rows to parent complaints.
+*   **Row-Level Security (RLS) Policies:** Enabled secure RLS access rules for selecting, inserting, and updating data, securing database connections against external unauthorized edits.
 
 ---
 
@@ -227,19 +238,34 @@ cd janmitra-ai
 
 ### 2. Configure Environment Variables
 Create a `.env.local` file in the root directory:
-```bash
+```env
 # Get your API key from Google AI Studio: https://aistudio.google.com/
 GEMINI_API_KEY=your_gemini_api_key_here
-```
-> [!NOTE]
-> If `GEMINI_API_KEY` is omitted, the application runs in high-fidelity simulation mode automatically, fallback to the local double-weighted keyword classifier and pre-compiled transcription streams.
 
-### 3. Install Dependencies
+# Supabase database config settings
+NEXT_PUBLIC_SUPABASE_URL=https://fqqbiwhwpljynpcekpnh.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_GrFh1xfTpY0o8EFTpl_rlQ_M_R7yrxh
+```
+
+### 3. Initialize Supabase PostgreSQL Schemas & Seed Data
+Initialize your Supabase database instance with schemas, tables, RLS policies, and telemetry mock values:
+```bash
+# 1. Provision the primary grievances and updates tables
+node create-tables.js
+
+# 2. Provision the citizen database credentials table
+node src/scripts/setup_citizens_table.js
+
+# 3. Seed complaints history and timeline logs
+node setup-supabase.js
+```
+
+### 4. Install Dependencies
 ```bash
 npm install
 ```
 
-### 4. Run the Development Server
+### 5. Run the Development Server
 ```bash
 npm run dev
 ```
@@ -248,13 +274,13 @@ Open [http://localhost:3000](http://localhost:3000) inside your browser. Navigat
 
 Alternatively, you can visit the live application at [https://jan-mitra-ai-opal.vercel.app/](https://jan-mitra-ai-opal.vercel.app/).
 
-### 5. Key Routes & Pathways
+### 6. Key Routes & Pathways
 *   **Landing Page:** `/`
 *   **Citizen Dashboard:** `/citizen`
 *   **Officer Portal:** `/officer`
 *   **Admin Console:** `/admin`
 
-### 6. Verify Feature Suite
+### 7. Verify Feature Suite
 Run the pre-configured feature validation test suite to verify the spatial clustering, priority promotions, notification dispatches, and resolved hotspot shrinkage operations:
 ```bash
 npx tsx src/scripts/verify_features.ts
