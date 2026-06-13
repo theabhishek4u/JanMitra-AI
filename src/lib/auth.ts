@@ -91,7 +91,7 @@ export function getAuthSession(): AuthSession | null {
   if (lsVal) {
     try {
       const parsed = JSON.parse(lsVal);
-      if (parsed && (parsed.role === "officer" || parsed.role === "admin")) {
+      if (parsed && (parsed.role === "officer" || parsed.role === "admin" || parsed.role === "citizen")) {
         return parsed;
       }
     } catch (e) {

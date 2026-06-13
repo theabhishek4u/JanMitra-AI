@@ -82,7 +82,18 @@ export function Hero() {
   const [session, setSession] = useState<{ role: string; email: string } | null>(null);
 
   useEffect(() => {
-    setSession(getAuthSession());
+    const checkSession = () => {
+      setSession(getAuthSession());
+    };
+    checkSession();
+    window.addEventListener("storage", checkSession);
+    window.addEventListener("focus", checkSession);
+    window.addEventListener("visibilitychange", checkSession);
+    return () => {
+      window.removeEventListener("storage", checkSession);
+      window.removeEventListener("focus", checkSession);
+      window.removeEventListener("visibilitychange", checkSession);
+    };
   }, []);
 
   // Cycle the live ticket representation
