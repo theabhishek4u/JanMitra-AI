@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { usePathname } from "next/navigation";
 import {
   Sparkles,
   X,
@@ -247,8 +248,15 @@ function AnimatedBotFace({ className = "w-9 h-9" }: AnimatedBotFaceProps) {
   );
 }
 
-export function AIAssistantWidget() {
-  const [isOpen, setIsOpen] = useState(false);
+interface AIAssistantWidgetProps {
+  inline?: boolean;
+}
+
+export function AIAssistantWidget({ inline = false }: AIAssistantWidgetProps) {
+  const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(inline);
+
+
   const [language, setLanguage] = useState<"en" | "hi">("en");
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -942,39 +950,50 @@ export function AIAssistantWidget() {
     return <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${badge.cls}`}>{badge.label}</span>;
   };
 
+  // Hide the global floating trigger if we are on the citizen page where it is rendered inline
+  if (pathname === "/citizen" && !inline) {
+    return null;
+  }
+
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+    <div className={inline ? "w-full" : "fixed bottom-6 right-6 z-50 flex flex-col items-end"}>
       {/* Floating launcher trigger */}
-      <AnimatePresence>
-        {!isOpen && (
-          <motion.button
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            whileHover={{ scale: 1.1 }}
-            onClick={() => setIsOpen(true)}
-            className="flex items-center justify-center w-14 h-14 rounded-full cursor-pointer relative bg-linear-to-tr from-gov-blue via-violet-600 to-ai-purple shadow-[0_0_25px_rgba(139,92,246,0.5)] border border-violet-400/30 text-white"
-          >
-            <AnimatedBotFace className="w-9 h-9" />
-            <span className="absolute -top-1 -right-1 flex h-4 w-4">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-4 w-4 bg-cyan-500 text-[10px] text-slate-950 font-bold items-center justify-center">
-                AI
+      {!inline && (
+        <AnimatePresence>
+          {!isOpen && (
+            <motion.button
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              whileHover={{ scale: 1.1 }}
+              onClick={() => setIsOpen(true)}
+              className="flex items-center justify-center w-14 h-14 rounded-full cursor-pointer relative bg-linear-to-tr from-gov-blue via-violet-600 to-ai-purple shadow-[0_0_25px_rgba(139,92,246,0.5)] border border-violet-400/30 text-white"
+            >
+              <AnimatedBotFace className="w-9 h-9" />
+              <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-4 w-4 bg-cyan-500 text-[10px] text-slate-950 font-bold items-center justify-center">
+                  AI
+                </span>
               </span>
-            </span>
-          </motion.button>
-        )}
-      </AnimatePresence>
+            </motion.button>
+          )}
+        </AnimatePresence>
+      )}
 
       {/* Main chat window container */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            initial={inline ? { opacity: 0, scale: 0.98 } : { opacity: 0, y: 50, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 50, scale: 0.95 }}
+            exit={inline ? { opacity: 0, scale: 0.98 } : { opacity: 0, y: 50, scale: 0.95 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="w-[420px] max-w-[92vw] h-[600px] rounded-2xl flex flex-col overflow-hidden border border-slate-800/80 bg-slate-950/90 backdrop-blur-xl shadow-[0_0_50px_rgba(139,92,246,0.25)]"
+            className={
+              inline
+                ? "w-full h-[600px] rounded-2xl flex flex-col overflow-hidden border border-slate-800/80 bg-slate-950/40 backdrop-blur-xl shadow-2xl relative"
+                : "w-[420px] max-w-[92vw] h-[600px] rounded-2xl flex flex-col overflow-hidden border border-slate-800/80 bg-slate-950/90 backdrop-blur-xl shadow-[0_0_50px_rgba(139,92,246,0.25)]"
+            }
           >
             {/* Header section with status, sound, language */}
             <div className="p-4 border-b border-slate-800/80 bg-linear-to-r from-slate-950 via-slate-900/60 to-slate-950 flex items-center justify-between">
@@ -1019,12 +1038,14 @@ export function AIAssistantWidget() {
                 </button>
 
                 {/* Close Button */}
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="p-1.5 rounded-md hover:bg-slate-900 text-slate-400 hover:text-slate-200 cursor-pointer"
-                >
-                  <X className="w-4.5 h-4.5" />
-                </button>
+                {!inline && (
+                  <button
+                    onClick={() => setIsOpen(false)}
+                    className="p-1.5 rounded-md hover:bg-slate-900 text-slate-400 hover:text-slate-200 cursor-pointer"
+                  >
+                    <X className="w-4.5 h-4.5" />
+                  </button>
+                )}
               </div>
             </div>
 
