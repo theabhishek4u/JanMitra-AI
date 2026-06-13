@@ -579,6 +579,13 @@ export default function CitizenDashboard() {
 
           {session && (
             <>
+              {/* Decorative Background Orbs */}
+              <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden -z-10">
+                <div className="absolute top-20 -left-32 w-96 h-96 bg-indigo-600/[0.04] rounded-full blur-[120px]" />
+                <div className="absolute top-60 -right-32 w-80 h-80 bg-violet-600/[0.03] rounded-full blur-[100px]" />
+                <div className="absolute bottom-40 left-1/3 w-72 h-72 bg-blue-600/[0.03] rounded-full blur-[100px]" />
+              </div>
+
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#1f2937]/30 pb-2">
               <TabsList className="hidden sm:flex bg-[#090d16] border border-[#1f2937]/45 p-1 rounded-xl h-11 gap-1.5 shadow-lg shadow-black/10">
