@@ -26,6 +26,8 @@ import {
   EyeOff,
   Loader2,
   TrendingUp,
+  PlusCircle,
+  FileText,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -366,10 +368,16 @@ export default function CitizenDashboard() {
       .replace("Mahanagar, Lucknow", "महानगर, लखनऊ");
   };
 
+  const bottomNavItems = [
+    { id: "new", label: isHi ? "नई शिकायत" : "New", icon: PlusCircle },
+    { id: "track", label: isHi ? "शिकायतें" : "Complaints", icon: FileText },
+    { id: "search-track", label: isHi ? "ट्रैक" : "Track", icon: Search },
+  ];
+
   return (
     <>
       <Navbar />
-      <main className="min-h-screen pt-28 md:pt-32 pb-12 bg-[#05070f] text-gray-100">
+      <main className="min-h-screen pt-28 md:pt-32 pb-24 sm:pb-12 bg-[#05070f] text-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {!session && (
             <motion.div
@@ -573,7 +581,7 @@ export default function CitizenDashboard() {
             <>
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#1f2937]/30 pb-2">
-              <TabsList className="bg-[#090d16] border border-[#1f2937]/45 p-1 rounded-xl h-11 gap-1.5 shadow-lg shadow-black/10">
+              <TabsList className="hidden sm:flex bg-[#090d16] border border-[#1f2937]/45 p-1 rounded-xl h-11 gap-1.5 shadow-lg shadow-black/10">
                 <TabsTrigger
                   value="new"
                   className="gap-2 px-4 h-8.5 rounded-lg text-xs font-black transition-all duration-200 cursor-pointer data-[state=active]:bg-[#111827] data-[state=active]:text-white data-[state=active]:border data-[state=active]:border-[#1f2937]/80 hover:bg-slate-900/60 text-gray-400"
@@ -595,17 +603,10 @@ export default function CitizenDashboard() {
                   <Search className="w-4 h-4" />
                   {isHi ? "शिकायत ट्रैक करें" : "TRACK COMPLAINT"}
                 </TabsTrigger>
-                <TabsTrigger
-                  value="profile"
-                  className="gap-2 px-4 h-8.5 rounded-lg text-xs font-black transition-all duration-200 cursor-pointer data-[state=active]:bg-[#111827] data-[state=active]:text-white data-[state=active]:border data-[state=active]:border-[#1f2937]/80 hover:bg-slate-900/60 text-gray-400"
-                >
-                  <User className="w-4 h-4" />
-                  {isHi ? "मेरी प्रोफ़ाइल" : "MY PROFILE"}
-                </TabsTrigger>
               </TabsList>
 
               {/* Utility Panel: Notifications & Language Toggle */}
-              <div className="flex items-center gap-3 relative justify-end">
+              <div className="flex items-center gap-3 relative justify-end w-full sm:w-auto">
                 {/* Notification Bell Component */}
                 <div className="relative">
                   <button
@@ -733,12 +734,81 @@ export default function CitizenDashboard() {
 
             {/* Track Complaints Tab */}
             <TabsContent value="track">
-              <div className="grid grid-cols-1 grid-rows-1 lg:grid-cols-5 gap-6">
-                {/* Complaint List */}
-                <div className={`${selectedComplaint ? "hidden lg:block" : "block"} lg:col-span-2 space-y-3`}>
-                  <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-4">
-                    {dict.yourComplaints} ({complaints.length})
-                  </h3>
+              <div className="space-y-6 text-left">
+                {/* Merged Profile Section at the top of Complaints */}
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                  {/* Profile Overview Card */}
+                  <div className="lg:col-span-3 bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-5 relative overflow-hidden shadow-xl flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                    <div className="absolute -right-16 -top-16 w-36 h-36 bg-[#7c3aed]/10 rounded-full filter blur-xl pointer-events-none" />
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center border border-indigo-500/20 shadow-2xl shrink-0 relative">
+                      <User className="w-7 h-7 text-white" />
+                      <div className="absolute -bottom-1 -right-1 w-4 bg-emerald-500 rounded-full border-2 border-[#05070f] flex items-center justify-center">
+                        <ShieldCheck className="w-2.5 h-2.5 text-white" />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-1.5 text-center sm:text-left flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                        <h2 className="text-xl font-black text-white leading-none truncate font-sans">
+                          {session?.name}
+                        </h2>
+                        <Badge variant="outline" className="border-indigo-500/30 text-indigo-400 bg-indigo-500/5 font-black uppercase text-[8.5px] px-2 py-0.5 tracking-wider rounded">
+                          Verified Citizen
+                        </Badge>
+                      </div>
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 text-xs text-gray-400 font-bold pt-0.5">
+                        <span className="flex items-center gap-1.5 min-w-0 truncate">
+                          <Mail className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                          <span className="truncate">{session?.email}</span>
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                          <span>{session?.mobile || "+91 96317 06698"}</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-[10px] font-bold text-gray-400 bg-[#070b13]/60 border border-[#1f2937]/50 rounded-xl px-3.5 py-2 flex items-center gap-1.5 self-center shrink-0">
+                      <Calendar className="w-3.5 h-3.5 text-indigo-400" />
+                      <span>
+                        Reg: {session?.authenticatedAt ? new Date(session.authenticatedAt).toLocaleDateString("en-IN", { month: "short", year: "numeric" }) : "June 2026"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Profile Stats Grid */}
+                  <div className="lg:col-span-2 grid grid-cols-3 gap-3">
+                    <div className="bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-4.5 flex flex-col justify-center text-left hover:border-indigo-500/20 transition-all">
+                      <span className="text-[9px] text-gray-500 font-black uppercase tracking-wider block">Grievances</span>
+                      <span className="text-2xl font-black text-white block mt-0.5">{complaints.length}</span>
+                      <span className="text-[8px] text-gray-400 font-medium mt-0.5 hidden sm:block">Total filed</span>
+                    </div>
+
+                    <div className="bg-[#090d16]/30 border border-emerald-500/10 rounded-2xl p-4.5 flex flex-col justify-center text-left hover:border-emerald-500/30 transition-all">
+                      <span className="text-[9px] text-emerald-400/80 font-black uppercase tracking-wider block">Resolved</span>
+                      <span className="text-2xl font-black text-emerald-400 block mt-0.5">
+                        {complaints.filter(c => c.status === "resolved").length}
+                      </span>
+                      <span className="text-[8px] text-gray-400 font-medium mt-0.5 hidden sm:block">Verified</span>
+                    </div>
+
+                    <div className="bg-[#090d16]/30 border border-amber-500/10 rounded-2xl p-4.5 flex flex-col justify-center text-left hover:border-amber-500/30 transition-all">
+                      <span className="text-[9px] text-amber-400/80 font-black uppercase tracking-wider block">Active</span>
+                      <span className="text-2xl font-black text-amber-400 block mt-0.5">
+                        {complaints.filter(c => c.status !== "resolved").length}
+                      </span>
+                      <span className="text-[8px] text-gray-400 font-medium mt-0.5 hidden sm:block">Processing</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Main Complaints List & Tracking Split */}
+                <div className="grid grid-cols-1 grid-rows-1 lg:grid-cols-5 gap-6">
+                  {/* Complaint List */}
+                  <div className={`${selectedComplaint ? "hidden lg:block" : "block"} lg:col-span-2 space-y-3`}>
+                    <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-4">
+                      {dict.yourComplaints} ({complaints.length})
+                    </h3>
                   {complaints.length === 0 ? (
                     <p className="text-sm text-muted-foreground/80 font-medium py-4 text-center">
                       {isHi ? "कोई शिकायत नहीं मिली।" : "No complaints found."}
@@ -1034,7 +1104,8 @@ export default function CitizenDashboard() {
                   )}
                 </div>
               </div>
-            </TabsContent>
+            </div>
+          </TabsContent>
 
             {/* Search and Track Tab */}
             <TabsContent value="search-track">
@@ -1320,105 +1391,6 @@ export default function CitizenDashboard() {
                 </AnimatePresence>
               </div>
             </TabsContent>
-
-            {/* Profile Tab */}
-            <TabsContent value="profile">
-              <div className="max-w-4xl mx-auto space-y-6 text-left animate-in fade-in slide-in-from-bottom-4 duration-300">
-                {/* Profile Overview Card */}
-                <div className="bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-6 sm:p-8 relative overflow-hidden shadow-xl">
-                  <div className="absolute -right-16 -top-16 w-36 h-36 bg-[#7c3aed]/10 rounded-full filter blur-xl pointer-events-none" />
-                  
-                  <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
-                    <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center border border-indigo-500/20 shadow-2xl relative">
-                      <User className="w-8 h-8 text-white" />
-                      <div className="absolute -bottom-1 -right-1 w-4.5 h-4.5 bg-emerald-500 rounded-full border-2 border-[#05070f] flex items-center justify-center">
-                        <ShieldCheck className="w-2.5 h-2.5 text-white" />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-1 text-center sm:text-left flex-1">
-                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
-                        <h2 className="text-2xl font-black text-white leading-none">
-                          {session?.name}
-                        </h2>
-                        <Badge variant="outline" className="border-indigo-500/30 text-indigo-400 bg-indigo-500/5 font-black uppercase text-[9.5px] px-2.5 py-0.5 tracking-wider rounded-md">
-                          Verified Citizen
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-gray-400 font-bold flex items-center justify-center sm:justify-start gap-1.5 pt-1.5">
-                        <Mail className="w-3.5 h-3.5 text-gray-500" />
-                        {session?.email}
-                      </p>
-                      <p className="text-xs text-gray-400 font-bold flex items-center justify-center sm:justify-start gap-1.5 pt-0.5">
-                        <Phone className="w-3.5 h-3.5 text-gray-500" />
-                        {session?.mobile || "+91 99999 88888"}
-                      </p>
-                    </div>
-
-                    <div className="text-xs font-bold text-gray-400 bg-[#070b13]/60 border border-[#1f2937]/50 rounded-xl px-4 py-2.5 flex items-center gap-2 self-center">
-                      <Calendar className="w-4 h-4 text-indigo-400" />
-                      <span>
-                        Registered: {session?.authenticatedAt ? new Date(session.authenticatedAt).toLocaleDateString("en-IN", { month: "long", year: "numeric" }) : "June 2026"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Profile Stats Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                  <div className="bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-5 hover:border-indigo-500/20 transition-all text-left">
-                    <span className="text-[10px] text-gray-500 font-black uppercase tracking-wider block">Total Grievances</span>
-                    <span className="text-3xl font-black text-white block mt-1">{complaints.length}</span>
-                    <span className="text-[9px] text-gray-400 font-semibold block mt-0.5">Filed via portal</span>
-                  </div>
-
-                  <div className="bg-[#090d16]/30 border border-emerald-500/10 rounded-2xl p-5 hover:border-emerald-500/30 transition-all text-left">
-                    <span className="text-[10px] text-emerald-400/80 font-black uppercase tracking-wider block">Resolved Grievances</span>
-                    <span className="text-3xl font-black text-emerald-400 block mt-1">
-                      {complaints.filter(c => c.status === "resolved").length}
-                    </span>
-                    <span className="text-[9px] text-gray-400 font-semibold block mt-0.5">Verified resolutions</span>
-                  </div>
-
-                  <div className="bg-[#090d16]/30 border border-amber-500/10 rounded-2xl p-5 hover:border-amber-500/30 transition-all text-left">
-                    <span className="text-[10px] text-amber-400/80 font-black uppercase tracking-wider block">Active Unresolved</span>
-                    <span className="text-3xl font-black text-amber-400 block mt-1">
-                      {complaints.filter(c => c.status !== "resolved").length}
-                    </span>
-                    <span className="text-[9px] text-gray-400 font-semibold block mt-0.5 font-sans">In queue / processing</span>
-                  </div>
-                </div>
-
-                {/* Recent Activity Section */}
-                <div className="bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-6 sm:p-7 space-y-4">
-                  <h3 className="font-extrabold text-sm uppercase tracking-wider text-white flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-indigo-400" />
-                    Recent Citizen Activity Log
-                  </h3>
-                  {complaints.length === 0 ? (
-                    <p className="text-xs text-gray-500 font-semibold py-2">No activity recorded yet.</p>
-                  ) : (
-                    <div className="space-y-3 pt-1">
-                      {complaints.slice(0, 5).map((c) => (
-                        <div key={c.id} className="flex items-center justify-between border-b border-[#1f2937]/30 pb-2.5 last:border-0 last:pb-0">
-                          <div className="space-y-1">
-                            <span className="text-[9px] font-mono font-bold text-indigo-400 bg-indigo-950/40 border border-indigo-500/20 px-1.5 py-0.5 rounded uppercase tracking-wider">
-                              {c.id}
-                            </span>
-                            <span className="text-xs font-bold text-gray-200 ml-2.5">
-                              {isHi ? c.titleHi : c.title}
-                            </span>
-                          </div>
-                          <Badge variant="outline" className={`text-[9px] font-extrabold uppercase px-2 py-0.5 ${c.status === "resolved" ? "border-emerald-500/20 text-emerald-400 bg-emerald-500/5" : "border-amber-500/20 text-amber-400 bg-amber-500/5"}`}>
-                            {getStatusLabel(c.status)}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </TabsContent>
           </Tabs>
 
           {/* Redesigned Hero and Civic Stats Card Section */}
@@ -1512,6 +1484,69 @@ export default function CitizenDashboard() {
               </div>
             </div>
           </motion.div>
+
+          {/* Mobile Bottom Navigation Bar */}
+          <div className="fixed bottom-6 left-6 right-6 h-19 z-50 bg-[#070b15]/90 backdrop-blur-2xl border border-indigo-500/15 rounded-2xl flex justify-around items-center px-2 shadow-[0_20px_50px_rgba(0,0,0,0.85)] sm:hidden animate-in fade-in slide-in-from-bottom-6 duration-500">
+            {bottomNavItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setActiveTab(item.id)}
+                  className="relative flex flex-col items-center justify-center flex-1 h-full cursor-pointer transition-all duration-300 group select-none outline-none"
+                >
+                  {/* Glassmorphic active bubble background */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeBottomBubble"
+                      className="absolute inset-x-2 inset-y-2 rounded-xl bg-gradient-to-b from-indigo-500/12 to-indigo-500/2 border border-indigo-500/25 shadow-[0_0_15px_rgba(99,102,241,0.12),inset_0_1px_8px_rgba(99,102,241,0.08)]"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+
+                  {/* Animated Content Wrapper */}
+                  <motion.div
+                    animate={isActive ? { y: -2, scale: 1.05 } : { y: 0, scale: 1 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                    className="flex flex-col items-center justify-center z-10"
+                  >
+                    {/* Glowing active icon */}
+                    <div className="relative">
+                      <Icon
+                        className={`w-5.5 h-5.5 transition-all duration-300 ${
+                          isActive
+                            ? "text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.6)]"
+                            : "text-gray-400 group-hover:text-gray-300"
+                        }`}
+                      />
+                    </div>
+
+                    {/* Text Label */}
+                    <span
+                      className={`text-[9.5px] font-black tracking-wider uppercase mt-1.5 transition-all duration-300 ${
+                        isActive
+                          ? "text-white opacity-100 font-extrabold"
+                          : "text-gray-500 opacity-80 group-hover:text-gray-400"
+                      }`}
+                    >
+                      {item.label}
+                    </span>
+                  </motion.div>
+
+                  {/* Active bottom accent dot */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeBottomDot"
+                      className="absolute bottom-1.5 w-1 h-1 bg-indigo-400 rounded-full shadow-[0_0_8px_#818cf8]"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
           </>)}
         </div>
       </main>
