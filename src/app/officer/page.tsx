@@ -79,7 +79,7 @@ export default function OfficerDashboard() {
 
   const handleLogout = () => {
     clearAuthSession();
-    window.location.href = "/login?role=officer";
+    window.location.href = "/";
   };
   const [selectedComplaintId, setSelectedComplaintId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");

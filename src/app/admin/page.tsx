@@ -84,7 +84,7 @@ export default function AdminDashboard() {
 
   const handleLogout = () => {
     clearAuthSession();
-    window.location.href = "/login?role=admin";
+    window.location.href = "/";
   };
   
   // Header Notification states
