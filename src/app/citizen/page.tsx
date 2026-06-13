@@ -18,9 +18,20 @@ import {
   Upload,
   ShieldCheck,
   X as XIcon,
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  Lock,
+  EyeOff,
+  Loader2,
+  TrendingUp,
+  PlusCircle,
+  FileText,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/shared/Navbar";
 import { ComplaintForm } from "@/components/citizen/ComplaintForm";
@@ -32,7 +43,15 @@ import {
   markNotificationAsRead,
   clearNotifications,
   citizenVerifyResolution,
+  getComplaintById,
 } from "@/lib/complaints";
+import {
+  getAuthSession,
+  setAuthSession,
+  clearAuthSession,
+  registerCitizen,
+  loginCitizen,
+} from "@/lib/auth";
 import type { Complaint, Notification } from "@/types";
 
 const priorityIcon = {
@@ -58,6 +77,20 @@ export default function CitizenDashboard() {
   const [rejectPhotoName, setRejectPhotoName] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
 
+  // Citizen Auth States
+  const [session, setSession] = useState<any>(null);
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Form Inputs
+  const [authName, setAuthName] = useState("");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authMobile, setAuthMobile] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authConfirmPassword, setAuthConfirmPassword] = useState("");
+
   const handleSearchTrack = (idToSearch?: string) => {
     const queryId = (idToSearch || trackSearchId).trim().toUpperCase();
     if (!queryId) return;
@@ -71,6 +104,77 @@ export default function CitizenDashboard() {
     }
   };
 
+  const handleAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+
+    const cleanEmail = authEmail.trim();
+    const cleanPassword = authPassword;
+
+    if (authMode === "signup") {
+      const cleanName = authName.trim();
+      const cleanMobile = authMobile.trim();
+      const cleanConfirm = authConfirmPassword;
+
+      if (!cleanName || !cleanEmail || !cleanMobile || !cleanPassword) {
+        setAuthError("All fields are required.");
+        return;
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(cleanEmail)) {
+        setAuthError("Please enter a valid email address.");
+        return;
+      }
+
+      if (cleanMobile.length < 10 || isNaN(Number(cleanMobile))) {
+        setAuthError("Please enter a valid 10-digit mobile number.");
+        return;
+      }
+
+      if (cleanPassword.length < 4) {
+        setAuthError("Password must be at least 4 characters long.");
+        return;
+      }
+
+      if (cleanPassword !== cleanConfirm) {
+        setAuthError("Passwords do not match.");
+        return;
+      }
+
+      setAuthLoading(true);
+      const res = await registerCitizen(cleanName, cleanEmail, cleanMobile, cleanPassword);
+      setAuthLoading(false);
+
+      if (res.success && res.session) {
+        setAuthSession(res.session);
+        setSession(res.session);
+        window.dispatchEvent(new Event("storage"));
+        getComplaints(res.session.id).then(setComplaints);
+      } else {
+        setAuthError(res.error || "Registration failed.");
+      }
+    } else {
+      if (!cleanEmail || !cleanPassword) {
+        setAuthError("Credentials cannot be empty.");
+        return;
+      }
+
+      setAuthLoading(true);
+      const res = await loginCitizen(cleanEmail, cleanPassword);
+      setAuthLoading(false);
+
+      if (res.success && res.session) {
+        setAuthSession(res.session);
+        setSession(res.session);
+        window.dispatchEvent(new Event("storage"));
+        getComplaints(res.session.id).then(setComplaints);
+      } else {
+        setAuthError(res.error || "Invalid login credentials.");
+      }
+    }
+  };
+
   useEffect(() => {
     if (trackSearchId) {
       const found = complaints.find((c) => c.id.toUpperCase() === trackSearchId.trim().toUpperCase());
@@ -79,7 +183,6 @@ export default function CitizenDashboard() {
       }
     }
   }, [complaints, trackSearchId]);
-
 
   const isHi = language === "hi";
 
@@ -118,16 +221,29 @@ export default function CitizenDashboard() {
 
   // Load complaints dynamically on mount and listen to real-time local storage edits
   useEffect(() => {
-    setComplaints(getComplaints());
-
-    const handleSync = () => {
-      setComplaints(getComplaints());
+    const checkSession = () => {
+      const activeSession = getAuthSession();
+      if (activeSession && activeSession.role === "citizen") {
+        setSession(activeSession);
+        getComplaints(activeSession.id).then(setComplaints);
+      } else {
+        setSession(null);
+        setComplaints([]);
+      }
     };
-    window.addEventListener("janmitra-db-change", handleSync);
-    window.addEventListener("storage", handleSync);
+
+    checkSession();
+
+    window.addEventListener("janmitra-db-change", checkSession);
+    window.addEventListener("storage", checkSession);
+    window.addEventListener("focus", checkSession);
+    window.addEventListener("visibilitychange", checkSession);
+
     return () => {
-      window.removeEventListener("janmitra-db-change", handleSync);
-      window.removeEventListener("storage", handleSync);
+      window.removeEventListener("janmitra-db-change", checkSession);
+      window.removeEventListener("storage", checkSession);
+      window.removeEventListener("focus", checkSession);
+      window.removeEventListener("visibilitychange", checkSession);
     };
   }, []);
 
@@ -141,14 +257,16 @@ export default function CitizenDashboard() {
     }
   }, []);
 
-  const refreshComplaints = () => {
-    setComplaints(getComplaints());
+  const refreshComplaints = async () => {
+    const activeSession = getAuthSession();
+    const data = await getComplaints(activeSession && activeSession.role === "citizen" ? activeSession.id : undefined);
+    setComplaints(data);
   };
 
-  const handleVerifyResolution = (complaintId: string, verified: boolean) => {
+  const handleVerifyResolution = async (complaintId: string, verified: boolean) => {
     if (!verifyFeedback.trim() && !verified) return;
     setIsVerifying(true);
-    citizenVerifyResolution(
+    await citizenVerifyResolution(
       complaintId,
       verified,
       verifyFeedback || (verified ? "Issue is fixed, thank you!" : "Issue not resolved."),
@@ -173,10 +291,10 @@ export default function CitizenDashboard() {
     reader.readAsDataURL(file);
   };
 
-  const handleTrackComplaint = (id: string) => {
-    refreshComplaints();
+  const handleTrackComplaint = async (id: string) => {
+    await refreshComplaints();
     setTrackSearchId(id);
-    const found = getComplaints().find((c) => c.id.toUpperCase() === id.toUpperCase());
+    const found = await getComplaintById(id);
     if (found) {
       setTrackedComplaint(found);
       setTrackError(false);
@@ -250,42 +368,255 @@ export default function CitizenDashboard() {
       .replace("Mahanagar, Lucknow", "महानगर, लखनऊ");
   };
 
+  const bottomNavItems = [
+    { id: "new", label: isHi ? "नई शिकायत" : "New", icon: PlusCircle },
+    { id: "track", label: isHi ? "शिकायतें" : "Complaints", icon: FileText },
+    { id: "search-track", label: isHi ? "ट्रैक" : "Track", icon: Search },
+  ];
+
   return (
     <>
       <Navbar />
-      <main className="min-h-screen pt-28 md:pt-32 pb-12 bg-[#05070f] text-gray-100">
+      <main className="min-h-screen pt-28 md:pt-32 pb-24 sm:pb-12 bg-[#05070f] text-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
+          {!session && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="max-w-md mx-auto space-y-6 pt-4 text-left"
+            >
+              {/* Logo / Header inside the form */}
+              <div className="text-center space-y-2 mb-6">
+                <div className="mx-auto w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center border border-indigo-500/20 shadow-xl">
+                  <User className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-2xl font-black text-white">
+                  {authMode === "login" 
+                    ? (isHi ? "नागरिक पोर्टल लॉगिन" : "Citizen Portal Login") 
+                    : (isHi ? "नागरिक पंजीकरण" : "Citizen Registration")}
+                </h2>
+                <p className="text-xs text-gray-400 font-semibold leading-relaxed">
+                  {authMode === "login"
+                    ? (isHi ? "शिकायत दर्ज करने और ट्रैक करने के लिए लॉगिन करें" : "Log in to report and track your civic complaints")
+                    : (isHi ? "शिकायत निवारण प्रणाली में शामिल होने के लिए रजिस्टर करें" : "Sign up to join the smart grievance resolution portal")}
+                </p>
+              </div>
 
+              {/* Mode Toggle Selector */}
+              <div className="flex bg-[#090d16] border border-[#1f2937]/60 p-1 rounded-xl shadow-inner h-11">
+                <button
+                  type="button"
+                  onClick={() => { setAuthMode("login"); setAuthError(null); }}
+                  className={`flex-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    authMode === "login"
+                      ? "bg-[#111827] text-white border border-[#1f2937]/80"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  {isHi ? "लॉगिन करें" : "Sign In"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setAuthMode("signup"); setAuthError(null); }}
+                  className={`flex-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    authMode === "signup"
+                      ? "bg-[#111827] text-white border border-[#1f2937]/80"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  {isHi ? "नया खाता बनाएं" : "Register"}
+                </button>
+              </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#1f2937]/30 pb-2">
-              <TabsList className="bg-[#090d16] border border-[#1f2937]/45 p-1 rounded-xl h-11 gap-1.5 shadow-lg shadow-black/10">
-                <TabsTrigger
-                  value="new"
-                  className="gap-2 px-4 h-8.5 rounded-lg text-xs font-black transition-all duration-200 cursor-pointer data-[state=active]:bg-[#111827] data-[state=active]:text-white data-[state=active]:border data-[state=active]:border-[#1f2937]/80 hover:bg-slate-900/60 text-gray-400"
-                >
-                  <Plus className="w-4 h-4" />
-                  {dict.newComplaint.toUpperCase()}
-                </TabsTrigger>
-                <TabsTrigger
-                  value="track"
-                  className="gap-2 px-4 h-8.5 rounded-lg text-xs font-black transition-all duration-200 cursor-pointer data-[state=active]:bg-[#111827] data-[state=active]:text-white data-[state=active]:border data-[state=active]:border-[#1f2937]/80 hover:bg-slate-900/60 text-gray-400"
-                >
-                  <Search className="w-4 h-4" />
-                  {dict.myComplaints.toUpperCase()}
-                </TabsTrigger>
-                <TabsTrigger
-                  value="search-track"
-                  className="gap-2 px-4 h-8.5 rounded-lg text-xs font-black transition-all duration-200 cursor-pointer data-[state=active]:bg-[#111827] data-[state=active]:text-white data-[state=active]:border data-[state=active]:border-[#1f2937]/80 hover:bg-slate-900/60 text-gray-400"
-                >
-                  <Search className="w-4 h-4" />
-                  {isHi ? "शिकायत ट्रैक करें" : "TRACK COMPLAINT"}
-                </TabsTrigger>
-              </TabsList>
+              {/* Form Frame */}
+              <div className="bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+                <div className="absolute -right-16 -top-16 w-32 h-32 bg-[#7c3aed]/5 rounded-full filter blur-xl pointer-events-none" />
+                
+                <form onSubmit={handleAuthSubmit} className="space-y-4">
+                  {authError && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-red-950/20 border border-red-500/20 text-red-300 text-xs font-bold px-4 py-3 rounded-xl flex items-start gap-2"
+                    >
+                      <AlertTriangle className="w-4.5 h-4.5 text-red-500 shrink-0 mt-0.5" />
+                      <span>{authError}</span>
+                    </motion.div>
+                  )}
 
-              {/* Utility Panel: Notifications & Language Toggle */}
-              <div className="flex items-center gap-3 relative justify-end">
+                  {authMode === "signup" && (
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider pl-1.5">
+                        {isHi ? "आपका नाम" : "Full Name"}
+                      </label>
+                      <div className="relative">
+                        <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                        <Input
+                          type="text"
+                          value={authName}
+                          onChange={(e) => setAuthName(e.target.value)}
+                          placeholder={isHi ? "उदा. अमित कुमार" : "e.g. Amit Kumar"}
+                          className="pl-10.5 h-11 bg-[#05070f] border-[#1f2937]/80 rounded-xl text-gray-100 placeholder:text-gray-600 focus:border-[#7c3aed]/60"
+                          required
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider pl-1.5">
+                      {authMode === "login" 
+                        ? (isHi ? "ईमेल या मोबाइल नंबर" : "Email ID or Mobile Number")
+                        : (isHi ? "ईमेल पता" : "Email Address")}
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                      <Input
+                        type="text"
+                        value={authEmail}
+                        onChange={(e) => setAuthEmail(e.target.value)}
+                        placeholder={authMode === "login"
+                          ? (isHi ? "उदा. amit@gmail.com या 9876543210" : "e.g. amit@gmail.com or 9876543210")
+                          : (isHi ? "उदा. amit@gmail.com" : "e.g. amit@gmail.com")}
+                        className="pl-10.5 h-11 bg-[#05070f] border-[#1f2937]/80 rounded-xl text-gray-100 placeholder:text-gray-600 focus:border-[#7c3aed]/60"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {authMode === "signup" && (
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider pl-1.5">
+                        {isHi ? "मोबाइल नंबर" : "Mobile Number"}
+                      </label>
+                      <div className="relative">
+                        <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                        <Input
+                          type="tel"
+                          value={authMobile}
+                          onChange={(e) => setAuthMobile(e.target.value)}
+                          placeholder="e.g. 9876543210"
+                          maxLength={10}
+                          className="pl-10.5 h-11 bg-[#05070f] border-[#1f2937]/80 rounded-xl text-gray-100 placeholder:text-gray-600 focus:border-[#7c3aed]/60"
+                          required
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider pl-1.5">
+                      {isHi ? "सुरक्षा पासवर्ड" : "Password"}
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        value={authPassword}
+                        onChange={(e) => setAuthPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="pl-10.5 pr-10.5 h-11 bg-[#05070f] border-[#1f2937]/80 rounded-xl text-gray-100 placeholder:text-gray-600 focus:border-[#7c3aed]/60"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 cursor-pointer p-0.5"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {authMode === "signup" && (
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider pl-1.5">
+                        {isHi ? "पासवर्ड की पुष्टि करें" : "Confirm Password"}
+                      </label>
+                      <div className="relative">
+                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          value={authConfirmPassword}
+                          onChange={(e) => setAuthConfirmPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="pl-10.5 h-11 bg-[#05070f] border-[#1f2937]/80 rounded-xl text-gray-100 placeholder:text-gray-600 focus:border-[#7c3aed]/60"
+                          required
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <Button
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full h-11 rounded-xl bg-[#7c3aed] text-white hover:bg-[#6d28d9] font-bold cursor-pointer transition-all active:scale-95 text-xs uppercase tracking-wider mt-4 flex items-center justify-center gap-2"
+                  >
+                    {authLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        {isHi ? "सत्यापित किया जा रहा है..." : "Authenticating..."}
+                      </>
+                    ) : (
+                      <>
+                        <ShieldCheck className="w-4 h-4" />
+                        {authMode === "login" 
+                          ? (isHi ? "लॉगिन करें और प्रवेश करें" : "Sign In & Enter Portal")
+                          : (isHi ? "खाता बनाएं और लॉगिन करें" : "Create Account & Sign In")}
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </div>
+
+              {/* Secure Notice Footer */}
+              <div className="text-[10px] text-gray-500 font-semibold text-center flex items-center justify-center gap-1.5 py-2">
+                <Lock className="w-3.5 h-3.5 text-indigo-400" />
+                <span>{isHi ? "सुरक्षित एसएसएल एन्क्रिप्टेड कनेक्शन" : "Secure SSL encrypted database connection"}</span>
+              </div>
+            </motion.div>
+          )}
+
+          {session && (
+            <>
+              {/* Decorative Background Orbs */}
+              <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden -z-10">
+                <div className="absolute top-20 -left-32 w-96 h-96 bg-indigo-600/[0.04] rounded-full blur-[120px]" />
+                <div className="absolute top-60 -right-32 w-80 h-80 bg-violet-600/[0.03] rounded-full blur-[100px]" />
+                <div className="absolute bottom-40 left-1/3 w-72 h-72 bg-blue-600/[0.03] rounded-full blur-[100px]" />
+              </div>
+
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1f2937]/30 pb-4">
+                  {/* Desktop alignment spacer to balance the utilities on the right */}
+                  <div className="hidden sm:block w-44 shrink-0" />
+
+                  <TabsList className="hidden sm:flex bg-[#070b15]/80 border border-[#1f2937]/65 p-1 rounded-2xl h-12 gap-1.5 shadow-2xl mx-auto backdrop-blur-md">
+                    <TabsTrigger
+                      value="new"
+                      className="gap-2 px-5 h-9.5 rounded-xl text-xs font-black transition-all duration-300 cursor-pointer data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600/90 data-[state=active]:to-violet-600/90 data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(99,102,241,0.25)] hover:bg-[#111827]/60 text-gray-400 hover:text-gray-200"
+                    >
+                      <Plus className="w-4 h-4 shrink-0" />
+                      {dict.newComplaint.toUpperCase()}
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="track"
+                      className="gap-2 px-5 h-9.5 rounded-xl text-xs font-black transition-all duration-300 cursor-pointer data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600/90 data-[state=active]:to-violet-600/90 data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(99,102,241,0.25)] hover:bg-[#111827]/60 text-gray-400 hover:text-gray-200"
+                    >
+                      <FileText className="w-4 h-4 shrink-0" />
+                      {dict.myComplaints.toUpperCase()}
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="search-track"
+                      className="gap-2 px-5 h-9.5 rounded-xl text-xs font-black transition-all duration-300 cursor-pointer data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600/90 data-[state=active]:to-violet-600/90 data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(99,102,241,0.25)] hover:bg-[#111827]/60 text-gray-400 hover:text-gray-200"
+                    >
+                      <Search className="w-4 h-4 shrink-0" />
+                      {isHi ? "शिकायत ट्रैक करें" : "TRACK COMPLAINT"}
+                    </TabsTrigger>
+                  </TabsList>
+
+                  {/* Utility Panel: Notifications & Language Toggle */}
+                  <div className="flex items-center gap-3 relative justify-end w-full sm:w-44 shrink-0">
                 {/* Notification Bell Component */}
                 <div className="relative">
                   <button
@@ -413,12 +744,81 @@ export default function CitizenDashboard() {
 
             {/* Track Complaints Tab */}
             <TabsContent value="track">
-              <div className="grid grid-cols-1 grid-rows-1 lg:grid-cols-5 gap-6">
-                {/* Complaint List */}
-                <div className={`${selectedComplaint ? "hidden lg:block" : "block"} lg:col-span-2 space-y-3`}>
-                  <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-4">
-                    {dict.yourComplaints} ({complaints.length})
-                  </h3>
+              <div className="space-y-6 text-left">
+                {/* Merged Profile Section at the top of Complaints */}
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                  {/* Profile Overview Card */}
+                  <div className="lg:col-span-3 bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-5 relative overflow-hidden shadow-xl flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                    <div className="absolute -right-16 -top-16 w-36 h-36 bg-[#7c3aed]/10 rounded-full filter blur-xl pointer-events-none" />
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center border border-indigo-500/20 shadow-2xl shrink-0 relative">
+                      <User className="w-7 h-7 text-white" />
+                      <div className="absolute -bottom-1 -right-1 w-4 bg-emerald-500 rounded-full border-2 border-[#05070f] flex items-center justify-center">
+                        <ShieldCheck className="w-2.5 h-2.5 text-white" />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-1.5 text-center sm:text-left flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                        <h2 className="text-xl font-black text-white leading-none truncate font-sans">
+                          {session?.name}
+                        </h2>
+                        <Badge variant="outline" className="border-indigo-500/30 text-indigo-400 bg-indigo-500/5 font-black uppercase text-[8.5px] px-2 py-0.5 tracking-wider rounded">
+                          Verified Citizen
+                        </Badge>
+                      </div>
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 text-xs text-gray-400 font-bold pt-0.5">
+                        <span className="flex items-center gap-1.5 min-w-0 truncate">
+                          <Mail className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                          <span className="truncate">{session?.email}</span>
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                          <span>{session?.mobile || "+91 96317 06698"}</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-[10px] font-bold text-gray-400 bg-[#070b13]/60 border border-[#1f2937]/50 rounded-xl px-3.5 py-2 flex items-center gap-1.5 self-center shrink-0">
+                      <Calendar className="w-3.5 h-3.5 text-indigo-400" />
+                      <span>
+                        Reg: {session?.authenticatedAt ? new Date(session.authenticatedAt).toLocaleDateString("en-IN", { month: "short", year: "numeric" }) : "June 2026"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Profile Stats Grid */}
+                  <div className="lg:col-span-2 grid grid-cols-3 gap-3">
+                    <div className="bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-4.5 flex flex-col justify-center text-left hover:border-indigo-500/20 transition-all">
+                      <span className="text-[9px] text-gray-500 font-black uppercase tracking-wider block">Grievances</span>
+                      <span className="text-2xl font-black text-white block mt-0.5">{complaints.length}</span>
+                      <span className="text-[8px] text-gray-400 font-medium mt-0.5 hidden sm:block">Total filed</span>
+                    </div>
+
+                    <div className="bg-[#090d16]/30 border border-emerald-500/10 rounded-2xl p-4.5 flex flex-col justify-center text-left hover:border-emerald-500/30 transition-all">
+                      <span className="text-[9px] text-emerald-400/80 font-black uppercase tracking-wider block">Resolved</span>
+                      <span className="text-2xl font-black text-emerald-400 block mt-0.5">
+                        {complaints.filter(c => c.status === "resolved").length}
+                      </span>
+                      <span className="text-[8px] text-gray-400 font-medium mt-0.5 hidden sm:block">Verified</span>
+                    </div>
+
+                    <div className="bg-[#090d16]/30 border border-amber-500/10 rounded-2xl p-4.5 flex flex-col justify-center text-left hover:border-amber-500/30 transition-all">
+                      <span className="text-[9px] text-amber-400/80 font-black uppercase tracking-wider block">Active</span>
+                      <span className="text-2xl font-black text-amber-400 block mt-0.5">
+                        {complaints.filter(c => c.status !== "resolved").length}
+                      </span>
+                      <span className="text-[8px] text-gray-400 font-medium mt-0.5 hidden sm:block">Processing</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Main Complaints List & Tracking Split */}
+                <div className="grid grid-cols-1 grid-rows-1 lg:grid-cols-5 gap-6">
+                  {/* Complaint List */}
+                  <div className={`${selectedComplaint ? "hidden lg:block" : "block"} lg:col-span-2 space-y-3`}>
+                    <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-4">
+                      {dict.yourComplaints} ({complaints.length})
+                    </h3>
                   {complaints.length === 0 ? (
                     <p className="text-sm text-muted-foreground/80 font-medium py-4 text-center">
                       {isHi ? "कोई शिकायत नहीं मिली।" : "No complaints found."}
@@ -714,7 +1114,8 @@ export default function CitizenDashboard() {
                   )}
                 </div>
               </div>
-            </TabsContent>
+            </div>
+          </TabsContent>
 
             {/* Search and Track Tab */}
             <TabsContent value="search-track">
@@ -1093,6 +1494,70 @@ export default function CitizenDashboard() {
               </div>
             </div>
           </motion.div>
+
+          {/* Mobile Bottom Navigation Bar */}
+          <div className="fixed bottom-6 left-6 right-6 h-19 z-50 bg-[#070b15]/90 backdrop-blur-2xl border border-indigo-500/15 rounded-2xl flex justify-around items-center px-2 shadow-[0_20px_50px_rgba(0,0,0,0.85)] sm:hidden animate-in fade-in slide-in-from-bottom-6 duration-500">
+            {bottomNavItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setActiveTab(item.id)}
+                  className="relative flex flex-col items-center justify-center flex-1 h-full cursor-pointer transition-all duration-300 group select-none outline-none"
+                >
+                  {/* Glassmorphic active bubble background */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeBottomBubble"
+                      className="absolute inset-x-2 inset-y-2 rounded-xl bg-gradient-to-b from-indigo-500/12 to-indigo-500/2 border border-indigo-500/25 shadow-[0_0_15px_rgba(99,102,241,0.12),inset_0_1px_8px_rgba(99,102,241,0.08)]"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+
+                  {/* Animated Content Wrapper */}
+                  <motion.div
+                    animate={isActive ? { y: -2, scale: 1.05 } : { y: 0, scale: 1 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                    className="flex flex-col items-center justify-center z-10"
+                  >
+                    {/* Glowing active icon */}
+                    <div className="relative">
+                      <Icon
+                        className={`w-5.5 h-5.5 transition-all duration-300 ${
+                          isActive
+                            ? "text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.6)]"
+                            : "text-gray-400 group-hover:text-gray-300"
+                        }`}
+                      />
+                    </div>
+
+                    {/* Text Label */}
+                    <span
+                      className={`text-[9.5px] font-black tracking-wider uppercase mt-1.5 transition-all duration-300 ${
+                        isActive
+                          ? "text-white opacity-100 font-extrabold"
+                          : "text-gray-500 opacity-80 group-hover:text-gray-400"
+                      }`}
+                    >
+                      {item.label}
+                    </span>
+                  </motion.div>
+
+                  {/* Active bottom accent dot */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeBottomDot"
+                      className="absolute bottom-1.5 w-1 h-1 bg-indigo-400 rounded-full shadow-[0_0_8px_#818cf8]"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          </>)}
         </div>
       </main>
     </>

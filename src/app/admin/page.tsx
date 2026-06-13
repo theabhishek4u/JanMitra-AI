@@ -81,6 +81,11 @@ export default function AdminDashboard() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [activeSidebarTab, setActiveSidebarTab] = useState("analytics");
+
+  const handleLogout = () => {
+    clearAuthSession();
+    window.location.href = "/";
+  };
   
   // Header Notification states
   const [showNotifications, setShowNotifications] = useState(false);
@@ -129,9 +134,18 @@ export default function AdminDashboard() {
     if (!checkAuth()) return;
 
     setMounted(true);
-    setStats(getStats());
-    setAnalytics(getAnalytics());
-    setComplaints(getComplaints());
+    
+    // Initial fetch
+    Promise.all([
+      getStats(),
+      getAnalytics(),
+      getComplaints()
+    ]).then(([statsData, analyticsData, complaintsData]) => {
+      setStats(statsData);
+      setAnalytics(analyticsData);
+      setComplaints(complaintsData);
+    });
+
     setMaxTokens(getAdminTokenConfig());
     setReport(getCitizenFrequencyReport());
 
@@ -139,10 +153,10 @@ export default function AdminDashboard() {
       checkAuth();
     };
 
-    const handleSync = () => {
-      setComplaints(getComplaints());
-      setStats(getStats());
-      setAnalytics(getAnalytics());
+    const handleSync = async () => {
+      setComplaints(await getComplaints());
+      setStats(await getStats());
+      setAnalytics(await getAnalytics());
       setReport(getCitizenFrequencyReport());
     };
 
@@ -374,9 +388,9 @@ export default function AdminDashboard() {
                )}
              </div>
 
-             <a href="/" className="p-2 rounded-xl border border-border/30 bg-muted/30 hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all cursor-pointer flex items-center justify-center active:scale-95">
-               <LogOut className="w-4 h-4 ml-0.5" />
-             </a>
+              <button onClick={handleLogout} className="p-2 rounded-xl border border-border/30 bg-muted/30 hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all cursor-pointer flex items-center justify-center active:scale-95">
+                <LogOut className="w-4 h-4 ml-0.5" />
+              </button>
           </div>
         </header>
 

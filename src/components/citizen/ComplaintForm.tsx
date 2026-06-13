@@ -30,6 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { classifyComplaintAI } from "@/lib/ai";
 import { addComplaint } from "@/lib/complaints";
 import { getTokenState, consumeToken, isEmergencyComplaint } from "@/lib/tokenSystem";
+import { getAuthSession } from "@/lib/auth";
 import type { AIClassification, Complaint } from "@/types";
 
 export function ComplaintForm({ 
@@ -64,6 +65,17 @@ export function ComplaintForm({
   const [tokenState, setTokenState] = useState(() => getTokenState());
   const [tokenAlert, setTokenAlert] = useState<string | null>(null);
   const [isEmergencyBypass, setIsEmergencyBypass] = useState(false);
+
+  const [session, setSession] = useState<any>(null);
+
+  useEffect(() => {
+    const activeSession = getAuthSession();
+    if (activeSession && activeSession.role === "citizen") {
+      setSession(activeSession);
+      setName(activeSession.name || "");
+      setPhone(activeSession.mobile || "");
+    }
+  }, []);
 
   useEffect(() => {
     const handleTokenChange = () => {
@@ -521,7 +533,7 @@ export function ComplaintForm({
       }
 
       // Add to dynamic localStorage Database Store
-      const newComplaint = addComplaint({
+      const newComplaint = await addComplaint({
         title: text.split(/[.।\n]/)[0].slice(0, 60) || "Civic Issue",
         titleHi: isHi ? "नागरिक समस्या दर्ज" : "Civic Issue Reported",
         description: text,
@@ -534,13 +546,18 @@ export function ComplaintForm({
         latitude: location?.lat || 26.8467,
         longitude: location?.lng || 80.9462,
         area: location?.area || "Gomti Nagar, Lucknow",
-        citizenName: name || "Demo Citizen",
-        citizenPhone: phone || "+91 99999 88888",
+        citizenId: session?.id || null,
+        citizenName: name || session?.name || "Demo Citizen",
+        citizenPhone: phone || session?.mobile || "+91 99999 88888",
         imageUrl: photo || undefined,
         aiSummary: result.summary,
         aiSummaryHi: result.summaryHi,
         aiConfidence: result.confidence,
       });
+
+      if (!newComplaint) {
+        throw new Error("Failed to create complaint in database.");
+      }
 
       setClassification(result);
       setCreatedComplaintId(newComplaint.id);
@@ -600,236 +617,304 @@ export function ComplaintForm({
             className="space-y-6 text-left"
           >
             {/* Complaint text */}
-            <div className="bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-6 sm:p-7 space-y-4">
-              <div className="flex flex-col gap-1 mb-2">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-extrabold text-lg tracking-wider text-white">{dict.describeTitle}</h3>
-                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{isHi ? "(अंग्रेजी भी समर्थित)" : "(Hindi Supported)"}</span>
+            <div className="relative rounded-2xl overflow-hidden">
+              {/* Gradient top accent line */}
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-indigo-500/60 to-transparent" />
+              
+              <div className="bg-gradient-to-b from-[#0c1120]/80 to-[#080d18]/60 backdrop-blur-sm border border-[#1e293b]/40 rounded-2xl p-6 sm:p-7 space-y-5 shadow-[0_8px_40px_rgba(0,0,0,0.3)]">
+                {/* Header Row */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-600/20 shrink-0">
+                        <FileText className="w-4.5 h-4.5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-extrabold text-base sm:text-lg text-white leading-tight">{dict.describeTitle}</h3>
+                        <span className="text-[9px] font-black text-indigo-400/70 uppercase tracking-[0.15em]">{isHi ? "(अंग्रेजी भी समर्थित)" : "(HINDI SUPPORTED)"}</span>
+                      </div>
+                    </div>
+                    <p className="text-[13px] text-gray-400/90 font-medium pl-0.5">{dict.subtitleText}</p>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-400 font-medium">{dict.subtitleText}</p>
-              </div>
 
-              {/* Dynamic Token Tracker UI */}
-              <div className="flex items-center justify-between pb-3 border-b border-[#1f2937]/40">
-                <div className="flex items-center gap-2">
-                  <Coins className="w-4 h-4 text-amber-500 animate-pulse" />
-                  <span className="text-xs font-bold text-gray-400">
-                    {isHi ? "दैनिक शिकायत कोटा:" : "Daily Complaint Quota:"}
-                  </span>
+                {/* Token Tracker - Pill Style */}
+                <div className="flex items-center justify-between px-4 py-2.5 bg-[#070b14]/70 border border-[#1e293b]/50 rounded-xl">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                      <Coins className="w-3.5 h-3.5 text-amber-400" />
+                    </div>
+                    <span className="text-[11px] font-bold text-gray-400">
+                      {isHi ? "शेष शिकायतें:" : "Complaints Remaining:"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-sm font-black tabular-nums ${tokenState.tokensRemaining <= 1 ? "text-red-400" : "text-amber-400"}`}>
+                      {tokenState.tokensRemaining}/{tokenState.maxTokens}
+                    </span>
+                    <div className="w-20 h-2 bg-[#0c1020] rounded-full overflow-hidden border border-amber-500/10">
+                      <motion.div 
+                        className={`h-full rounded-full ${tokenState.tokensRemaining <= 1 ? "bg-gradient-to-r from-red-500 to-red-400" : "bg-gradient-to-r from-amber-600 to-amber-400"}`}
+                        initial={false}
+                        animate={{ width: `${(tokenState.tokensRemaining / tokenState.maxTokens) * 100}%` }}
+                        transition={{ duration: 0.5, ease: "easeOut" }}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-black text-amber-400">
-                    {tokenState.tokensRemaining}/{tokenState.maxTokens}
-                  </span>
-                  <div className="w-16 h-1.5 bg-slate-900 rounded-full overflow-hidden border border-amber-500/10">
-                    <div 
-                      className="h-full bg-amber-500 rounded-full transition-all duration-300"
-                      style={{ width: `${(tokenState.tokensRemaining / tokenState.maxTokens) * 100}%` }}
+
+                {/* Textarea with enhanced focus state */}
+                <div className="relative group">
+                  <Textarea
+                    value={text}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                    onChange={(e) => setText(e.target.value)}
+                    placeholder={dict.placeholderText}
+                    className="min-h-[150px] text-sm resize-none border border-[#1e293b]/60 focus:border-indigo-500/50 rounded-xl px-4 py-3.5 bg-[#060a12]/80 text-gray-100 w-full transition-all duration-500 placeholder:text-gray-600/80 focus:shadow-[0_0_0_3px_rgba(99,102,241,0.08),0_0_30px_rgba(99,102,241,0.08)] outline-none leading-relaxed"
+                  />
+                  {/* Character count */}
+                  {text.length > 0 && (
+                    <span className="absolute bottom-3 right-3 text-[10px] font-bold text-gray-600 tabular-nums">
+                      {text.length}
+                    </span>
+                  )}
+                </div>
+
+                {/* Hidden file input */}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  onChange={handlePhotoChange}
+                  accept="image/*"
+                />
+
+                {/* Photo preview block with Holographic neon scanner */}
+                {photo && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className={`flex items-center gap-3.5 p-3 bg-gradient-to-r from-indigo-500/[0.04] to-violet-500/[0.04] border rounded-xl w-full relative overflow-hidden transition-all duration-300 ${
+                      isScanningImage ? "border-indigo-500/40 shadow-[0_0_20px_rgba(99,102,241,0.12)]" : "border-[#1e293b]/50"
+                    }`}
+                  >
+                    <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-[#1e293b] bg-black/20 shrink-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={photo} alt="Preview" className="w-full h-full object-cover" />
+                      {isScanningImage && <div className="holo-scanline" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-gray-200 truncate">{photoName}</p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className={`w-1.5 h-1.5 rounded-full ${isScanningImage ? "bg-indigo-400 animate-ping" : "bg-emerald-400 animate-pulse"}`} />
+                        <p className={`text-[10px] font-bold uppercase tracking-wider ${isScanningImage ? "text-indigo-400" : "text-emerald-400"}`}>
+                          {isScanningImage 
+                            ? `AI SCAN: ${scanProgress}%` 
+                            : (isHi ? "✓ AI स्कैन पूर्ण" : "✓ AI Scan Complete")}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={removePhoto}
+                      className="p-2 rounded-lg hover:bg-red-500/10 text-gray-500 hover:text-red-400 transition-all cursor-pointer active:scale-90"
+                      aria-label="Remove photo"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </motion.div>
+                )}
+
+                {/* Feature Action Buttons - Premium Pill Cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                  {/* Voice Input */}
+                  <button
+                    type="button"
+                    onClick={toggleRecording}
+                    disabled={isTranscribing}
+                    className={`relative group flex items-center gap-2.5 px-4 py-3 rounded-xl border transition-all duration-300 cursor-pointer active:scale-[0.97] overflow-hidden ${
+                      isRecording
+                        ? "border-red-500/40 bg-red-500/10 shadow-[0_0_20px_rgba(239,68,68,0.1)]"
+                        : isTranscribing
+                        ? "border-indigo-500/30 bg-indigo-500/5"
+                        : "border-[#1e293b]/50 bg-[#0a0f1a]/60 hover:border-indigo-500/30 hover:bg-[#0c1122]/80 hover:shadow-[0_4px_20px_rgba(99,102,241,0.06)]"
+                    }`}
+                  >
+                    {isRecording ? (
+                      <>
+                        <div className="w-7 h-7 rounded-lg bg-red-500/15 flex items-center justify-center shrink-0">
+                          <MicOff className="w-3.5 h-3.5 text-red-400 animate-pulse" />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-wider text-red-300 truncate">{isHi ? "रोकें..." : "Stop..."}</span>
+                      </>
+                    ) : isTranscribing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 text-indigo-400 animate-spin shrink-0" />
+                        <span className="text-[10px] font-black uppercase tracking-wider text-indigo-300 truncate">{isHi ? "AI विश्लेषण..." : "AI..."}</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-7 h-7 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0 group-hover:bg-indigo-500/15 transition-colors">
+                          <Mic className="w-3.5 h-3.5 text-indigo-400" />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-wider text-gray-300 group-hover:text-white truncate">{isHi ? "बोलें" : "Speak"}</span>
+                      </>
+                    )}
+                  </button>
+
+                  {isRecording && (
+                    <div className="flex items-end gap-1 h-full px-3 pb-3 border border-indigo-500/15 bg-indigo-500/[0.03] rounded-xl">
+                      {[...Array(6)].map((_, i) => (
+                        <span key={i} className="soundwave-bar" />
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Photo Upload */}
+                  <button
+                    type="button"
+                    onClick={handlePhotoUploadClick}
+                    className={`group flex items-center gap-2.5 px-4 py-3 rounded-xl border transition-all duration-300 cursor-pointer active:scale-[0.97] ${
+                      photo
+                        ? "border-emerald-500/30 bg-emerald-500/[0.06]"
+                        : "border-[#1e293b]/50 bg-[#0a0f1a]/60 hover:border-violet-500/30 hover:bg-[#0c1122]/80 hover:shadow-[0_4px_20px_rgba(139,92,246,0.06)]"
+                    }`}
+                  >
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                      photo ? "bg-emerald-500/15" : "bg-violet-500/10 group-hover:bg-violet-500/15"
+                    }`}>
+                      <Upload className={`w-3.5 h-3.5 ${photo ? "text-emerald-400" : "text-violet-400"}`} />
+                    </div>
+                    <span className={`text-[10px] font-black uppercase tracking-wider truncate ${
+                      photo ? "text-emerald-300" : "text-gray-300 group-hover:text-white"
+                    }`}>{photo ? (isHi ? "संलग्न ✓" : "Attached ✓") : (isHi ? "फोटो" : "Photo")}</span>
+                  </button>
+
+                  {/* Location Detection */}
+                  <button
+                    type="button"
+                    onClick={detectLocation}
+                    className={`group flex items-center gap-2.5 px-4 py-3 rounded-xl border transition-all duration-300 cursor-pointer active:scale-[0.97] ${
+                      location
+                        ? "border-emerald-500/30 bg-emerald-500/[0.06] col-span-2 sm:col-span-1"
+                        : "border-[#1e293b]/50 bg-[#0a0f1a]/60 hover:border-cyan-500/30 hover:bg-[#0c1122]/80 hover:shadow-[0_4px_20px_rgba(6,182,212,0.06)] col-span-2 sm:col-span-1"
+                    }`}
+                  >
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                      location ? "bg-emerald-500/15" : "bg-cyan-500/10 group-hover:bg-cyan-500/15"
+                    }`}>
+                      <MapPin className={`w-3.5 h-3.5 ${location ? "text-emerald-400" : "text-cyan-400"}`} />
+                    </div>
+                    <span className={`text-[10px] font-black uppercase tracking-wider truncate ${
+                      location ? "text-emerald-300" : "text-gray-300 group-hover:text-white"
+                    }`}>{location ? (location.area.length > 18 ? location.area.slice(0, 18) + "…" : location.area) : (isHi ? "स्थान" : "Location")}</span>
+                  </button>
+                </div>
+
+               {location && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex items-center gap-3 p-3.5 bg-emerald-500/[0.04] border border-emerald-500/15 rounded-xl relative overflow-hidden"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 radar-glow" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[9px] text-gray-500 uppercase font-black tracking-wider block">{dict.pinnedArea}</span>
+                    <span className="text-xs font-bold text-gray-200">{location.area}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Badge variant="outline" className="font-mono text-[8px] border-emerald-500/20 text-emerald-400/80 bg-emerald-500/5 font-bold px-1.5 py-0">
+                      {location.lat.toFixed(3)}
+                    </Badge>
+                    <Badge variant="outline" className="font-mono text-[8px] border-emerald-500/20 text-emerald-400/80 bg-emerald-500/5 font-bold px-1.5 py-0">
+                      {location.lng.toFixed(3)}
+                    </Badge>
+                  </div>
+                </motion.div>
+              )}
+              </div>
+            </div>
+
+            {/* Priority Selector - Color-coded Cards */}
+            <div className="relative rounded-2xl overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-500/40 to-transparent" />
+              <div className="bg-gradient-to-b from-[#0c1120]/80 to-[#080d18]/60 backdrop-blur-sm border border-[#1e293b]/40 rounded-2xl p-6 sm:p-7 space-y-4 shadow-[0_8px_40px_rgba(0,0,0,0.3)]">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-600/15 shrink-0">
+                    <AlertTriangle className="w-4 h-4 text-white" />
+                  </div>
+                  <h3 className="font-extrabold text-sm uppercase tracking-wider text-white">{dict.selectPriority}</h3>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  {[
+                    { id: "Auto", label: dict.priorityAuto, icon: "✨", color: "indigo", desc: isHi ? "AI तय करेगा" : "AI decides" },
+                    { id: "Normal", label: dict.priorityNormal, icon: "○", color: "gray", desc: isHi ? "सामान्य" : "Standard" },
+                    { id: "Important", label: dict.priorityImportant, icon: "🟠", color: "amber", desc: isHi ? "तत्काल" : "Urgent" },
+                    { id: "Emergency", label: dict.priorityEmergency, icon: "🔴", color: "red", desc: isHi ? "आपातकालीन" : "Critical" }
+                  ].map((p) => {
+                    const isSelected = userPriority === p.id;
+                    const colorMap: Record<string, string> = {
+                      indigo: isSelected ? "border-indigo-500/50 bg-indigo-500/10 shadow-[0_0_20px_rgba(99,102,241,0.1)]" : "border-[#1e293b]/50 bg-[#0a0f1a]/60 hover:border-indigo-500/25",
+                      gray: isSelected ? "border-slate-400/50 bg-slate-500/10 shadow-[0_0_20px_rgba(148,163,184,0.08)]" : "border-[#1e293b]/50 bg-[#0a0f1a]/60 hover:border-slate-500/25",
+                      amber: isSelected ? "border-amber-500/50 bg-amber-500/10 shadow-[0_0_20px_rgba(245,158,11,0.1)]" : "border-[#1e293b]/50 bg-[#0a0f1a]/60 hover:border-amber-500/25",
+                      red: isSelected ? "border-red-500/50 bg-red-500/10 shadow-[0_0_20px_rgba(239,68,68,0.1)]" : "border-[#1e293b]/50 bg-[#0a0f1a]/60 hover:border-red-500/25",
+                    };
+                    return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setUserPriority(p.id as "Auto" | "Normal" | "Important" | "Emergency")}
+                      className={`relative flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl border transition-all duration-300 cursor-pointer active:scale-[0.97] ${colorMap[p.color]}`}
+                    >
+                      <span className="text-base leading-none">{p.icon}</span>
+                      <span className={`text-[10px] font-black uppercase tracking-wider ${isSelected ? "text-white" : "text-gray-400"}`}>{p.label}</span>
+                      {isSelected && (
+                        <motion.div 
+                          layoutId="priorityIndicator"
+                          className="absolute -bottom-px left-1/4 right-1/4 h-[2px] bg-gradient-to-r from-transparent via-white/60 to-transparent rounded-full"
+                          transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                        />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+            {/* Personal details */}
+            {!session && (
+              <div className="bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-6 sm:p-7 space-y-4">
+                <h3 className="font-extrabold text-sm uppercase tracking-wider text-white flex items-center gap-2">
+                  <User className="w-5 h-5 text-[#7c3aed]" />
+                  {dict.yourDetails}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="relative group text-left">
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors z-10" />
+                    <Input
+                      placeholder={dict.namePlaceholder}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="pl-10 border border-[#1f2937]/80 focus:border-[#7c3aed]/60 focus:ring-1 focus:ring-[#7c3aed]/40 rounded-xl bg-[#070b13] text-gray-200 h-11 transition-all duration-300 focus:scale-[1.005]"
+                    />
+                  </div>
+                  <div className="relative group text-left">
+                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors z-10" />
+                    <Input
+                      placeholder={dict.phonePlaceholder}
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="pl-10 border border-[#1f2937]/80 focus:border-[#7c3aed]/60 focus:ring-1 focus:ring-[#7c3aed]/40 rounded-xl bg-[#070b13] text-gray-200 h-11 transition-all duration-300 focus:scale-[1.005]"
                     />
                   </div>
                 </div>
               </div>
-
-              <Textarea
-                value={text}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                onChange={(e) => setText(e.target.value)}
-                placeholder={dict.placeholderText}
-                className="min-h-[140px] text-sm resize-none border border-[#1f2937]/80 focus:border-[#7c3aed]/60 focus:ring-1 focus:ring-[#7c3aed]/40 rounded-xl px-4 py-3 bg-[#070b13] text-gray-100 w-full transition-all duration-300 placeholder:text-gray-600 focus:shadow-[0_0_20px_rgba(124,58,237,0.15)] focus:scale-[1.001] outline-none"
-              />
-
-              {/* Hidden file input */}
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                onChange={handlePhotoChange}
-                accept="image/*"
-              />
-
-              {/* Photo preview block with Holographic neon scanner */}
-              {photo && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className={`flex items-center gap-3.5 p-2.5 pr-4 bg-ai-purple/3 border rounded-2xl w-fit relative overflow-hidden transition-all duration-300 ${
-                    isScanningImage ? "border-ai-purple shadow-[0_0_15px_rgba(124,58,237,0.2)] bg-ai-purple/5" : "border-[#1f2937]"
-                  }`}
-                >
-                  <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-[#1f2937] bg-black/5 shrink-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={photo} alt="Preview" className="w-full h-full object-cover" />
-                    
-                    {/* Pulsing Holographic Scan Sweeper */}
-                    {isScanningImage && <div className="holo-scanline" />}
-                  </div>
-                  <div className="flex-1 min-w-[150px] max-w-[320px]">
-                    <p className="text-xs font-bold text-gray-200 truncate">{photoName}</p>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className={`w-1.5 h-1.5 rounded-full ${isScanningImage ? "bg-ai-purple animate-ping" : "bg-trust-green animate-pulse"}`} />
-                      <p className={`text-[10px] font-bold uppercase tracking-wider ${isScanningImage ? "text-ai-purple" : "text-trust-green"}`}>
-                        {isScanningImage 
-                          ? `[AI SCAN ACTIVE: DIAGNOSING ${scanProgress}%]` 
-                          : (isHi ? "AI स्कैन सफल • 1.2 MB" : "AI Scan OK • 1.2 MB")}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={removePhoto}
-                    className="p-1.5 rounded-lg hover:bg-danger-red/10 text-gray-400 hover:text-danger-red transition-all cursor-pointer relative z-10 active:scale-90"
-                    aria-label="Remove photo"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </motion.div>
-              )}
-
-              {/* Voice & Upload row */}
-              <div className="flex flex-wrap items-center gap-3 pt-1">
-                <Button
-                  type="button"
-                  variant={isRecording ? "destructive" : isTranscribing ? "secondary" : "outline"}
-                  size="sm"
-                  onClick={toggleRecording}
-                  disabled={isTranscribing}
-                  className={`gap-2 rounded-xl transition-all font-black text-xs uppercase cursor-pointer relative overflow-hidden bg-[#0c101f] border border-[#1f2937] text-gray-300 hover:text-white hover:bg-slate-900 h-9 px-4`}
-                >
-                  {isRecording ? (
-                    <>
-                      <MicOff className="w-3.5 h-3.5 text-white z-10 animate-pulse" />
-                      <span className="animate-pulse text-white z-10">{dict.voiceRecording}</span>
-                    </>
-                  ) : isTranscribing ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
-                      <span>{isHi ? "AI विश्लेषण..." : "AI Transcribing..."}</span>
-                    </>
-                  ) : (
-                    <>
-                      {dict.voiceInput}
-                    </>
-                  )}
-                </Button>
-
-                {isRecording && (
-                  <div className="flex items-end gap-1 h-8 px-2.5 pb-2 border border-ai-purple/20 bg-ai-purple/5 rounded-xl animate-fade-in">
-                    {[...Array(6)].map((_, i) => (
-                      <span key={i} className="soundwave-bar" />
-                    ))}
-                  </div>
-                )}
-
-                <Button 
-                  type="button"
-                  variant={photo ? "secondary" : "outline"} 
-                  size="sm" 
-                  onClick={handlePhotoUploadClick}
-                  className={`gap-2 rounded-xl font-black text-xs uppercase transition-all active:scale-95 cursor-pointer bg-[#0c101f] border border-[#1f2937] text-gray-300 hover:text-white hover:bg-slate-900 h-9 px-4`}
-                >
-                  {photo ? dict.photoAttached : dict.uploadPhoto}
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="gap-2 ml-auto rounded-xl font-black text-xs uppercase transition-all hover:bg-slate-900 bg-[#0c101f] border border-[#1f2937] text-gray-300 hover:text-white active:scale-95 cursor-pointer h-9 px-4"
-                  onClick={detectLocation}
-                >
-                  {location ? location.area : dict.detectLocation}
-                </Button>
-              </div>
-
-              {location && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-trust-green/2 border border-trust-green/20 rounded-xl mt-3 animate-fade-in relative overflow-hidden"
-                >
-                  <div className="absolute -left-6 -bottom-6 w-16 h-16 bg-trust-green/5 rounded-full filter blur-lg pointer-events-none" />
-                  
-                  <div className="flex items-center gap-3 text-left">
-                    <div className="w-6 h-6 rounded-full bg-trust-green/20 flex items-center justify-center shrink-0 relative">
-                      <div className="w-2.5 h-2.5 rounded-full bg-trust-green radar-glow relative" />
-                    </div>
-                    <div>
-                      <span className="text-[9px] text-gray-500 uppercase font-black tracking-wider block">{dict.pinnedArea}</span>
-                      <span className="text-xs font-bold text-gray-200">{location.area}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                    <Badge variant="outline" className="font-mono text-[9px] border-trust-green/30 text-trust-green bg-trust-green/5 font-bold px-2 py-0.5">
-                      LAT: {location.lat.toFixed(4)}
-                    </Badge>
-                    <Badge variant="outline" className="font-mono text-[9px] border-trust-green/30 text-trust-green bg-trust-green/5 font-bold px-2 py-0.5">
-                      LNG: {location.lng.toFixed(4)}
-                    </Badge>
-                  </div>
-                </motion.div>
-              )}
-            </div>
-
-            {/* Priority Selector */}
-            <div className="bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-6 sm:p-7 space-y-4">
-              <h3 className="font-extrabold text-sm uppercase tracking-wider text-white flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-[#7c3aed]" />
-                {dict.selectPriority}
-              </h3>
-              <div className="flex flex-wrap gap-3">
-                {[
-                  { id: "Auto", label: dict.priorityAuto, icon: "✨" },
-                  { id: "Normal", label: dict.priorityNormal, icon: "○" },
-                  { id: "Important", label: dict.priorityImportant, icon: "🟠" },
-                  { id: "Emergency", label: dict.priorityEmergency, icon: "🔴" }
-                ].map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => setUserPriority(p.id as "Auto" | "Normal" | "Important" | "Emergency")}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all text-sm font-bold ${
-                      userPriority === p.id 
-                        ? "border-indigo-500 bg-indigo-500/10 text-white shadow-[0_0_15px_rgba(99,102,241,0.2)]" 
-                        : "border-[#1f2937] bg-[#070b13] text-gray-400 hover:text-gray-200 hover:border-gray-600"
-                    }`}
-                  >
-                    <span>{p.icon}</span>
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Personal details */}
-            <div className="bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-6 sm:p-7 space-y-4">
-              <h3 className="font-extrabold text-sm uppercase tracking-wider text-white flex items-center gap-2">
-                <User className="w-5 h-5 text-[#7c3aed]" />
-                {dict.yourDetails}
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="relative group text-left">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors z-10" />
-                  <Input
-                    placeholder={dict.namePlaceholder}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="pl-10 border border-[#1f2937]/80 focus:border-[#7c3aed]/60 focus:ring-1 focus:ring-[#7c3aed]/40 rounded-xl bg-[#070b13] text-gray-200 h-11 transition-all duration-300 focus:scale-[1.005]"
-                  />
-                </div>
-                <div className="relative group text-left">
-                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors z-10" />
-                  <Input
-                    placeholder={dict.phonePlaceholder}
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="pl-10 border border-[#1f2937]/80 focus:border-[#7c3aed]/60 focus:ring-1 focus:ring-[#7c3aed]/40 rounded-xl bg-[#070b13] text-gray-200 h-11 transition-all duration-300 focus:scale-[1.005]"
-                  />
-                </div>
-              </div>
-            </div>
+            )}
 
             {/* Token alerts and bypass indicators */}
             {tokenState.tokensRemaining <= 0 && (

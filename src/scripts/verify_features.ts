@@ -38,22 +38,25 @@ async function runVerification() {
   clearNotifications("citizen");
   clearNotifications("officer");
 
+  const testArea = `Aliganj Test Area ${Math.floor(Math.random() * 1000000)}`;
+
   // ----------------------------------------------------
   // TEST 1: File 1 grievance in Aliganj
   // ----------------------------------------------------
   console.log("--- TEST 1: Submitting First Grievance ---");
-  const c1 = addComplaint({
+  const c1 = await addComplaint({
     title: "Overflowing Garbage Bin in Sector Q",
     titleHi: "सेक्टर Q में कचरा पात्र का अतिप्रवाह",
     description: "The garbage bin at Sector Q main market is overflowing. Severe bad smell.",
     descriptionHi: "सेक्टर Q मुख्य बाजार में कचरा पात्र बह रहा है। गंभीर दुर्गंध।",
     category: "Garbage / Sanitation",
     categoryHi: "कचरा / स्वच्छता",
-    area: "Aliganj, Lucknow",
+    area: testArea,
     citizenId: "cit-123",
     citizenName: "Amit Sharma",
     priority: "medium"
   });
+  if (!c1) throw new Error("FAIL: Failed to add Complaint 1.");
   console.log(`✅ Complaint 1 submitted successfully: ID = ${c1.id}`);
   
   // Verify officer notification
@@ -66,7 +69,7 @@ async function runVerification() {
   }
 
   // Verify complaint list properties
-  let complaints = getComplaints();
+  let complaints = await getComplaints();
   let complaint1 = complaints.find(c => c.id === c1.id);
   if (!complaint1) throw new Error("FAIL: Complaint 1 not found in database.");
   console.log(`🔍 Initial priority: ${complaint1.priority}`);
@@ -80,22 +83,23 @@ async function runVerification() {
   // TEST 2: File 2nd grievance in Aliganj under same category
   // ----------------------------------------------------
   console.log("--- TEST 2: Submitting Second Grievance in Same Area & Category (Hotspot Trigger) ---");
-  const c2 = addComplaint({
+  const c2 = await addComplaint({
     title: "Garbage near Aliganj Park entrance",
     titleHi: "अलीगंज पार्क प्रवेश द्वार के पास कचरा",
     description: "Huge pile of trash sitting here for 4 days.",
     descriptionHi: "यहाँ 4 दिनों से कचरे का बड़ा ढेर लगा हुआ है।",
     category: "Garbage / Sanitation",
     categoryHi: "कचरा / स्वच्छता",
-    area: "Aliganj, Lucknow",
+    area: testArea,
     citizenId: "cit-456",
     citizenName: "Ritu Verma",
     priority: "medium"
   });
+  if (!c2) throw new Error("FAIL: Failed to add Complaint 2.");
   console.log(`✅ Complaint 2 submitted successfully: ID = ${c2.id}`);
 
   // Retrieve complaints list and verify hotspots
-  complaints = getComplaints();
+  complaints = await getComplaints();
   const c1Updated = complaints.find(c => c.id === c1.id)!;
   const c2Updated = complaints.find(c => c.id === c2.id)!;
 
@@ -133,7 +137,7 @@ async function runVerification() {
   const resolvedNotesEn = "Waste removal vehicles dispatched. Cleaned and disinfected the area.";
   const resolvedNotesHi = "कचरा हटाने वाले वाहन भेजे गए। क्षेत्र को साफ और कीटाणुरहित किया गया।";
   
-  const updatedC1 = updateComplaintStatus(
+  const updatedC1 = await updateComplaintStatus(
     c1.id,
     "resolved",
     "Shri Rajesh Kumar",
@@ -164,7 +168,7 @@ async function runVerification() {
 
   // Verify hotspot resolution shrinkage
   console.log("🔍 Verifying Hotspot Shrinkage after resolution...");
-  complaints = getComplaints();
+  complaints = await getComplaints();
   const c1Final = complaints.find(c => c.id === c1.id)!;
   const c2Final = complaints.find(c => c.id === c2.id)!;
 

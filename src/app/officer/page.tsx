@@ -76,6 +76,11 @@ export default function OfficerDashboard() {
   const [mounted, setMounted] = useState(false);
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
+
+  const handleLogout = () => {
+    clearAuthSession();
+    window.location.href = "/";
+  };
   const [selectedComplaintId, setSelectedComplaintId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
@@ -112,7 +117,7 @@ export default function OfficerDashboard() {
   // Sync notifications whenever complaints update
   useEffect(() => {
     setNotifications(getOfficerNotifications());
-    setSuspiciousComplaints(getSuspiciousComplaints());
+    getSuspiciousComplaints().then(setSuspiciousComplaints);
   }, [complaints]);
 
   const handleClearAllNotifications = (e: React.MouseEvent) => {
@@ -194,12 +199,15 @@ export default function OfficerDashboard() {
     if (!checkAuth()) return;
 
     setMounted(true);
-    setComplaints(getComplaints());
-    setStats(getStats());
+    
+    Promise.all([getComplaints(), getStats()]).then(([complaintsData, statsData]) => {
+      setComplaints(complaintsData);
+      setStats(statsData);
+    });
 
-    const handleSync = () => {
-      setComplaints(getComplaints());
-      setStats(getStats());
+    const handleSync = async () => {
+      setComplaints(await getComplaints());
+      setStats(await getStats());
     };
 
     const handleTabSync = () => {
@@ -219,22 +227,22 @@ export default function OfficerDashboard() {
     };
   }, []);
 
-  const refreshData = () => {
-    const freshComplaints = getComplaints();
+  const refreshData = async () => {
+    const freshComplaints = await getComplaints();
     setComplaints(freshComplaints);
-    setStats(getStats());
-    setSuspiciousComplaints(getSuspiciousComplaints());
+    setStats(await getStats());
+    setSuspiciousComplaints(await getSuspiciousComplaints());
   };
 
   // Fake Detection verdict handlers
-  const handleMarkSafe = (id: string) => {
-    updateComplaintVerdict(id, "safe");
-    refreshData();
+  const handleMarkSafe = async (id: string) => {
+    await updateComplaintVerdict(id, "safe");
+    await refreshData();
   };
 
-  const handleConfirmSpam = (id: string) => {
-    updateComplaintVerdict(id, "spam");
-    refreshData();
+  const handleConfirmSpam = async (id: string) => {
+    await updateComplaintVerdict(id, "spam");
+    await refreshData();
   };
 
   const getTrustLevelConfig = (level: TrustLevel) => {
@@ -339,7 +347,7 @@ export default function OfficerDashboard() {
     }
   };
 
-  const handleAdvanceStatus = () => {
+  const handleAdvanceStatus = async () => {
     if (!selectedComplaint) return;
 
     // If current status is action_in_progress, open proof modal instead
@@ -351,21 +359,21 @@ export default function OfficerDashboard() {
     const next = getNextStatus(selectedComplaint.status);
     if (!next) return;
 
-    updateComplaintStatus(
+    await updateComplaintStatus(
       selectedComplaint.id,
       next,
       "Shri Rajesh Kumar",
       `Advanced automatically to ${next.replace(/_/g, " ")} by command console control.`,
       `कमांड कंसोल नियंत्रण द्वारा स्थिति स्वचालित रूप से ${next} में परिवर्तित की गई।`
     );
-    refreshData();
+    await refreshData();
   };
 
-  const handleSubmitProof = () => {
+  const handleSubmitProof = async () => {
     if (!selectedComplaint || !proofNote.trim()) return;
     setIsSubmittingProof(true);
 
-    submitResolutionProof(
+    await submitResolutionProof(
       selectedComplaint.id,
       proofPhoto || "",
       proofNote,
@@ -378,7 +386,7 @@ export default function OfficerDashboard() {
     setProofPhotoName("");
     setProofNote("");
     setIsSubmittingProof(false);
-    refreshData();
+    await refreshData();
   };
 
   const handleProofPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -392,24 +400,24 @@ export default function OfficerDashboard() {
     reader.readAsDataURL(file);
   };
 
-  const handleManualEscalate = () => {
+  const handleManualEscalate = async () => {
     if (!selectedComplaint) return;
-    updateComplaintStatus(
+    await updateComplaintStatus(
       selectedComplaint.id,
       "escalated",
       "Shri Rajesh Kumar",
       "Manual priority SLA escalation override triggered by Municipal Commissioner.",
       "नगर आयुक्त द्वारा मैन्युअल प्राथमिकता एसएलए एस्केलेशन ओवरराइड सक्रिय किया गया।"
     );
-    refreshData();
+    await refreshData();
   };
 
-  const handleAddOfficialLog = (e: React.FormEvent) => {
+  const handleAddOfficialLog = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedComplaint || !noteText.trim()) return;
 
     setIsSubmittingNote(true);
-    updateComplaintStatus(
+    await updateComplaintStatus(
       selectedComplaint.id,
       selectedComplaint.status,
       "Shri Rajesh Kumar",
@@ -419,13 +427,13 @@ export default function OfficerDashboard() {
 
     setNoteText("");
     setIsSubmittingNote(false);
-    refreshData();
+    await refreshData();
   };
 
-  const handleJoinDuplicate = (duplicateId: string) => {
+  const handleJoinDuplicate = async (duplicateId: string) => {
     if (!selectedComplaint) return;
-    mergeDuplicateComplaint(duplicateId, selectedComplaint.id);
-    refreshData();
+    await mergeDuplicateComplaint(duplicateId, selectedComplaint.id);
+    await refreshData();
   };
 
   // Stat Card metadata
@@ -672,9 +680,9 @@ export default function OfficerDashboard() {
                )}
              </div>
 
-             <a href="/" className="p-2 rounded-xl border border-border/30 bg-muted/30 hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all cursor-pointer flex items-center justify-center active:scale-95">
-               <LogOut className="w-4 h-4 ml-0.5" />
-             </a>
+             <button onClick={handleLogout} className="p-2 rounded-xl border border-border/30 bg-muted/30 hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all cursor-pointer flex items-center justify-center active:scale-95">
+                <LogOut className="w-4 h-4 ml-0.5" />
+              </button>
           </div>
         </header>
 
@@ -974,7 +982,7 @@ export default function OfficerDashboard() {
                                 </div>
 
                                 {/* Flag Badges */}
-                                {trust.flags.length > 0 && (
+                                {trust.flags && trust.flags.length > 0 && (
                                   <div className="flex flex-wrap gap-1.5">
                                     {trust.flags.map((flag) => (
                                       <span
@@ -989,7 +997,7 @@ export default function OfficerDashboard() {
 
                                 {/* Primary Reason */}
                                  <p className="text-xs font-semibold text-foreground/90 leading-relaxed line-clamp-2 bg-muted/30 dark:bg-white/2 border border-border/40 dark:border-white/4 p-3 rounded-xl">
-                                  {trust.reasons[0] || "Suspicious activity detected"}
+                                  {(trust.reasons && trust.reasons[0]) || "Suspicious activity detected"}
                                 </p>
 
                                 {/* Meta: Time + Category */}
@@ -1409,7 +1417,7 @@ export default function OfficerDashboard() {
                           </div>
 
                           {/* Flags & Reasons */}
-                          {selectedComplaint.trustAnalysis.flags.length > 0 && (
+                          {selectedComplaint.trustAnalysis.flags && selectedComplaint.trustAnalysis.flags.length > 0 && (
                             <div className="space-y-2">
                               <div className="flex flex-wrap gap-1">
                                 {selectedComplaint.trustAnalysis.flags.map((flag) => (
@@ -1426,7 +1434,7 @@ export default function OfficerDashboard() {
                                 ))}
                               </div>
                               <div className="space-y-1.5">
-                                {selectedComplaint.trustAnalysis.reasons.map((reason, idx) => (
+                                {(selectedComplaint.trustAnalysis.reasons || []).map((reason, idx) => (
                                   <p key={idx} className="text-[11px] text-foreground/80 font-semibold leading-normal flex items-start gap-1.5">
                                     <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" style={{ color: getTrustLevelConfig(selectedComplaint.trustAnalysis!.trustLevel).color }} />
                                     {reason}

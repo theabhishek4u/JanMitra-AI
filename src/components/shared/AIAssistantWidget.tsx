@@ -357,9 +357,9 @@ export function AIAssistantWidget() {
   // ============================================
   // Enhanced NLP Parsing Engine
   // ============================================
-  const parseMessage = (input: string) => {
+  const parseMessage = async (input: string) => {
     const text = input.toLowerCase().trim();
-    const complaints = getComplaints();
+    const complaints = await getComplaints();
 
     // Helper to emit event to force state refreshing on the pages
     const notifyDatabaseChanged = () => {
@@ -461,7 +461,7 @@ export function AIAssistantWidget() {
       text.includes("कितने") ||
       text.includes("कुल")
     ) {
-      const stats = getStats();
+      const stats = await getStats();
       return {
         text: isHi
           ? "यहाँ जनमित्र AI सिस्टम का वर्तमान विश्लेषण रिपोर्ट है:"
@@ -533,7 +533,7 @@ export function AIAssistantWidget() {
       // Find a high priority or pending complaint to escalate
       const pending = complaints.find((c) => c.status !== "resolved");
       if (pending) {
-        const updated = updateComplaintStatus(
+        const updated = await updateComplaintStatus(
           pending.id,
           "escalated",
           "AI Auto-Escalation Engine",
@@ -626,7 +626,7 @@ export function AIAssistantWidget() {
         const fullId = ticketMatch[0].toUpperCase();
         // If they only entered e.g. JM-008, format it as JM-2026-008
         const normalizedId = fullId.length === 6 ? `JM-2026-${fullId.substring(3)}` : fullId;
-        targetComplaint = getComplaintById(normalizedId);
+        targetComplaint = await getComplaintById(normalizedId);
       } else {
         // Find the most recent active complaint for demonstration
         targetComplaint = complaints.find((c) => c.status !== "resolved") || complaints[0];
@@ -694,7 +694,7 @@ export function AIAssistantWidget() {
       const titleEn = `Conversational filing: Active ${detectedCategory.name} reported near ${area.split(",")[0]}`;
       const titleHi = `संवाद फ़ाइलिंग: ${area.split(",")[0]} के पास सक्रिय ${detectedCategory.nameHi} की सूचना`;
 
-      const newTicket = addComplaint({
+      const newTicket = await addComplaint({
         title: titleEn,
         titleHi,
         description: input,
@@ -709,6 +709,14 @@ export function AIAssistantWidget() {
         latitude: lat,
         longitude: lng,
       });
+
+      if (!newTicket) {
+        return {
+          text: isHi
+            ? "क्षमा करें, सर्वर त्रुटि के कारण शिकायत दर्ज नहीं हो सकी।"
+            : "Sorry, complaint could not be registered due to a server error."
+        };
+      }
 
       notifyDatabaseChanged();
 
@@ -745,8 +753,8 @@ export function AIAssistantWidget() {
     setIsTyping(true);
 
     // Simulate AI response delay
-    setTimeout(() => {
-      const result = parseMessage(textToSend) as any;
+    setTimeout(async () => {
+      const result = (await parseMessage(textToSend)) as any;
 
       // Handle clear chat special case
       if (result._clearChat) {

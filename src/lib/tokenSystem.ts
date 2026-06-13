@@ -7,7 +7,7 @@
 
 import type { TokenState, TokenConsumeResult } from "@/types";
 
-const TOKEN_KEY = "janmitra_token_system";
+const TOKEN_KEY = "janmitra_token_system_v2";
 const TOKEN_CONFIG_KEY = "janmitra_token_config";
 const isClient = typeof window !== "undefined";
 

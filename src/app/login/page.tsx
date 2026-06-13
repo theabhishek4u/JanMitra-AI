@@ -56,7 +56,9 @@ export default function LoginPage() {
       setActiveSessionRole(session.role);
       setLoading(true);
       setSuccess(true);
-      setActiveLoginForm(session.role);
+      if (session.role === "officer" || session.role === "admin") {
+        setActiveLoginForm(session.role);
+      }
       
       const timer = setTimeout(() => {
         router.replace(session.role === "officer" ? "/officer" : "/admin");
@@ -79,7 +81,9 @@ export default function LoginPage() {
       if (activeSession) {
         setLoading(true);
         setSuccess(true);
-        setActiveLoginForm(activeSession.role);
+        if (activeSession.role === "officer" || activeSession.role === "admin") {
+          setActiveLoginForm(activeSession.role);
+        }
         router.replace(activeSession.role === "officer" ? "/officer" : "/admin");
       }
     };
@@ -301,7 +305,7 @@ export default function LoginPage() {
 
       {/* 1. Endless Scrolling Grid Background Matrix */}
       <div 
-        className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_65%_55%_at_50%_50%,#000_75%,transparent_100%)] opacity-20 pointer-events-none animate-pan-grid"
+        className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-size-[4rem_4rem] mask-[radial-gradient(ellipse_65%_55%_at_50%_50%,#000_75%,transparent_100%)] opacity-20 pointer-events-none animate-pan-grid"
       />
       
       {/* 2. Rotating Digital HUD Radars */}
