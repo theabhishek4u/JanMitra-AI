@@ -86,6 +86,8 @@ export default function OfficerDashboard() {
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [activeSubTab, setActiveSubTab] = useState<"queue" | "map">("queue");
+  const [selectedDashboardComplaint, setSelectedDashboardComplaint] = useState<Complaint | null>(null);
+  const [dashboardStatsFilter, setDashboardStatsFilter] = useState<"all" | "pending" | "resolved" | "high">("all");
 
   // Sidebar Layout State
   const [activeSidebarTab, setActiveSidebarTab] = useState<"dashboard" | "fraud" | "portal" | "map">("dashboard");
@@ -152,7 +154,7 @@ export default function OfficerDashboard() {
         rootEn: "Systemic garbage accumulation due to a dysfunctional localized dump container, causing waste overflows, stray animal concentration, and public health hazards in this block.",
         rootHi: "स्थानीय कचरा पात्र के निष्क्रिय होने के कारण क्षेत्र में कचरे का भारी संचय, आवारा पशुओं का जमावड़ा और गंभीर सार्वजनिक स्वास्थ्य संबंधी खतरे उत्पन्न हो रहे हैं।",
         actionEn: "1. Dispatch 3 additional heavy garbage containment vehicles immediately.\n2. Re-route Nagar Nigam sanitation trucks to clear the junction twice daily.\n3. Install a new automated smart waste container with a solar-powered compaction sensor.",
-        actionHi: "1. तुरंत 3 अतिरिक्त भारी कचरा संग्रह वाहनों को मौके पर भेजें।\n2. जंक्शन को दिन में दो बार साफ करने के लिए नगर निगम के स्वच्छता ट्रकों का मार्ग बदलें।\n3. सौर-ऊर्जा संचालित संघनन सेंसर के साथ एक नया स्वचालित स्मार्ट कचरा पात्र स्थापित करें।"
+        actionHi: "1. तुरंत 3 अतिरिक्त भारी कचरा संग्रह वाहनों को मौके पर भेजें।\n2. जंक्शन को दिन में दो बार साफ करने के लिए नगर निगम के स्वच्छता ट्रकों का मार्ग बदलें।\n3. सौर-ऊर्जा संचालित संघनन सेंसर के साथ एक नया स्वचालित स्मार्ट कचरा पात्र स्थापित करें。"
       };
     }
     if (norm.includes("water")) {
@@ -160,7 +162,7 @@ export default function OfficerDashboard() {
         rootEn: "Sub-junction distribution pipeline rupture combined with severe sewer-water infiltration, resulting in highly contaminated local water discharge.",
         rootHi: "उप-जंक्शन वितरण पाइपलाइन फटने और सीवर-पानी के गंभीर प्रवेश के संयोजन के कारण, अत्यधिक दूषित स्थानीय जल की आपूर्ति हो रही है।",
         actionEn: "1. Issue urgent excavation and welding orders for the ruptured pipeline casing.\n2. Dispatch a repair squad to weld the pressure casing within 24 hours.\n3. Mobilize 4 clean drinking water tankers to provide immediate clean water relief.",
-        actionHi: "1. फटी पाइपलाइन आवरण के लिए तत्काल खुदाई और वेल्डिंग के आदेश जारी करें।\n2. 24 घंटे के भीतर प्रेशर केसिंग की मरम्मत के लिए एक विशेष दल रवाना करें।\n3. तत्काल स्वच्छ पेयजल राहत प्रदान करने के लिए 4 स्वच्छ जल टैंकरों को काम पर लगाएं।"
+        actionHi: "1. फटी पाइपलाइन आवरण के लिए तत्काल खुदाई और वेल्डिंग के आदेश जारी करें।\n2. 24 घंटे के भीतर प्रेशर केसिंग की मरम्मत के लिए एक विशेष दल रवाना करें।\n3. तत्काल स्वच्छ पेयजल राहत प्रदान करने के लिए 4 स्वच्छ जल टैंकरों को काम पर लगाएं。"
       };
     }
     if (norm.includes("road") || norm.includes("damage")) {
@@ -168,14 +170,14 @@ export default function OfficerDashboard() {
         rootEn: "Sub-surface concrete base erosion from recent waterlogging, resulting in compounding active asphalt structural collapse and deep pothole formation.",
         rootHi: "हाल ही में हुए जलभराव के कारण उप-सतह कंक्रीट बेस का क्षरण, जिसके परिणामस्वरूप संयुक्त रूप से सक्रिय डामर संरचनात्मक रूप से ढह गई है और गहरे गड्ढे बन गए हैं।",
         actionEn: "1. Initiate localized quick-set asphalt paving and pothole patchwork within 12 hours.\n2. Direct PWD resources to clear sub-surface drainage blocks to prevent future water damage.\n3. Request budget allocation for complete road re-carpeting in the next fiscal sprint.",
-        actionHi: "1. 12 घंटे के भीतर स्थानीय स्तर पर त्वरित-सेट डामर बिछाने और गड्ढों को भरने का कार्य शुरू करें।\n2. भविष्य में जल क्षति को रोकने के लिए पीडब्ल्यूडी संसाधनों को उप-सतह जल निकासी ब्लॉकों को साफ करने का निर्देश दें।\n3. अगले वित्तीय चक्र में सड़क के पूर्ण पुनर्निर्माण के लिए बजट आवंटन का अनुरोध करें।"
+        actionHi: "1. 12 घंटे के भीतर स्थानीय स्तर पर त्वरित-सेट डामर बिछाने और गड्ढों को भरने का कार्य शुरू करें।\n2. भविष्य में जल क्षति को रोकने के लिए पीडब्ल्यूडी संसाधनों को उप-सतह जल निकासी ब्लॉकों को साफ करने का निर्देश दें।\n3. अगले वित्तीय चक्र में सड़क के पूर्ण पुनर्निर्माण के लिए बजट आवंटन का अनुरोध करें。"
       };
     }
     return {
       rootEn: "Cumulative civic asset deterioration and infrastructure capacity breach due to dense residential load in this urban micro-zone.",
       rootHi: "इस शहरी सूक्ष्म क्षेत्र में सघन आवासीय भार के कारण संचयी नागरिक संपत्ति का ह्रास और बुनियादी ढांचे की क्षमता का उल्लंघन।",
       actionEn: "1. Conduct an immediate zone-level inspection and structural audit.\n2. Dispatch maintenance crews to repair physical assets and secure safety boundaries.\n3. Present a preventive structural maintenance protocol within 48 hours.",
-      actionHi: "1. तत्काल क्षेत्र-स्तरीय निरीक्षण और संरचनात्मक ऑडिट करें।\n2. भौतिक संपत्तियों की मरम्मत और सुरक्षा सीमाओं को सुरक्षित करने के लिए रखरखाव दल भेजें।\n3. 48 घंटे के भीतर एक सुरक्षात्मक संरचनात्मक रखरखाव प्रोटोकॉल प्रस्तुत करें।"
+      actionHi: "1. तत्काल क्षेत्र-स्तरीय निरीक्षण और संरचनात्मक ऑडिट करें।\n2. भौतिक संपत्तियों की मरम्मत और सुरक्षा सीमाओं को सुरक्षित करने के लिए रखरखाव दल भेजें।\n3. 48 घंटे के भीतर एक सुरक्षात्मक संरचनात्मक रखरखाव प्रोटोकॉल प्रस्तुत करें。"
     };
   };
 
@@ -268,18 +270,6 @@ export default function OfficerDashboard() {
     }
   };
 
-  if (!mounted || !stats) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-muted-foreground">
-        <div className="w-12 h-12 rounded-xl bg-linear-to-br from-gov-blue/20 via-primary/10 to-ai-purple/20 border border-ai-purple/30 flex items-center justify-center shadow-lg animate-spin">
-          <Sparkles className="w-6 h-6 text-ai-purple" />
-        </div>
-        <span className="text-sm font-bold mt-4 tracking-wider">LOADING COMMAND CONSOLE...</span>
-      </div>
-    );
-  }
-
-  // Filter complaints
   const filteredComplaints = complaints.filter((c) => {
     const matchesSearch =
       c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -290,21 +280,19 @@ export default function OfficerDashboard() {
     return matchesSearch && matchesPriority && matchesCategory;
   });
 
-  const selectedComplaint = complaints.find((c) => c.id === selectedComplaintId);
+  const dashboardFilteredComplaints = complaints.filter((c) => {
+    const matchesCategory = selectedCategory === "all" || c.category === selectedCategory;
+    let matchesStats = true;
+    if (dashboardStatsFilter === "pending") {
+      matchesStats = c.status !== "resolved";
+    } else if (dashboardStatsFilter === "resolved") {
+      matchesStats = c.status === "resolved";
+    } else if (dashboardStatsFilter === "high") {
+      matchesStats = c.priority === "high";
+    }
+    return matchesCategory && matchesStats;
+  });
 
-  // Setup adjacent duplicate detection for active selected complaint
-  const duplicateComplaints = selectedComplaint
-    ? complaints.filter(
-        (c) =>
-          c.id !== selectedComplaint.id &&
-          c.status !== "resolved" &&
-          c.category === selectedComplaint.category &&
-          (c.area.toLowerCase().includes(selectedComplaint.area.toLowerCase()) ||
-            selectedComplaint.area.toLowerCase().includes(c.area.toLowerCase()))
-      )
-    : [];
-
-  // Advancing status mappings
   const getNextStatusText = (status: ComplaintStatus): string => {
     switch (status) {
       case "submitted":
@@ -325,6 +313,44 @@ export default function OfficerDashboard() {
         return "";
     }
   };
+
+  const handleStatsCardClick = (title: string) => {
+    if (title.includes("Total")) {
+      setDashboardStatsFilter("all");
+    } else if (title.includes("Pending")) {
+      setDashboardStatsFilter("pending");
+    } else if (title.includes("Resolved")) {
+      setDashboardStatsFilter("resolved");
+    } else if (title.includes("High")) {
+      setDashboardStatsFilter("high");
+    }
+    setSelectedCategory("all");
+  };
+
+  if (!mounted || !stats) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-muted-foreground">
+        <div className="w-12 h-12 rounded-xl bg-linear-to-br from-gov-blue/20 via-primary/10 to-ai-purple/20 border border-ai-purple/30 flex items-center justify-center shadow-lg animate-spin">
+          <Sparkles className="w-6 h-6 text-ai-purple" />
+        </div>
+        <span className="text-sm font-bold mt-4 tracking-wider">LOADING COMMAND CONSOLE...</span>
+      </div>
+    );
+  }
+
+  const selectedComplaint = complaints.find((c) => c.id === selectedComplaintId);
+
+  // Setup adjacent duplicate detection for active selected complaint
+  const duplicateComplaints = selectedComplaint
+    ? complaints.filter(
+        (c) =>
+          c.id !== selectedComplaint.id &&
+          c.status !== "resolved" &&
+          c.category === selectedComplaint.category &&
+          (c.area.toLowerCase().includes(selectedComplaint.area.toLowerCase()) ||
+            selectedComplaint.area.toLowerCase().includes(c.area.toLowerCase()))
+      )
+    : [];
 
   const getNextStatus = (status: ComplaintStatus): ComplaintStatus | null => {
     switch (status) {
@@ -699,54 +725,66 @@ export default function OfficerDashboard() {
             >
               {/* Stats Cards */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {statCards.map((stat, i) => (
-              <motion.div
-                key={stat.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08 }}
-              >
-                <Card 
-                  className={`glass-premium border premium-glow-border relative overflow-hidden transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] group ${stat.glowClass}`}
-                  style={{
-                    background: `radial-gradient(circle at 100% 100%, ${stat.color}0c 0%, transparent 60%)`
-                  }}
-                >
-                  <div
-                    className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full filter blur-xl opacity-15 pointer-events-none group-hover:scale-125 transition-transform duration-500"
-                    style={{ backgroundColor: stat.color }}
-                  />
-                  <CardContent className="p-5 relative z-10">
-                    <div className="flex items-center justify-between mb-3">
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors group-hover:bg-opacity-20 shadow-sm"
+                {statCards.map((stat, i) => {
+                  const isActive = 
+                    (dashboardStatsFilter === "all" && stat.title.includes("Total")) ||
+                    (dashboardStatsFilter === "pending" && stat.title.includes("Pending")) ||
+                    (dashboardStatsFilter === "resolved" && stat.title.includes("Resolved")) ||
+                    (dashboardStatsFilter === "high" && stat.title.includes("High"));
+
+                  return (
+                    <motion.div
+                      key={stat.title}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.08 }}
+                    >
+                      <Card 
+                        className={`glass-premium border premium-glow-border relative overflow-hidden transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] cursor-pointer group ${stat.glowClass} ${
+                          isActive ? "ring-1" : ""
+                        }`}
+                        onClick={() => handleStatsCardClick(stat.title)}
                         style={{
-                          background: `${stat.color}15`,
-                          border: `1px solid ${stat.color}25`,
+                          background: `radial-gradient(circle at 100% 100%, ${stat.color}0c 0%, transparent 60%)`,
+                          borderColor: isActive ? stat.color : "rgba(255, 255, 255, 0.08)"
                         }}
                       >
-                        <stat.icon className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" style={{ color: stat.color }} />
-                      </div>
-                      <span
-                        className={`text-xs font-black flex items-center gap-0.5 ${
-                          stat.up ? "text-trust-green" : "text-danger-red"
-                        }`}
-                      >
-                        {stat.up ? (
-                          <ArrowUpRight className="w-3.5 h-3.5 stroke-[3px]" />
-                        ) : (
-                          <ArrowDownRight className="w-3.5 h-3.5 stroke-[3px]" />
-                        )}
-                        {stat.change}
-                      </span>
-                    </div>
-                    <div className="text-3xl font-black tracking-tight text-foreground drop-shadow-sm">{stat.value.toLocaleString()}</div>
-                    <div className="text-xs font-bold tracking-wide uppercase text-muted-foreground mt-2 transition-colors">{stat.title}</div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
+                        <div
+                          className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full filter blur-xl opacity-15 pointer-events-none group-hover:scale-125 transition-transform duration-500"
+                          style={{ backgroundColor: stat.color }}
+                        />
+                        <CardContent className="p-5 relative z-10">
+                          <div className="flex items-center justify-between mb-3">
+                            <div
+                              className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors group-hover:bg-opacity-20 shadow-sm"
+                              style={{
+                                background: `${stat.color}15`,
+                                border: `1px solid ${stat.color}25`,
+                              }}
+                            >
+                              <stat.icon className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" style={{ color: stat.color }} />
+                            </div>
+                            <span
+                              className={`text-xs font-black flex items-center gap-0.5 ${
+                                stat.up ? "text-trust-green" : "text-danger-red"
+                              }`}
+                            >
+                              {stat.up ? (
+                                <ArrowUpRight className="w-3.5 h-3.5 stroke-[3px]" />
+                              ) : (
+                                <ArrowDownRight className="w-3.5 h-3.5 stroke-[3px]" />
+                              )}
+                              {stat.change}
+                            </span>
+                          </div>
+                          <div className="text-3xl font-black tracking-tight text-foreground drop-shadow-sm">{stat.value.toLocaleString()}</div>
+                          <div className="text-xs font-bold tracking-wide uppercase text-muted-foreground mt-2 transition-colors">{stat.title}</div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
+              </div>
 
           {/* Interactive Category Breakdown Section */}
           <motion.div
@@ -805,6 +843,7 @@ export default function OfficerDashboard() {
                         setSelectedCategory("all");
                       } else {
                         setSelectedCategory(cat.name);
+                        setDashboardStatsFilter("all");
                       }
                     }}
                   >
@@ -858,6 +897,103 @@ export default function OfficerDashboard() {
                 );
               })}
             </div>
+          </motion.div>
+
+          {/* Dynamic Dashboard Complaints Ledger */}
+          <motion.div
+            className="mt-8 border-t border-border/10 pt-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-linear-to-br from-primary/10 to-blue-500/10 flex items-center justify-center border border-primary/20">
+                  <Layers className="w-4.5 h-4.5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-foreground flex items-center gap-2">
+                    Grievance Ledger Stream
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[9px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full">
+                      {dashboardFilteredComplaints.length} tickets
+                    </Badge>
+                  </h3>
+                  <p className="text-xs text-muted-foreground font-semibold mt-0.5">
+                    {selectedCategory !== "all" 
+                      ? `Filter active: ${selectedCategory.split(" / ")[0]}` 
+                      : dashboardStatsFilter === "pending" 
+                      ? "Filter active: Pending Resolution" 
+                      : dashboardStatsFilter === "resolved" 
+                      ? "Filter active: Resolved Grievances" 
+                      : dashboardStatsFilter === "high" 
+                      ? "Filter active: High Priority Active" 
+                      : "All registered complaints"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick filters reset */}
+              {(selectedCategory !== "all" || dashboardStatsFilter !== "all") && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-8 px-3 rounded-xl border-primary/30 text-primary bg-primary/5 hover:bg-primary/10 transition-all font-bold cursor-pointer active:scale-95"
+                  onClick={() => {
+                    setSelectedCategory("all");
+                    setDashboardStatsFilter("all");
+                  }}
+                >
+                  Clear Ledger Filter
+                </Button>
+              )}
+            </div>
+
+            {/* Simple list of filtered complaints */}
+            {dashboardFilteredComplaints.length === 0 ? (
+              <Card className="glass-premium border border-border/15 bg-muted/5 p-8 text-center text-xs font-bold text-muted-foreground rounded-2xl">
+                No complaints match the active ledger filter.
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {dashboardFilteredComplaints.map((c) => (
+                  <motion.div
+                    key={c.id}
+                    className="glass-premium border border-border/10 bg-muted/10 rounded-2xl p-5 hover:border-primary/35 hover:bg-primary/2 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 cursor-pointer flex flex-col justify-between gap-4 group"
+                    onClick={() => setSelectedDashboardComplaint(c)}
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[10px] font-black text-gray-400 bg-[#030712]/50 border border-white/10 px-2 py-0.5 rounded-md">
+                          {c.id}
+                        </span>
+                        <Badge className={`priority-${c.priority} text-[9px] uppercase font-bold px-2 border-transparent`}>
+                          {c.priority}
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-1.5 text-left">
+                        <h4 className="text-xs font-black text-white group-hover:text-primary transition-colors line-clamp-1 leading-snug">
+                          {c.title}
+                        </h4>
+                        <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed font-medium">
+                          {c.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-white/5 pt-3 mt-auto">
+                      <span className="text-[10px] text-gray-400 font-bold flex items-center gap-1.5 uppercase tracking-wide">
+                        <MapPin className="w-3.5 h-3.5 text-gray-500" />
+                        <span className="truncate max-w-[120px]">{c.area}</span>
+                      </span>
+                      <Badge className="text-[8.5px] font-black uppercase tracking-wider text-sky-400 bg-sky-950/20 border border-sky-500/20 px-2 py-0.5 rounded-md">
+                        {c.status.replace(/_/g, " ")}
+                      </Badge>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
           </motion.div>
             </motion.div>
           )}
@@ -2055,6 +2191,189 @@ export default function OfficerDashboard() {
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Dashboard Complaint Detail Modal */}
+      <AnimatePresence>
+        {selectedDashboardComplaint && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div 
+              className="absolute inset-0 bg-[#030712]/80 backdrop-blur-md cursor-pointer"
+              onClick={() => setSelectedDashboardComplaint(null)}
+            />
+            
+            <motion.div
+              className="relative w-full max-w-2xl bg-[#080d1a]/95 border border-border/30 rounded-3xl overflow-hidden shadow-2xl z-10 flex flex-col max-h-[85vh]"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            >
+              {/* Laser scan line at top of modal */}
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-linear-to-r from-transparent via-primary to-transparent" />
+              
+              {/* Close button */}
+              <button
+                type="button"
+                onClick={() => setSelectedDashboardComplaint(null)}
+                className="absolute right-4 top-4 p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer z-20 flex items-center justify-center"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              {/* Content container */}
+              <div className="overflow-y-auto p-6 space-y-6 custom-scrollbar text-slate-100 text-left">
+                
+                {/* Header details */}
+                <div className="flex items-start gap-4 pr-8">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/25 flex items-center justify-center shrink-0">
+                    <Layers className="w-6 h-6 text-primary animate-pulse" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-mono text-xs font-bold text-muted-foreground bg-white/5 px-2 py-0.5 rounded border border-white/5">
+                        {selectedDashboardComplaint.id}
+                      </span>
+                      <Badge className={`priority-${selectedDashboardComplaint.priority} font-extrabold text-[10px] uppercase px-2 py-0.5`}>
+                        {selectedDashboardComplaint.priority} priority
+                      </Badge>
+                      <Badge variant="outline" className="border-primary/25 bg-primary/5 text-primary text-[10px] uppercase font-bold">
+                        {selectedDashboardComplaint.category}
+                      </Badge>
+                    </div>
+                    <h3 className="text-lg font-black text-white pt-1">
+                      {selectedDashboardComplaint.title}
+                    </h3>
+                  </div>
+                </div>
+
+                {/* Location metadata */}
+                <div className="flex items-center gap-2 text-xs text-slate-400 font-semibold border-b border-white/5 pb-4">
+                  <MapPin className="w-4 h-4 text-primary" />
+                  <span>{selectedDashboardComplaint.area}</span>
+                  <span className="text-muted-foreground/30">•</span>
+                  <span className="text-muted-foreground/60">{selectedDashboardComplaint.department}</span>
+                  <span className="text-muted-foreground/30">•</span>
+                  <span>Status: <strong className="text-sky-400 font-extrabold uppercase">{selectedDashboardComplaint.status.replace(/_/g, " ")}</strong></span>
+                </div>
+
+                {/* Description block */}
+                <div className="space-y-2">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">
+                    Grievance Statement
+                  </h4>
+                  <p className="text-xs text-slate-200 leading-relaxed bg-[#030712]/50 border border-border/10 rounded-2xl p-4">
+                    {selectedDashboardComplaint.description}
+                  </p>
+                </div>
+
+                {/* AI Diagnostic Summary */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card className="bg-[#030712]/40 border border-ai-purple/15 p-4 rounded-2xl">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Brain className="w-4 h-4 text-ai-purple" />
+                      <span className="text-xs font-bold text-white">AI Diagnostics Suite</span>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-[10px] font-bold text-muted-foreground">
+                          <span>Trust Index Score</span>
+                          <span className="text-trust-green">{Math.round(selectedDashboardComplaint.aiConfidence * 100)}%</span>
+                        </div>
+                        <div className="h-1.5 bg-trust-green/10 rounded-full overflow-hidden flex">
+                          <div
+                            className="h-full bg-linear-to-r from-trust-green to-trust-green-light rounded-full"
+                            style={{ width: `${selectedDashboardComplaint.aiConfidence * 100}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-[10px] font-bold text-muted-foreground">
+                          <span>Spam & Fraud Risk</span>
+                          <span className="text-danger-red">{Math.round((1 - selectedDashboardComplaint.aiConfidence) * 100)}%</span>
+                        </div>
+                        <div className="h-1.5 bg-danger-red/10 rounded-full overflow-hidden flex">
+                          <div
+                            className="h-full bg-linear-to-r from-danger-red to-danger-red-light rounded-full"
+                            style={{ width: `${(1 - selectedDashboardComplaint.aiConfidence) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card className="bg-[#030712]/40 border border-border/20 p-4 rounded-2xl flex flex-col justify-between">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Activity className="w-4 h-4 text-gov-blue" />
+                      <span className="text-xs font-bold text-white">SLA Threshold</span>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-[10px] font-bold text-muted-foreground">
+                        <span>Estimated Resolution:</span>
+                        <span className="text-foreground">36 Hours</span>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px] font-bold text-muted-foreground">
+                        <span>Hotspot Assessment:</span>
+                        <span className={selectedDashboardComplaint.isHotspot ? "text-danger-red" : "text-trust-green"}>
+                          {selectedDashboardComplaint.isHotspot ? "🔥 Active Hotspot" : "Safe Zone"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-[9.5px] text-slate-500 leading-normal border-t border-white/5 pt-2 flex items-center gap-1 font-bold mt-3">
+                      <Clock className="w-3.5 h-3.5 text-warning-amber" />
+                      <span>Auto-Escalation SLAs enabled.</span>
+                    </div>
+                  </Card>
+                </div>
+
+                {/* Evidence media */}
+                {selectedDashboardComplaint.imageUrl && (
+                  <div className="space-y-2">
+                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">
+                      Visual Evidence Attachment
+                    </h4>
+                    <div className="relative rounded-2xl overflow-hidden border border-white/10 max-h-[220px]">
+                      <img
+                        src={selectedDashboardComplaint.imageUrl}
+                        alt="Grievance Evidence"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions in dialog */}
+                <div className="flex flex-col sm:flex-row items-center gap-3 border-t border-white/5 pt-5">
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setSelectedDashboardComplaint(null);
+                      // Redirect to portal view with this complaint preselected
+                      setSelectedComplaintId(selectedDashboardComplaint.id);
+                      setActiveSidebarTab("portal");
+                    }}
+                    className="w-full sm:flex-1 py-5 bg-primary hover:bg-primary/90 text-white font-extrabold uppercase text-xs tracking-wider rounded-xl cursor-pointer transition-all active:scale-95 shadow-md flex items-center justify-center gap-1.5"
+                  >
+                    <Eye className="w-4 h-4" />
+                    <span>Open in Portal Workspace</span>
+                  </Button>
+
+                  <Button
+                    type="button"
+                    onClick={() => setSelectedDashboardComplaint(null)}
+                    className="w-full sm:w-32 py-5 bg-[#0b1329] border border-slate-800 hover:border-slate-700 text-slate-300 font-bold uppercase text-xs tracking-wider rounded-xl cursor-pointer transition-all active:scale-95 flex items-center justify-center"
+                  >
+                    <span>Dismiss</span>
+                  </Button>
+                </div>
+
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </>

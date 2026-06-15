@@ -31,6 +31,8 @@ import {
   Inbox,
   X,
   FileText,
+  Users,
+  Search,
 } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,6 +40,7 @@ import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/shared/Navbar";
 import { getStats, getAnalytics, getComplaints } from "@/lib/complaints";
 import { getAdminTokenConfig, setAdminTokenConfig, grantExtraTokens, getCitizenFrequencyReport } from "@/lib/tokenSystem";
+import { getRegisteredCitizens } from "@/lib/auth";
 import type { DashboardStats, AnalyticsData, Complaint } from "@/types";
 
 // Dynamic import to avoid SSR issues with recharts
@@ -81,6 +84,8 @@ export default function AdminDashboard() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [activeSidebarTab, setActiveSidebarTab] = useState("analytics");
+  const [citizens, setCitizens] = useState<any[]>([]);
+  const [citizenSearchQuery, setCitizenSearchQuery] = useState("");
 
   const handleLogout = () => {
     clearAuthSession();
@@ -139,11 +144,13 @@ export default function AdminDashboard() {
     Promise.all([
       getStats(),
       getAnalytics(),
-      getComplaints()
-    ]).then(([statsData, analyticsData, complaintsData]) => {
+      getComplaints(),
+      getRegisteredCitizens()
+    ]).then(([statsData, analyticsData, complaintsData, citizensData]) => {
       setStats(statsData);
       setAnalytics(analyticsData);
       setComplaints(complaintsData);
+      setCitizens(citizensData);
     });
 
     setMaxTokens(getAdminTokenConfig());
@@ -157,6 +164,7 @@ export default function AdminDashboard() {
       setComplaints(await getComplaints());
       setStats(await getStats());
       setAnalytics(await getAnalytics());
+      setCitizens(await getRegisteredCitizens());
       setReport(getCitizenFrequencyReport());
     };
 
@@ -203,6 +211,16 @@ export default function AdminDashboard() {
   // Calculate dynamic stats cards
   const resolutionRate = stats.total > 0 ? ((stats.resolved / stats.total) * 100).toFixed(1) + "%" : "0%";
 
+  const filteredCitizens = citizens.filter((citizen) => {
+    const query = citizenSearchQuery.toLowerCase().trim();
+    if (!query) return true;
+    return (
+      (citizen.name && citizen.name.toLowerCase().includes(query)) ||
+      (citizen.email && citizen.email.toLowerCase().includes(query)) ||
+      (citizen.mobile && citizen.mobile.includes(query))
+    );
+  });
+
   const adminStats = [
     { label: "Total Complaints", value: stats.total.toLocaleString(), icon: BarChart3, color: "#3B82F6", change: "+12%", up: true },
     { label: "Resolution Rate", value: resolutionRate, icon: TrendingUp, color: "#10B981", change: "+5.2%", up: true },
@@ -233,6 +251,7 @@ export default function AdminDashboard() {
             { id: "insights", label: "Predictive Insights", icon: Sparkles },
             { id: "tokens", label: "Token Controls", icon: Coins },
             { id: "registry", label: "Nodal Registry", icon: FileText },
+            { id: "users", label: "Registered Citizens", icon: Users },
             { id: "settings", label: "System Settings", icon: Settings },
           ].map((item) => (
             <button
@@ -282,6 +301,7 @@ export default function AdminDashboard() {
                {activeSidebarTab === "insights" && "Predictive Insights"}
                {activeSidebarTab === "tokens" && "Token Controls"}
                {activeSidebarTab === "registry" && "Nodal Grievance Registry"}
+               {activeSidebarTab === "users" && "Registered Citizens Directory"}
                {activeSidebarTab === "settings" && "System Settings"}
              </h1>
           </div>
@@ -805,6 +825,141 @@ export default function AdminDashboard() {
             </div>
           </div>
           </motion.div>
+          )}
+
+          {activeSidebarTab === "users" && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-6"
+            >
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card className="glass-premium border border-border/20 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:neon-glow-primary hover:border-gov-blue/30 group bg-[#070b15]/40">
+                  <div className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full filter blur-xl opacity-15 pointer-events-none group-hover:scale-125 transition-transform duration-500 bg-ai-purple" />
+                  <CardContent className="p-5 flex items-center gap-4 relative z-10">
+                    <div className="w-12 h-12 rounded-xl bg-ai-purple/10 border border-ai-purple/20 flex items-center justify-center">
+                      <Users className="w-6 h-6 text-ai-purple" />
+                    </div>
+                    <div>
+                      <span className="text-2xl font-black text-white">{citizens.length}</span>
+                      <span className="text-[10px] text-muted-foreground block font-bold uppercase tracking-wider">Registered Citizens</span>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="glass-premium border border-border/20 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:neon-glow-success hover:border-trust-green/30 group bg-[#070b15]/40">
+                  <div className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full filter blur-xl opacity-15 pointer-events-none group-hover:scale-125 transition-transform duration-500 bg-trust-green" />
+                  <CardContent className="p-5 flex items-center gap-4 relative z-10">
+                    <div className="w-12 h-12 rounded-xl bg-trust-green/10 border border-trust-green/20 flex items-center justify-center">
+                      <ShieldCheck className="w-6 h-6 text-trust-green" />
+                    </div>
+                    <div>
+                      <span className="text-2xl font-black text-white">Active</span>
+                      <span className="text-[10px] text-muted-foreground block font-bold uppercase tracking-wider">Authentication Core</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="glass-premium border border-border/20 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:neon-glow-ai hover:border-ai-purple/30 group bg-[#070b15]/40">
+                  <div className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full filter blur-xl opacity-15 pointer-events-none group-hover:scale-125 transition-transform duration-500 bg-gov-blue" />
+                  <CardContent className="p-5 flex items-center gap-4 relative z-10">
+                    <div className="w-12 h-12 rounded-xl bg-gov-blue/10 border border-gov-blue/20 flex items-center justify-center">
+                      <Zap className="w-6 h-6 text-gov-blue-light animate-pulse" />
+                    </div>
+                    <div>
+                      <span className="text-2xl font-black text-white">Live Sync</span>
+                      <span className="text-[10px] text-muted-foreground block font-bold uppercase tracking-wider">State Telemetry</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Data Table */}
+              <div className="flex flex-col -mx-6 lg:-mx-8">
+                <div className="px-6 lg:px-8 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-black text-foreground tracking-tight flex items-center gap-2">
+                      Registered Citizen Directory
+                      <Badge variant="outline" className="bg-ai-purple/10 text-ai-purple border-ai-purple/20 text-[9px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full">
+                        {citizens.length} nodes
+                      </Badge>
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1 font-medium">
+                      Inspect citizen profiles, registered phone coordinates, and database entry logs.
+                    </p>
+                  </div>
+                  
+                  {/* Search box */}
+                  <div className="relative w-full sm:w-72 shrink-0">
+                    <input
+                      type="text"
+                      value={citizenSearchQuery}
+                      onChange={(e) => setCitizenSearchQuery(e.target.value)}
+                      placeholder="Search name, email, or mobile..."
+                      className="w-full bg-[#030712]/60 border border-border/20 rounded-full py-2.5 pl-4 pr-10 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-ai-purple/55 transition-all font-semibold"
+                    />
+                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">
+                      <Search className="w-4 h-4 text-slate-500" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto w-full border-t border-border/10">
+                  <table className="w-full text-left border-collapse min-w-[700px]">
+                    <thead>
+                      <tr className="bg-[#090d16]/95 border-b border-border/10 text-[10px] font-black uppercase tracking-widest text-muted-foreground/85">
+                        <th className="py-4.5 px-6 lg:px-8">Citizen Identity</th>
+                        <th className="py-4.5 px-4">Citizen ID</th>
+                        <th className="py-4.5 px-4">Official Email</th>
+                        <th className="py-4.5 px-4">Mobile Number</th>
+                        <th className="py-4.5 px-6 lg:px-8 text-right">Registered On</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/5">
+                      {filteredCitizens.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="text-center py-16 text-xs font-bold text-muted-foreground">
+                            {citizenSearchQuery ? "No matching citizens found in search filter." : "No registered citizens found in database."}
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredCitizens.map((c) => (
+                          <tr key={c.id} className="hover:bg-white/2 transition-colors duration-200 text-xs font-semibold group">
+                            <td className="py-4.5 px-6 lg:px-8">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-ai-purple/15 flex items-center justify-center border border-ai-purple/20 shrink-0">
+                                  <User className="w-3.5 h-3.5 text-ai-purple" />
+                                </div>
+                                <span className="font-extrabold text-foreground group-hover:text-white transition-colors">{c.name}</span>
+                              </div>
+                            </td>
+                            <td className="py-4.5 px-4 font-mono font-bold text-muted-foreground">
+                              <span className="bg-muted/30 border border-border/25 px-2.5 py-1 rounded-md text-[10px] text-slate-400">
+                                {c.id ? c.id.substring(0, 8) : "N/A"}
+                              </span>
+                            </td>
+                            <td className="py-4.5 px-4 text-slate-300 font-medium">
+                              {c.email}
+                            </td>
+                            <td className="py-4.5 px-4 text-slate-300 font-medium font-mono">
+                              {c.mobile || "N/A"}
+                            </td>
+                            <td className="py-4.5 px-6 lg:px-8 text-right text-muted-foreground font-mono">
+                              {c.created_at 
+                                ? new Date(c.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+                                : "N/A"
+                              }
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </motion.div>
           )}
 
           {activeSidebarTab === "settings" && (

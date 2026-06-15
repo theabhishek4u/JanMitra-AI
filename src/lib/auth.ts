@@ -210,3 +210,67 @@ export async function loginCitizen(identifier: string, password: string): Promis
     return { success: false, error: err.message || "An unexpected error occurred." };
   }
 }
+
+export async function resetCitizenPassword(email: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const cleanEmail = email.toLowerCase().trim();
+
+    // Check if email exists in database
+    const { data: citizen, error: findError } = await supabase
+      .from("citizens")
+      .select("id")
+      .eq("email", cleanEmail)
+      .maybeSingle();
+
+    if (findError || !citizen) {
+      return { success: false, error: "No registered citizen account found with this email." };
+    }
+
+    // Update the password in Supabase citizens table
+    const { error: updateError } = await supabase
+      .from("citizens")
+      .update({ password: newPassword })
+      .eq("email", cleanEmail);
+
+    if (updateError) {
+      return { success: false, error: updateError.message };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || "An unexpected error occurred." };
+  }
+}
+
+/**
+ * Fetch all registered citizens from the Supabase citizens table.
+ * Excludes plain-text passwords and includes fallback schema support.
+ */
+export async function getRegisteredCitizens(): Promise<any[]> {
+  try {
+    const { data, error } = await supabase
+      .from("citizens")
+      .select("id, name, email, mobile, created_at")
+      .order("name", { ascending: true });
+
+    if (error) {
+      console.warn("Retrying fetch without created_at ordering:", error.message);
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from("citizens")
+        .select("id, name, email, mobile");
+
+      if (fallbackError) {
+        console.error("Error in fallback fetch:", fallbackError.message);
+        return [];
+      }
+      return fallbackData || [];
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error("Unexpected error in getRegisteredCitizens:", err);
+    return [];
+  }
+}
+
+
