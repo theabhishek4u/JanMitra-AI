@@ -15,6 +15,9 @@ import {
   BarChart3,
   Sparkles,
   LogOut,
+  Bell,
+  Trash2,
+  Inbox,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
@@ -24,27 +27,68 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import {
+  getCitizenNotifications,
+  markNotificationAsRead,
+  clearNotifications,
+} from "@/lib/complaints";
+import type { Notification } from "@/types";
 
 export function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [session, setSession] = useState<{ role: string; email: string } | null>(null);
+  const [session, setSession] = useState<any>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [language, setLanguage] = useState<"en" | "hi">("en");
+
+  const isHi = language === "hi";
+
   useEffect(() => {
     const checkSession = () => {
       const activeSession = getAuthSession();
       setSession(activeSession);
     };
 
+    const checkLanguage = () => {
+      const saved = localStorage.getItem("janmitra-language");
+      if (saved === "hi") {
+        setLanguage("hi");
+      } else {
+        setLanguage("en");
+      }
+    };
+
+    const syncNotifications = () => {
+      const activeSession = getAuthSession();
+      if (activeSession && activeSession.role === "citizen") {
+        setNotifications(getCitizenNotifications());
+      } else {
+        setNotifications([]);
+      }
+    };
+
     checkSession();
+    checkLanguage();
+    syncNotifications();
     
     // Listen for storage, focus, and visibilitychange events to sync active authentication state in real time
     window.addEventListener("storage", checkSession);
+    window.addEventListener("storage", checkLanguage);
+    window.addEventListener("storage", syncNotifications);
     window.addEventListener("focus", checkSession);
     window.addEventListener("visibilitychange", checkSession);
+    window.addEventListener("janmitra-db-change", syncNotifications);
+    window.addEventListener("janmitra-language-change", checkLanguage);
+
     return () => {
       window.removeEventListener("storage", checkSession);
+      window.removeEventListener("storage", checkLanguage);
+      window.removeEventListener("storage", syncNotifications);
       window.removeEventListener("focus", checkSession);
       window.removeEventListener("visibilitychange", checkSession);
+      window.removeEventListener("janmitra-db-change", syncNotifications);
+      window.removeEventListener("janmitra-language-change", checkLanguage);
     };
   }, []);
 
@@ -54,6 +98,39 @@ export function Navbar() {
     window.dispatchEvent(new Event("storage"));
     window.location.href = "/";
   };
+
+  const handleClearAllNotifications = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    clearNotifications("citizen");
+    setNotifications([]);
+    window.dispatchEvent(new Event("janmitra-db-change"));
+  };
+
+  const handleNotificationClick = (n: Notification) => {
+    markNotificationAsRead(n.id, "citizen");
+    setNotifications(getCitizenNotifications());
+    setShowNotifications(false);
+    
+    // Dispatch custom event to track complaint on the citizen page if active
+    window.dispatchEvent(new CustomEvent("janmitra-track-complaint", { detail: n.complaintId }));
+    window.dispatchEvent(new Event("janmitra-db-change"));
+    
+    // Redirect if they are not already on the citizen page
+    if (window.location.pathname !== "/citizen") {
+      window.location.href = `/citizen?tab=track&complaintId=${n.complaintId}`;
+    }
+  };
+
+  const formatTime = (isoString: string) => {
+    try {
+      const d = new Date(isoString);
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      return "";
+    }
+  };
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/70 dark:bg-[#05070f]/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-[#1e293b]/40 shadow-[0_4px_30px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.4)]">
@@ -81,6 +158,97 @@ export function Navbar() {
           {/* Desktop Actions Area (Left and Center are clean and elegant) */}
           <div className="hidden md:flex items-center gap-3">
             <ThemeToggle />
+
+            {/* Notification Bell in Navbar */}
+            {session && session.role === "citizen" && (
+              <div className="relative flex items-center justify-center">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className={`relative rounded-full transition-all cursor-pointer flex items-center justify-center active:scale-95 ${
+                    showNotifications 
+                      ? "bg-primary/10 text-primary" 
+                      : "hover:bg-primary/10 text-slate-700 dark:text-gray-300"
+                  }`}
+                  aria-label="Notifications"
+                >
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-[8px] font-black text-white rounded-full flex items-center justify-center border border-white dark:border-[#05070f] animate-pulse">
+                      {unreadCount}
+                    </span>
+                  )}
+                </Button>
+
+                {/* Notifications Dropdown */}
+                {showNotifications && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40 cursor-default" 
+                      onClick={() => setShowNotifications(false)} 
+                    />
+                    <div className="absolute right-0 top-11 w-80 max-h-[420px] overflow-y-auto z-50 rounded-2xl p-4 shadow-xl border border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-[#090d16]/95 backdrop-blur-xl animate-in fade-in slide-in-from-top-3 duration-200">
+                      <div className="flex items-center justify-between border-b border-slate-200/50 dark:border-slate-800/50 pb-3 mb-3">
+                        <h4 className="font-extrabold text-xs text-slate-900 dark:text-white">
+                          {isHi ? "सूचनाएं" : "Notifications"}
+                        </h4>
+                        {notifications.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={handleClearAllNotifications}
+                            className="text-[10px] font-black text-red-500 hover:text-red-400 transition-colors flex items-center gap-1 cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            {isHi ? "साफ़ करें" : "Clear All"}
+                          </button>
+                        )}
+                      </div>
+
+                      {notifications.length === 0 ? (
+                        <div className="py-8 flex flex-col items-center justify-center text-center text-gray-500 gap-2">
+                          <Inbox className="w-8 h-8 opacity-40" />
+                          <p className="text-xs font-semibold">
+                            {isHi ? "कोई नई सूचना नहीं" : "No new notifications"}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2.5">
+                          {notifications.map((n) => (
+                            <div
+                              key={n.id}
+                              onClick={() => handleNotificationClick(n)}
+                              className={`p-3 rounded-xl border transition-all cursor-pointer flex flex-col gap-1.5 text-left ${
+                                n.read
+                                  ? "bg-slate-50/40 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800/50 hover:bg-slate-100/50 dark:hover:bg-slate-900/30"
+                                  : "bg-indigo-500/5 border-indigo-500/20 dark:border-indigo-500/25 hover:bg-indigo-500/10 shadow-sm hover:border-indigo-500/40"
+                              }`}
+                            >
+                              <div className="flex items-start justify-between gap-1.5">
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-900 text-slate-600 dark:text-gray-400 uppercase tracking-wider font-mono">
+                                  {n.complaintId}
+                                </span>
+                                <span className="text-[9px] text-gray-500 font-semibold">
+                                  {formatTime(n.timestamp)}
+                                </span>
+                              </div>
+                              <p className="text-xs font-bold text-slate-800 dark:text-gray-300 leading-normal">
+                                {isHi ? n.messageHi : n.message}
+                              </p>
+                              {!n.read && (
+                                <span className="text-[9px] font-black text-indigo-500 dark:text-indigo-400 self-end animate-pulse">
+                                  {isHi ? "● नया" : "● New"}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
             
             {/* File Complaint button always visible on desktop */}
             <Link href="/citizen">
@@ -136,6 +304,96 @@ export function Navbar() {
           </div>
 
           <div className="flex md:hidden items-center gap-2">
+            {/* Notification Bell in Navbar for Mobile */}
+            {session && session.role === "citizen" && (
+              <div className="relative flex items-center justify-center">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className={`relative rounded-full transition-all cursor-pointer flex items-center justify-center active:scale-95 ${
+                    showNotifications 
+                      ? "bg-primary/10 text-primary" 
+                      : "hover:bg-primary/10 text-slate-700 dark:text-gray-300"
+                  }`}
+                  aria-label="Notifications"
+                >
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-[8px] font-black text-white rounded-full flex items-center justify-center border border-white dark:border-[#05070f] animate-pulse">
+                      {unreadCount}
+                    </span>
+                  )}
+                </Button>
+
+                {/* Notifications Dropdown */}
+                {showNotifications && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40 cursor-default" 
+                      onClick={() => setShowNotifications(false)} 
+                    />
+                    <div className="absolute right-0 top-11 w-76 max-h-[360px] overflow-y-auto z-50 rounded-2xl p-4 shadow-xl border border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-[#090d16]/95 backdrop-blur-xl animate-in fade-in slide-in-from-top-3 duration-200">
+                      <div className="flex items-center justify-between border-b border-slate-200/50 dark:border-slate-800/50 pb-3 mb-3">
+                        <h4 className="font-extrabold text-xs text-slate-900 dark:text-white">
+                          {isHi ? "सूचनाएं" : "Notifications"}
+                        </h4>
+                        {notifications.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={handleClearAllNotifications}
+                            className="text-[10px] font-black text-red-500 hover:text-red-400 transition-colors flex items-center gap-1 cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            {isHi ? "साफ़ करें" : "Clear All"}
+                          </button>
+                        )}
+                      </div>
+
+                      {notifications.length === 0 ? (
+                        <div className="py-8 flex flex-col items-center justify-center text-center text-gray-500 gap-2">
+                          <Inbox className="w-8 h-8 opacity-40" />
+                          <p className="text-xs font-semibold">
+                            {isHi ? "कोई नई सूचना नहीं" : "No new notifications"}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2.5">
+                          {notifications.map((n) => (
+                            <div
+                              key={n.id}
+                              onClick={() => handleNotificationClick(n)}
+                              className={`p-3 rounded-xl border transition-all cursor-pointer flex flex-col gap-1.5 text-left ${
+                                n.read
+                                  ? "bg-slate-50/40 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800/50 hover:bg-slate-100/50 dark:hover:bg-slate-900/30"
+                                  : "bg-indigo-500/5 border-indigo-500/20 dark:border-indigo-500/25 hover:bg-indigo-500/10 shadow-sm hover:border-indigo-500/40"
+                              }`}
+                            >
+                              <div className="flex items-start justify-between gap-1.5">
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-900 text-slate-600 dark:text-gray-450 uppercase tracking-wider font-mono">
+                                  {n.complaintId}
+                                </span>
+                                <span className="text-[9px] text-gray-500 font-semibold">
+                                  {formatTime(n.timestamp)}
+                                </span>
+                              </div>
+                              <p className="text-xs font-bold text-slate-800 dark:text-gray-300 leading-normal">
+                                {isHi ? n.messageHi : n.message}
+                              </p>
+                              {!n.read && (
+                                <span className="text-[9px] font-black text-indigo-500 dark:text-indigo-400 self-end animate-pulse">
+                                  {isHi ? "● नया" : "● New"}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
             <ThemeToggle />
             <Button
               variant="ghost"

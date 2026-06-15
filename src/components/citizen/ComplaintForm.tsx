@@ -35,10 +35,12 @@ import type { AIClassification, Complaint } from "@/types";
 
 export function ComplaintForm({ 
   language = "en",
+  onLanguageChange,
   onComplaintCreated,
   onTrack
 }: { 
   language?: "en" | "hi";
+  onLanguageChange?: (lang: "en" | "hi") => void;
   onComplaintCreated?: (complaint: Complaint) => void;
   onTrack?: (id: string) => void;
 }) {
@@ -619,14 +621,14 @@ export function ComplaintForm({
             {/* Complaint text */}
             <div className="relative rounded-2xl overflow-hidden">
               {/* Gradient top accent line */}
-              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-indigo-500/60 to-transparent" />
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-linear-to-r from-transparent via-indigo-500/60 to-transparent" />
               
-              <div className="bg-gradient-to-b from-[#0c1120]/80 to-[#080d18]/60 backdrop-blur-sm border border-[#1e293b]/40 rounded-2xl p-6 sm:p-7 space-y-5 shadow-[0_8px_40px_rgba(0,0,0,0.3)]">
+              <div className="bg-linear-to-b from-[#0c1120]/80 to-[#080d18]/60 backdrop-blur-sm border border-[#1e293b]/40 rounded-2xl p-6 sm:p-7 space-y-5 shadow-[0_8px_40px_rgba(0,0,0,0.3)]">
                 {/* Header Row */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-col gap-1.5">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-600/20 shrink-0">
+                      <div className="w-9 h-9 rounded-xl bg-linear-to-br from-indigo-600 via-violet-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-600/20 shrink-0">
                         <FileText className="w-4.5 h-4.5 text-white" />
                       </div>
                       <div>
@@ -636,6 +638,34 @@ export function ComplaintForm({
                     </div>
                     <p className="text-[13px] text-gray-400/90 font-medium pl-0.5">{dict.subtitleText}</p>
                   </div>
+
+                  {/* Redesigned Premium Language Toggle */}
+                  {onLanguageChange && (
+                    <div className="flex items-center gap-1 bg-[#090d16] border border-[#1f2937]/65 p-0.5 rounded-xl shadow-inner w-fit h-8.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => onLanguageChange("en")}
+                        className={`px-3 h-7 text-[10px] font-black rounded-lg transition-all duration-350 cursor-pointer ${
+                          language === "en"
+                            ? "bg-linear-to-r from-blue-600 to-violet-600 text-white shadow-[0_0_12px_rgba(124,58,237,0.35)]"
+                            : "text-gray-400 hover:text-white"
+                        }`}
+                      >
+                        EN
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onLanguageChange("hi")}
+                        className={`px-3 h-7 text-[10px] font-black rounded-lg transition-all duration-350 cursor-pointer ${
+                          language === "hi"
+                            ? "bg-linear-to-r from-blue-600 to-violet-600 text-white shadow-[0_0_12px_rgba(124,58,237,0.35)]"
+                            : "text-gray-400 hover:text-white"
+                        }`}
+                      >
+                        हिन्दी
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Token Tracker - Pill Style */}
@@ -654,7 +684,7 @@ export function ComplaintForm({
                     </span>
                     <div className="w-20 h-2 bg-[#0c1020] rounded-full overflow-hidden border border-amber-500/10">
                       <motion.div 
-                        className={`h-full rounded-full ${tokenState.tokensRemaining <= 1 ? "bg-gradient-to-r from-red-500 to-red-400" : "bg-gradient-to-r from-amber-600 to-amber-400"}`}
+                        className={`h-full rounded-full ${tokenState.tokensRemaining <= 1 ? "bg-linear-to-r from-red-500 to-red-400" : "bg-linear-to-r from-amber-600 to-amber-400"}`}
                         initial={false}
                         animate={{ width: `${(tokenState.tokensRemaining / tokenState.maxTokens) * 100}%` }}
                         transition={{ duration: 0.5, ease: "easeOut" }}
@@ -696,7 +726,7 @@ export function ComplaintForm({
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    className={`flex items-center gap-3.5 p-3 bg-gradient-to-r from-indigo-500/[0.04] to-violet-500/[0.04] border rounded-xl w-full relative overflow-hidden transition-all duration-300 ${
+                    className={`flex items-center gap-3.5 p-3 bg-linear-to-r from-indigo-500/4 to-violet-500/4 border rounded-xl w-full relative overflow-hidden transition-all duration-300 ${
                       isScanningImage ? "border-indigo-500/40 shadow-[0_0_20px_rgba(99,102,241,0.12)]" : "border-[#1e293b]/50"
                     }`}
                   >
@@ -764,13 +794,6 @@ export function ComplaintForm({
                     )}
                   </button>
 
-                  {isRecording && (
-                    <div className="flex items-end gap-1 h-full px-3 pb-3 border border-indigo-500/15 bg-indigo-500/[0.03] rounded-xl">
-                      {[...Array(6)].map((_, i) => (
-                        <span key={i} className="soundwave-bar" />
-                      ))}
-                    </div>
-                  )}
 
                   {/* Photo Upload */}
                   <button
@@ -778,7 +801,7 @@ export function ComplaintForm({
                     onClick={handlePhotoUploadClick}
                     className={`group flex items-center gap-2.5 px-4 py-3 rounded-xl border transition-all duration-300 cursor-pointer active:scale-[0.97] ${
                       photo
-                        ? "border-emerald-500/30 bg-emerald-500/[0.06]"
+                        ? "border-emerald-500/30 bg-emerald-500/6"
                         : "border-[#1e293b]/50 bg-[#0a0f1a]/60 hover:border-violet-500/30 hover:bg-[#0c1122]/80 hover:shadow-[0_4px_20px_rgba(139,92,246,0.06)]"
                     }`}
                   >
@@ -798,7 +821,7 @@ export function ComplaintForm({
                     onClick={detectLocation}
                     className={`group flex items-center gap-2.5 px-4 py-3 rounded-xl border transition-all duration-300 cursor-pointer active:scale-[0.97] ${
                       location
-                        ? "border-emerald-500/30 bg-emerald-500/[0.06] col-span-2 sm:col-span-1"
+                        ? "border-emerald-500/30 bg-emerald-500/6 col-span-2 sm:col-span-1"
                         : "border-[#1e293b]/50 bg-[#0a0f1a]/60 hover:border-cyan-500/30 hover:bg-[#0c1122]/80 hover:shadow-[0_4px_20px_rgba(6,182,212,0.06)] col-span-2 sm:col-span-1"
                     }`}
                   >
@@ -817,7 +840,7 @@ export function ComplaintForm({
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="flex items-center gap-3 p-3.5 bg-emerald-500/[0.04] border border-emerald-500/15 rounded-xl relative overflow-hidden"
+                  className="flex items-center gap-3 p-3.5 bg-emerald-500/4 border border-emerald-500/15 rounded-xl relative overflow-hidden"
                 >
                   <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 radar-glow" />
@@ -841,10 +864,10 @@ export function ComplaintForm({
 
             {/* Priority Selector - Color-coded Cards */}
             <div className="relative rounded-2xl overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-500/40 to-transparent" />
-              <div className="bg-gradient-to-b from-[#0c1120]/80 to-[#080d18]/60 backdrop-blur-sm border border-[#1e293b]/40 rounded-2xl p-6 sm:p-7 space-y-4 shadow-[0_8px_40px_rgba(0,0,0,0.3)]">
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-linear-to-r from-transparent via-amber-500/40 to-transparent" />
+              <div className="bg-linear-to-b from-[#0c1120]/80 to-[#080d18]/60 backdrop-blur-sm border border-[#1e293b]/40 rounded-2xl p-6 sm:p-7 space-y-4 shadow-[0_8px_40px_rgba(0,0,0,0.3)]">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-600/15 shrink-0">
+                  <div className="w-8 h-8 rounded-xl bg-linear-to-br from-amber-600 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-600/15 shrink-0">
                     <AlertTriangle className="w-4 h-4 text-white" />
                   </div>
                   <h3 className="font-extrabold text-sm uppercase tracking-wider text-white">{dict.selectPriority}</h3>
@@ -875,7 +898,7 @@ export function ComplaintForm({
                       {isSelected && (
                         <motion.div 
                           layoutId="priorityIndicator"
-                          className="absolute -bottom-px left-1/4 right-1/4 h-[2px] bg-gradient-to-r from-transparent via-white/60 to-transparent rounded-full"
+                          className="absolute -bottom-px left-1/4 right-1/4 h-[2px] bg-linear-to-r from-transparent via-white/60 to-transparent rounded-full"
                           transition={{ type: "spring", stiffness: 380, damping: 30 }}
                         />
                       )}

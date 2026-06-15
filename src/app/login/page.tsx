@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -21,11 +20,15 @@ import {
   AlertCircle,
   Loader2,
   CheckCircle,
+  Fingerprint,
+  Cpu,
+  Terminal,
+  ShieldCheck,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getAuthSession, setAuthSession, clearAuthSession } from "@/lib/auth";
+import { getAuthSession, setAuthSession } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -42,6 +45,13 @@ export default function LoginPage() {
   const [success, setSuccess] = useState(false);
   const [triggerShake, setTriggerShake] = useState(false);
   const [activeSessionRole, setActiveSessionRole] = useState<string | null>(null);
+
+  // Biometric scanner state
+  const [biometricScanning, setBiometricScanning] = useState(false);
+  const [biometricMessage, setBiometricMessage] = useState<string | null>(null);
+
+  // Terminal log messages printed during login handshake
+  const [terminalLogs, setTerminalLogs] = useState<string[]>([]);
 
   // Track field focus for high-fidelity animations
   const [emailFocused, setEmailFocused] = useState(false);
@@ -111,79 +121,206 @@ export default function LoginPage() {
       setEmail("");
       setPassword("");
     }
+    setError(null);
+    setTerminalLogs([]);
   }, [activeLoginForm]);
 
-  // Officer & Admin roles list (Citizen removed for direct access)
+  const activeRole = activeLoginForm || hoveredRole;
+
+  // Background Canvas Particles effect
+  useEffect(() => {
+    if (!mounted) return;
+    const canvas = document.getElementById("canvas-particles") as HTMLCanvasElement;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    const particles: Array<{
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      radius: number;
+      alpha: number;
+    }> = [];
+
+    const particleCount = Math.min(80, Math.floor((width * height) / 25000));
+    
+    // Decide particle colors based on activeRole
+    const getParticleColor = () => {
+      if (activeRole === "officer") return "245, 158, 11"; // Amber
+      if (activeRole === "admin") return "139, 92, 246"; // Purple
+      return "59, 130, 246"; // Blue
+    };
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.45,
+        vy: (Math.random() - 0.5) * 0.45,
+        radius: Math.random() * 2 + 1,
+        alpha: Math.random() * 0.4 + 0.15,
+      });
+    }
+
+    let mouseX = width / 2;
+    let mouseY = height / 2;
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+
+    const resize = () => {
+      if (!canvas) return;
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+    window.addEventListener("resize", resize);
+
+    const draw = () => {
+      ctx.clearRect(0, 0, width, height);
+      
+      const currentThemeColor = getParticleColor();
+      ctx.strokeStyle = `rgba(${currentThemeColor}, 0.05)`;
+      ctx.lineWidth = 0.8;
+
+      for (let i = 0; i < particles.length; i++) {
+        const p1 = particles[i];
+        
+        p1.x += p1.vx;
+        p1.y += p1.vy;
+
+        if (p1.x < 0) p1.x = width;
+        if (p1.x > width) p1.x = 0;
+        if (p1.y < 0) p1.y = height;
+        if (p1.y > height) p1.y = 0;
+
+        ctx.beginPath();
+        ctx.arc(p1.x, p1.y, p1.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${currentThemeColor}, ${p1.alpha})`;
+        ctx.fill();
+
+        // Connect to mouse
+        const dxMouse = mouseX - p1.x;
+        const dyMouse = mouseY - p1.y;
+        const distMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
+        if (distMouse < 180) {
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(mouseX, mouseY);
+          ctx.strokeStyle = `rgba(${currentThemeColor}, ${0.12 * (1 - distMouse / 180)})`;
+          ctx.stroke();
+        }
+
+        // Connect to other particles
+        for (let j = i + 1; j < particles.length; j++) {
+          const p2 = particles[j];
+          const dx = p1.x - p2.x;
+          const dy = p1.y - p2.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 130) {
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = `rgba(${currentThemeColor}, ${0.08 * (1 - dist / 130)})`;
+            ctx.stroke();
+          }
+        }
+      }
+
+      animationFrameId = requestAnimationFrame(draw);
+    };
+
+    draw();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("resize", resize);
+    };
+  }, [mounted, activeRole]);
+
+  // Officer & Admin roles configuration
   const roles = [
     {
       id: "officer",
       title: "Officer Console",
       titleHi: "अधिकारी कंसोल",
-      description: "Access municipal command controls, override route assignments, inspect real-time STT transcripts, and coordinate action plans.",
+      description: "Access municipal command controls, override route assignments, inspect real-time speech-to-text transcripts, and coordinate local action plans.",
       href: "/officer",
       icon: Shield,
       color: "#F59E0B",
-      glowClass: "shadow-[0_0_30px_-5px_rgba(245,158,11,0.3)] border-amber-500/40 hover:border-amber-400",
-      badge: "Official Credentials Required",
+      glowClass: "shadow-[0_0_35px_-5px_rgba(245,158,11,0.35)] border-amber-500/40 hover:border-amber-400",
+      badge: "Command Security Clearance Level A",
       roleKey: "UP-GOV-OFFICER",
-      district: "Lucknow Central",
+      district: "Lucknow Central Command",
+      tagline: "Secure Telemetry Hub",
     },
     {
       id: "admin",
       title: "Admin Panel",
       titleHi: "प्रशासक पैनल",
-      description: "Audit cross-departmental performance metrics, manage SLA auto-escalations, and review predictive municipal diagnostics.",
+      description: "Audit cross-departmental response timelines, manage automatic escalations, configure AI parameters, and review system-wide diagnostics.",
       href: "/admin",
       icon: BarChart3,
-      color: "#7C3AED",
-      glowClass: "shadow-[0_0_30px_-5px_rgba(124,58,237,0.3)] border-purple-500/40 hover:border-purple-400",
-      badge: "Secretariat & CAG Audit",
+      color: "#8B5CF6",
+      glowClass: "shadow-[0_0_35px_-5px_rgba(139,92,246,0.35)] border-purple-500/40 hover:border-purple-400",
+      badge: "Secretariat Administration & Audits",
       roleKey: "UP-GOV-SECRETARIAT",
-      district: "UP Headquarters",
+      district: "UP State Headquarters",
+      tagline: "Autonomous Platform Control",
     },
   ];
 
-  // Helper to retrieve color details for selected console
+  // Colors mapping matching the active console role
   const getThemeColors = (roleId: string | null) => {
     if (roleId === "officer") {
       return {
         solid: "#F59E0B",
-        glow: "rgba(245, 158, 11, 0.15)",
-        glowStrong: "rgba(245, 158, 11, 0.45)",
-        badgeBg: "rgba(245, 158, 11, 0.1)",
+        glow: "rgba(245, 158, 11, 0.2)",
+        glowStrong: "rgba(245, 158, 11, 0.5)",
+        badgeBg: "rgba(245, 158, 11, 0.12)",
         text: "text-amber-500",
-        border: "border-amber-500/25",
+        border: "border-amber-500/30",
         gradient: "from-amber-500 via-amber-600 to-yellow-500",
+        particles: "245, 158, 11",
       };
     }
     if (roleId === "admin") {
       return {
-        solid: "#7C3AED",
-        glow: "rgba(124, 58, 237, 0.15)",
-        glowStrong: "rgba(124, 58, 237, 0.45)",
-        badgeBg: "rgba(124, 58, 237, 0.1)",
-        text: "text-purple-500",
-        border: "border-purple-500/25",
+        solid: "#8B5CF6",
+        glow: "rgba(139, 92, 246, 0.2)",
+        glowStrong: "rgba(139, 92, 246, 0.5)",
+        badgeBg: "rgba(139, 92, 246, 0.12)",
+        text: "text-purple-400",
+        border: "border-purple-500/30",
         gradient: "from-purple-500 via-purple-600 to-indigo-600",
+        particles: "139, 92, 246",
       };
     }
-    // Default brand blend colors
     return {
       solid: "#3B82F6",
-      glow: "rgba(59, 130, 246, 0.12)",
-      glowStrong: "rgba(59, 130, 246, 0.35)",
-      badgeBg: "rgba(59, 130, 246, 0.08)",
-      text: "text-blue-500",
+      glow: "rgba(59, 130, 246, 0.15)",
+      glowStrong: "rgba(59, 130, 246, 0.4)",
+      badgeBg: "rgba(59, 130, 246, 0.1)",
+      text: "text-blue-400",
       border: "border-blue-500/20",
       gradient: "from-blue-600 via-indigo-600 to-purple-600",
+      particles: "59, 130, 246",
     };
   };
 
-  const activeRole = activeLoginForm || hoveredRole;
   const theme = getThemeColors(activeRole);
 
   const handleRoleSelect = (roleId: string, href: string) => {
-    // Check if session already exists for this role
     const session = getAuthSession();
     if (session && session.role === roleId) {
       setLoading(true);
@@ -194,10 +331,52 @@ export default function LoginPage() {
       return;
     }
 
-    // Otherwise, transition to Login Form
     setError(null);
     setShowPassword(false);
     setActiveLoginForm(roleId as "officer" | "admin");
+  };
+
+  // Perform full cryptographic decryption style login execution
+  const executeLoginProcess = (targetEmail: string, targetRole: "officer" | "admin") => {
+    setLoading(true);
+    setError(null);
+    setTerminalLogs([]);
+
+    const logSteps = [
+      `[SYS] Initializing secure telemetry handshake on port 443...`,
+      `[SYS] Encrypted SSL tunnel created with UP command node.`,
+      `[AUTH] Loading cryptographic credentials structure...`,
+      `[AUTH] Verification token: SHA-256 validation initiated.`,
+      `[DEC] Performing biometric bypass / security passkey validation...`,
+      `[DEC] Credentials approved. Syncing officer session profile...`,
+      `[SYS] Handshake cleared! Forwarding session console gateway.`
+    ];
+
+    let currentLogIndex = 0;
+    const logInterval = setInterval(() => {
+      if (currentLogIndex < logSteps.length) {
+        setTerminalLogs((prev) => [...prev, logSteps[currentLogIndex]]);
+        currentLogIndex++;
+      } else {
+        clearInterval(logInterval);
+        
+        // Log authorized session in local storage
+        const authData = {
+          role: targetRole,
+          email: targetEmail.toLowerCase().trim(),
+          authenticatedAt: new Date().toISOString(),
+        };
+        setAuthSession(authData);
+        window.dispatchEvent(new Event("storage"));
+
+        setSuccess(true);
+        setLoading(false);
+
+        setTimeout(() => {
+          router.push(targetRole === "officer" ? "/officer" : "/admin");
+        }, 700);
+      }
+    }, 250);
   };
 
   const handleLoginSubmit = (e: React.FormEvent) => {
@@ -206,53 +385,74 @@ export default function LoginPage() {
     setTriggerShake(false);
 
     if (!email.trim() || !password.trim()) {
-      setError("Please enter security credentials.");
+      setError("Security credentials missing. Please enter official keycode.");
       setTriggerShake(true);
       return;
     }
 
-    setLoading(true);
+    const normalizedEmail = email.toLowerCase().trim();
+    let isValid = false;
 
-    // Simulate cryptographic mainframe decryption verification
-    setTimeout(() => {
-      const normalizedEmail = email.toLowerCase().trim();
-      let isValid = false;
-
-      if (activeLoginForm === "officer") {
-        if ((normalizedEmail === "officer@gmail.com" || normalizedEmail === "officers@gmail.com") && password === "1122") {
-          isValid = true;
-        }
-      } else if (activeLoginForm === "admin") {
-        if (normalizedEmail === "admin@gmail.com" && password === "1234") {
-          isValid = true;
-        }
+    if (activeLoginForm === "officer") {
+      if ((normalizedEmail === "officer@gmail.com" || normalizedEmail === "officers@gmail.com") && password === "1122") {
+        isValid = true;
       }
+    } else if (activeLoginForm === "admin") {
+      if (normalizedEmail === "admin@gmail.com" && password === "1234") {
+        isValid = true;
+      }
+    }
 
-      if (isValid && activeLoginForm) {
-        // Save session using unified helper
-        const authData = {
-          role: activeLoginForm,
-          email: normalizedEmail,
-          authenticatedAt: new Date().toISOString(),
-        };
-        setAuthSession(authData);
-        
-        // Dispatch event so layout and navbar sync instantly
-        window.dispatchEvent(new Event("storage"));
-        
-        setSuccess(true);
-        setLoading(false);
-        
-        // Redirect to dashboard
-        setTimeout(() => {
-          router.push(activeLoginForm === "officer" ? "/officer" : "/admin");
-        }, 800);
+    if (isValid && activeLoginForm) {
+      executeLoginProcess(normalizedEmail, activeLoginForm);
+    } else {
+      setError("Cryptographic check failed. Invalid console credentials or passkey.");
+      setTriggerShake(true);
+    }
+  };
+
+  // Holographic biometric bypass scanner trigger
+  const handleBiometricBypass = () => {
+    if (loading || success || biometricScanning) return;
+    
+    setBiometricScanning(true);
+    setBiometricMessage("PLACE RETINA OR INVENT FINGERPRINT TO INITIATE RADAR SCAN...");
+    setError(null);
+
+    const scanLogs = [
+      "[LIDAR] Directing laser scan array onto biometric sensors...",
+      "[LIDAR] Retinal mapping verified successfully. Match rate 99.8%",
+      "[AUTH] Official credential keys prefilled from secure database secure vault.",
+      "[SYS] Handshake authorized via Biometric Bypass Module."
+    ];
+
+    let currentLogIndex = 0;
+    const scanInterval = setInterval(() => {
+      if (currentLogIndex < scanLogs.length) {
+        setTerminalLogs((prev) => [...prev, scanLogs[currentLogIndex]]);
+        currentLogIndex++;
       } else {
-        setLoading(false);
-        setError("Cryptographic verification failed. Check credentials and keycodes.");
-        setTriggerShake(true);
+        clearInterval(scanInterval);
+        
+        // Auto fill credentials and proceed
+        if (activeLoginForm === "officer") {
+          setEmail("officers@gmail.com");
+          setPassword("1122");
+        } else if (activeLoginForm === "admin") {
+          setEmail("admin@gmail.com");
+          setPassword("1234");
+        }
+
+        setBiometricScanning(false);
+        setBiometricMessage(null);
+        
+        // Call login submit directly
+        const finalEmail = activeLoginForm === "officer" ? "officers@gmail.com" : "admin@gmail.com";
+        if (activeLoginForm) {
+          executeLoginProcess(finalEmail, activeLoginForm);
+        }
       }
-    }, 1200);
+    }, 450);
   };
 
   const shakeVariants = {
@@ -267,7 +467,7 @@ export default function LoginPage() {
   const currentRoleConfig = roles.find((r) => r.id === activeLoginForm);
 
   return (
-    <main className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 relative overflow-hidden font-sans">
+    <main className="min-h-screen bg-[#030712] flex flex-col items-center justify-center p-4 relative overflow-hidden font-sans text-slate-100">
       
       {/* Global CSS Style tag for highly reliable performance-friendly animations */}
       <style dangerouslySetInnerHTML={{ __html: `
@@ -276,170 +476,169 @@ export default function LoginPage() {
           100% { background-position: 64px 64px; }
         }
         .animate-pan-grid {
-          animation: panGrid 20s linear infinite;
+          animation: panGrid 24s linear infinite;
         }
         @keyframes spinSlow {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
         .animate-spin-slow {
-          animation: spinSlow 40s linear infinite;
+          animation: spinSlow 45s linear infinite;
         }
         @keyframes spinSlowReverse {
           from { transform: rotate(360deg); }
           to { transform: rotate(0deg); }
         }
         .animate-spin-slow-reverse {
-          animation: spinSlowReverse 50s linear infinite;
+          animation: spinSlowReverse 55s linear infinite;
         }
-        @keyframes laser-sweep {
-          0% { top: -5%; opacity: 0; }
-          15% { opacity: 1; }
-          85% { opacity: 1; }
-          100% { top: 105%; opacity: 0; }
+        @keyframes pulseBorder {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 1; }
         }
-        .animate-laser-sweep {
-          animation: laser-sweep 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        .animate-pulse-border {
+          animation: pulseBorder 3s infinite ease-in-out;
+        }
+        @keyframes scanBiometric {
+          0% { top: 0%; }
+          50% { top: 100%; }
+          100% { top: 0%; }
+        }
+        .animate-scan-biometric {
+          animation: scanBiometric 1.5s infinite linear;
+        }
+        @keyframes pulseText {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; text-shadow: 0 0 8px rgba(255,255,255,0.4); }
+        }
+        .animate-pulse-text {
+          animation: pulseText 2s infinite ease-in-out;
         }
       `}} />
 
-      {/* 1. Endless Scrolling Grid Background Matrix */}
+      {/* Interactive Canvas Background Particles */}
+      <canvas 
+        id="canvas-particles" 
+        className="absolute inset-0 pointer-events-none z-0" 
+      />
+
+      {/* Endless Scrolling Grid Background Matrix */}
       <div 
-        className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-size-[4rem_4rem] mask-[radial-gradient(ellipse_65%_55%_at_50%_50%,#000_75%,transparent_100%)] opacity-20 pointer-events-none animate-pan-grid"
+        className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1.5px,transparent_1.5px),linear-gradient(to_bottom,#0f172a_1.5px,transparent_1.5px)] bg-size-[4rem_4rem] mask-[radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-35 pointer-events-none animate-pan-grid z-0"
       />
       
-      {/* 2. Rotating Digital HUD Radars */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden opacity-[0.06] z-0">
-        <svg className="w-[750px] h-[750px] text-white animate-spin-slow" viewBox="0 0 200 200" fill="none" stroke="currentColor">
+      {/* Dynamic Digital HUD Radars */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden opacity-[0.08] z-0">
+        <svg className="w-[850px] h-[850px] text-white animate-spin-slow" viewBox="0 0 200 200" fill="none" stroke="currentColor">
           <circle cx="100" cy="100" r="95" strokeWidth="0.5" strokeDasharray="3 5" />
           <circle cx="100" cy="100" r="82" strokeWidth="0.25" />
           <circle cx="100" cy="100" r="68" strokeWidth="0.75" strokeDasharray="25 8 5 8" />
           <line x1="100" y1="5" x2="100" y2="195" strokeWidth="0.25" strokeDasharray="2 2" />
           <line x1="5" y1="100" x2="195" y2="100" strokeWidth="0.25" strokeDasharray="2 2" />
         </svg>
-        <svg className="absolute w-[500px] h-[500px] text-white animate-spin-slow-reverse" viewBox="0 0 200 200" fill="none" stroke="currentColor">
+        <svg className="absolute w-[600px] h-[600px] text-white animate-spin-slow-reverse" viewBox="0 0 200 200" fill="none" stroke="currentColor">
           <circle cx="100" cy="100" r="90" strokeWidth="0.3" strokeDasharray="1 10" />
           <circle cx="100" cy="100" r="75" strokeWidth="0.5" strokeDasharray="15 30 10 15" />
           <circle cx="100" cy="100" r="50" strokeWidth="0.25" strokeDasharray="4 4" />
         </svg>
       </div>
 
-      {/* 3. Orbiting & Scaling Ambient Blur Orbs */}
+      {/* Orbiting Ambient Blur Spotlights */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        {/* Main interactive color orb */}
+        {/* Active Role Light Spots */}
         <motion.div
-          className="absolute rounded-full filter blur-[120px] opacity-25"
-          style={{
-            width: "500px",
-            height: "500px",
-            top: "10%",
-            left: "15%",
-          }}
-          animate={{
-            x: [0, 50, -30, 0],
-            y: [0, -40, 30, 0],
-            backgroundColor: activeRole === "officer" ? "rgba(245, 158, 11, 0.28)" : activeRole === "admin" ? "rgba(124, 58, 237, 0.28)" : "rgba(59, 130, 246, 0.2)",
-          }}
-          transition={{
-            x: { duration: 16, repeat: Infinity, ease: "easeInOut" },
-            y: { duration: 16, repeat: Infinity, ease: "easeInOut" },
-            backgroundColor: { duration: 0.6 },
-          }}
-        />
-
-        {/* Secondary shifting orb */}
-        <motion.div
-          className="absolute rounded-full filter blur-[130px] opacity-20"
+          className="absolute rounded-full filter blur-[130px] opacity-25"
           style={{
             width: "550px",
             height: "550px",
-            bottom: "15%",
-            right: "10%",
+            top: "5%",
+            left: "10%",
           }}
           animate={{
-            x: [0, -45, 50, 0],
-            y: [0, 50, -25, 0],
-            backgroundColor: activeRole === "officer" ? "rgba(251, 191, 36, 0.16)" : activeRole === "admin" ? "rgba(167, 139, 250, 0.16)" : "rgba(124, 58, 237, 0.15)",
+            x: [0, 40, -40, 0],
+            y: [0, -40, 40, 0],
+            backgroundColor: activeRole === "officer" ? "rgba(245, 158, 11, 0.22)" : activeRole === "admin" ? "rgba(139, 92, 246, 0.22)" : "rgba(59, 130, 246, 0.18)",
           }}
           transition={{
-            x: { duration: 20, repeat: Infinity, ease: "easeInOut" },
-            y: { duration: 20, repeat: Infinity, ease: "easeInOut" },
-            backgroundColor: { duration: 0.6 },
+            x: { duration: 18, repeat: Infinity, ease: "easeInOut" },
+            y: { duration: 18, repeat: Infinity, ease: "easeInOut" },
+            backgroundColor: { duration: 0.5 },
           }}
         />
 
-        {/* Fixed green core brand orb */}
         <motion.div
-          className="absolute rounded-full filter blur-[100px] opacity-10"
+          className="absolute rounded-full filter blur-[140px] opacity-20"
           style={{
-            width: "400px",
-            height: "400px",
+            width: "600px",
+            height: "600px",
             bottom: "10%",
-            left: "25%",
-            backgroundColor: "rgba(16, 185, 129, 0.12)",
+            right: "5%",
           }}
           animate={{
-            x: [0, 30, -30, 0],
-            y: [0, -30, 30, 0],
+            x: [0, -35, 45, 0],
+            y: [0, 45, -35, 0],
+            backgroundColor: activeRole === "officer" ? "rgba(251, 191, 36, 0.14)" : activeRole === "admin" ? "rgba(167, 139, 250, 0.14)" : "rgba(124, 58, 237, 0.12)",
           }}
           transition={{
-            x: { duration: 14, repeat: Infinity, ease: "easeInOut" },
-            y: { duration: 14, repeat: Infinity, ease: "easeInOut" },
+            x: { duration: 22, repeat: Infinity, ease: "easeInOut" },
+            y: { duration: 22, repeat: Infinity, ease: "easeInOut" },
+            backgroundColor: { duration: 0.5 },
           }}
         />
       </div>
 
-      {/* Main Content Interface Container */}
+      {/* Main Container */}
       <div className="max-w-4xl w-full z-10 space-y-8 text-center px-4 relative">
         <AnimatePresence mode="wait">
           {!activeLoginForm ? (
             
-            // ================== HIGH-FIDELITY DUAL SELECTOR ==================
+            // ================== ROLE SELECTOR ==================
             <motion.div
               key="role-selector"
-              initial={{ opacity: 0, scale: 0.96 }}
+              initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
+              exit={{ opacity: 0, scale: 0.97 }}
               transition={{ duration: 0.4 }}
               className="space-y-8"
             >
-              {/* Core Platform Brand Header */}
+              {/* Brand Header */}
               <div className="space-y-4 flex flex-col items-center">
-                <div className="relative group">
-                  {/* Glowing background ring */}
+                <div className="relative group cursor-pointer">
+                  {/* Outer Pulsing Glow */}
                   <div 
-                    className="absolute -inset-1.5 rounded-2xl blur-md opacity-70 group-hover:opacity-100 transition duration-500 animate-pulse-glow"
+                    className="absolute -inset-2 rounded-2xl blur-lg opacity-60 group-hover:opacity-95 transition duration-500 animate-pulse-glow"
                     style={{
                       background: `linear-gradient(135deg, ${theme.solid}, #3B82F6)`,
                     }}
                   />
-                  <div className="relative w-16 h-16 rounded-2xl bg-slate-900 border border-slate-700/50 flex items-center justify-center shadow-2xl">
-                    <Bot className="w-9 h-9 text-white animate-pulse" />
+                  {/* Central Icon */}
+                  <div className="relative w-16 h-16 rounded-2xl bg-[#090d16] border border-slate-700/60 flex items-center justify-center shadow-2xl">
+                    <Bot className="w-9 h-9 text-slate-100 animate-pulse" />
                   </div>
-                  <div className="absolute -top-1 -right-1 w-4.5 h-4.5 bg-emerald-500 rounded-full border-2 border-slate-950 animate-ping" />
-                  <div className="absolute -top-1 -right-1 w-4.5 h-4.5 bg-emerald-500 rounded-full border-2 border-slate-950" />
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-[#030712] animate-ping" />
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-[#030712]" />
                 </div>
                 
                 <div className="space-y-1">
                   <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white leading-tight">
-                    JanMitra AI
+                    JanMitra <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-400 via-purple-400 to-indigo-400">AI</span>
                   </h1>
                   <p className="text-xs md:text-sm font-bold uppercase tracking-[0.25em] text-slate-400">
-                    Autonomous Governance & Command Platform
+                    Autonomous Smart Governance Platform
                   </p>
                 </div>
                 
                 <p className="text-sm text-slate-400 font-medium max-w-lg leading-relaxed">
-                  Secured portal gateway for official personnel and platform superintendents. Direct biometric verification enabled.
+                  Authorized access gateway for administrative authorities and department superintendents.
                 </p>
 
-                <Badge variant="outline" className="gap-1.5 px-3 py-1 font-extrabold border-slate-700 bg-slate-900/50 text-slate-300">
+                <Badge variant="outline" className="gap-1.5 px-3 py-1 font-extrabold border-slate-800 bg-[#0b1329]/50 text-slate-300 rounded-full">
                   <Sparkles className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
-                  Uttar Pradesh Secretariat Administration
+                  Government of Uttar Pradesh
                 </Badge>
               </div>
 
-              {/* 2-Column Professional Gateway Cards Grid */}
+              {/* Two Column Gateway Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl w-full mx-auto pt-4">
                 {roles.map((role, i) => {
                   const isHovered = hoveredRole === role.id;
@@ -450,85 +649,85 @@ export default function LoginPage() {
                       key={role.id}
                       initial={{ opacity: 0, y: 30 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.15, duration: 0.5, ease: "easeOut" }}
+                      transition={{ delay: i * 0.12, duration: 0.5, ease: "easeOut" }}
                       onMouseEnter={() => setHoveredRole(role.id)}
                       onMouseLeave={() => setHoveredRole(null)}
                       onClick={() => handleRoleSelect(role.id, role.href)}
+                      className="h-full"
                     >
-                      <div className="block group h-full">
+                      <div className="group h-full">
                         <Card
-                          className="h-full glass-premium border relative overflow-hidden transition-all duration-300 hover:scale-[1.03] text-left cursor-pointer flex flex-col justify-between bg-slate-950/40"
+                          className="h-full glass-premium border relative overflow-hidden transition-all duration-300 hover:scale-[1.03] text-left cursor-pointer flex flex-col justify-between bg-[#070b15]/40"
                           style={{
-                            borderColor: isHovered || isActiveSession ? role.color : "rgba(255, 255, 255, 0.08)",
+                            borderColor: isHovered || isActiveSession ? role.color : "rgba(255, 255, 255, 0.06)",
                             boxShadow: isActiveSession 
-                              ? `0 0 25px -5px ${role.color}50` 
+                              ? `0 0 30px -5px ${role.color}45` 
                               : isHovered 
-                              ? `0 0 25px -8px ${role.color}40` 
-                              : "0 4px 20px -8px rgba(0,0,0,0.5)",
+                              ? `0 0 30px -8px ${role.color}35` 
+                              : "0 4px 25px -8px rgba(0,0,0,0.6)",
                           }}
                         >
-                          {/* Sleek corner accent brackets that dynamically light up */}
+                          {/* Corner neon brackets */}
                           <div 
-                            className="absolute top-0 left-0 w-3.5 h-3.5 border-t-2 border-l-2 transition-colors duration-300" 
-                            style={{ borderColor: isHovered || isActiveSession ? role.color : "rgba(255, 255, 255, 0.15)" }} 
+                            className="absolute top-0 left-0 w-4 h-4 border-t border-l transition-colors duration-300" 
+                            style={{ borderColor: isHovered || isActiveSession ? role.color : "rgba(255, 255, 255, 0.12)" }} 
                           />
                           <div 
-                            className="absolute top-0 right-0 w-3.5 h-3.5 border-t-2 border-r-2 transition-colors duration-300" 
-                            style={{ borderColor: isHovered || isActiveSession ? role.color : "rgba(255, 255, 255, 0.15)" }} 
+                            className="absolute top-0 right-0 w-4 h-4 border-t border-r transition-colors duration-300" 
+                            style={{ borderColor: isHovered || isActiveSession ? role.color : "rgba(255, 255, 255, 0.12)" }} 
                           />
                           <div 
-                            className="absolute bottom-0 left-0 w-3.5 h-3.5 border-b-2 border-l-2 transition-colors duration-300" 
-                            style={{ borderColor: isHovered || isActiveSession ? role.color : "rgba(255, 255, 255, 0.15)" }} 
+                            className="absolute bottom-0 left-0 w-4 h-4 border-b border-l transition-colors duration-300" 
+                            style={{ borderColor: isHovered || isActiveSession ? role.color : "rgba(255, 255, 255, 0.12)" }} 
                           />
                           <div 
-                            className="absolute bottom-0 right-0 w-3.5 h-3.5 border-b-2 border-r-2 transition-colors duration-300" 
-                            style={{ borderColor: isHovered || isActiveSession ? role.color : "rgba(255, 255, 255, 0.15)" }} 
+                            className="absolute bottom-0 right-0 w-4 h-4 border-b border-r transition-colors duration-300" 
+                            style={{ borderColor: isHovered || isActiveSession ? role.color : "rgba(255, 255, 255, 0.12)" }} 
                           />
                           
                           <CardContent className="p-6 md:p-8 relative z-10 flex flex-col justify-between h-full space-y-6">
-                            <div className="space-y-5">
-                              
-                              {/* Glowing Icon Hub */}
+                            <div className="space-y-4">
                               <div className="flex items-center justify-between">
+                                {/* Glowing Icon Box */}
                                 <div
                                   className="w-14 h-14 rounded-2xl flex items-center justify-center border transition-all duration-300 group-hover:scale-110"
                                   style={{
                                     background: isHovered || isActiveSession ? `${role.color}15` : "rgba(255, 255, 255, 0.02)",
-                                    borderColor: isHovered || isActiveSession ? role.color : "rgba(255, 255, 255, 0.1)",
-                                    boxShadow: isHovered || isActiveSession ? `inset 0 0 10px ${role.color}25` : "none",
+                                    borderColor: isHovered || isActiveSession ? role.color : "rgba(255, 255, 255, 0.08)",
+                                    boxShadow: isHovered || isActiveSession ? `inset 0 0 12px ${role.color}20` : "none",
                                   }}
                                 >
                                   <role.icon 
                                     className="w-7 h-7 transition-transform duration-300" 
-                                    style={{ color: isHovered || isActiveSession ? role.color : "#94a3b8" }} 
+                                    style={{ color: isHovered || isActiveSession ? role.color : "#64748b" }} 
                                   />
                                 </div>
 
-                                <span className="font-mono text-[10px] text-slate-500 font-bold tracking-wider">
+                                <span className="font-mono text-[9px] text-slate-500 font-bold tracking-widest bg-slate-900/80 px-2.5 py-1 rounded-full border border-slate-800">
                                   {role.roleKey}
                                 </span>
                               </div>
 
-                              {/* Titles & Description */}
-                              <div className="space-y-1">
+                              {/* Title labels */}
+                              <div className="space-y-1 pt-2">
                                 {isActiveSession ? (
-                                  <Badge className="text-[9px] uppercase tracking-wider font-extrabold px-2 py-0.5 border-emerald-500/30 bg-emerald-500/10 text-emerald-400 animate-pulse gap-1 rounded-full">
+                                  <Badge className="text-[9px] uppercase tracking-wider font-extrabold px-2 py-0.5 border-emerald-500/30 bg-emerald-500/10 text-emerald-400 animate-pulse gap-1 rounded-full w-fit">
                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                                     Active Session
                                   </Badge>
                                 ) : (
-                                  <Badge variant="outline" className="text-[9px] uppercase tracking-wider font-extrabold px-2 py-0.5 border-slate-800 bg-slate-900/40 text-slate-400 rounded-full">
+                                  <Badge variant="outline" className="text-[9px] uppercase tracking-wider font-extrabold px-2.5 py-0.5 border-slate-800 bg-[#0e172a]/60 text-slate-400 rounded-full w-fit">
                                     {role.badge}
                                   </Badge>
                                 )}
                                 
                                 <h3 
-                                  className="text-xl font-bold text-white transition-colors pt-2"
+                                  className="text-xl font-bold text-white transition-colors pt-1.5"
                                   style={{ color: isHovered ? role.color : "#ffffff" }}
                                 >
                                   {role.title}
                                 </h3>
-                                <span className="text-[11px] text-slate-400 font-bold block">
+                                <span className="text-xs text-slate-400 font-semibold block">
                                   {role.titleHi}
                                 </span>
                                 
@@ -538,17 +737,17 @@ export default function LoginPage() {
                               </div>
                             </div>
 
-                            {/* Link CTA action strip */}
+                            {/* bottom banner */}
                             <div 
                               className="flex items-center justify-between gap-1.5 text-xs font-bold transition-colors border-t border-slate-900 pt-4 mt-auto"
-                              style={{ color: isActiveSession ? "#10b981" : isHovered ? role.color : "#94a3b8" }}
+                              style={{ color: isActiveSession ? "#10b981" : isHovered ? role.color : "#64748b" }}
                             >
                               <div className="flex flex-col">
-                                <span className="text-[10px] text-slate-500 font-medium">DISTRICT ASSIGNMENT</span>
+                                <span className="text-[9px] text-slate-500 font-medium tracking-wider">COMMAND NODE</span>
                                 <span className="text-xs text-slate-300 font-bold">{role.district}</span>
                               </div>
                               <div className="flex items-center gap-1">
-                                <span>{isActiveSession ? "Resume" : "Authorize"}</span>
+                                <span>{isActiveSession ? "Resume Connection" : "Access Terminal"}</span>
                                 <ArrowRight className={`w-3.5 h-3.5 ${isActiveSession ? "translate-x-0.5" : "group-hover:translate-x-1.5"} transition-transform`} />
                               </div>
                             </div>
@@ -560,20 +759,20 @@ export default function LoginPage() {
                 })}
               </div>
 
-              {/* Secure Notice Footer */}
+              {/* Secure Notice */}
               <motion.div
-                className="text-[11px] text-slate-500 font-semibold flex items-center justify-center gap-2 bg-slate-900/30 border border-slate-900 px-4 py-2.5 rounded-full w-fit mx-auto mt-4 shadow-inner"
+                className="text-[10px] text-slate-500 font-semibold flex items-center justify-center gap-2 bg-slate-900/20 border border-slate-900/60 px-4 py-2.5 rounded-full w-fit mx-auto mt-4 shadow-inner"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
+                transition={{ delay: 0.5 }}
               >
                 <Lock className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
-                <span>Authorized credentials mandatory. Access logs are archived for regulatory audit review.</span>
+                <span>Authorized credentials mandatory. Terminal connections and biometric requests are securely archived.</span>
               </motion.div>
             </motion.div>
           ) : (
             
-            // ================== CYBER LOGIN GATEWAY PANEL ==================
+            // ================== LOGIN FORM CONTAINER ==================
             <motion.div
               key="role-login-form"
               initial={{ opacity: 0, y: 25 }}
@@ -582,32 +781,32 @@ export default function LoginPage() {
               transition={{ duration: 0.4 }}
               className="max-w-md w-full mx-auto"
             >
-              {/* Futuristic Back Navigation */}
+              {/* Back to consoles */}
               <button
                 onClick={() => {
                   setActiveLoginForm(null);
                   setError(null);
                   setTriggerShake(false);
+                  setTerminalLogs([]);
                 }}
-                className="group flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-white mb-6 transition-colors bg-slate-900/50 hover:bg-slate-900 border border-slate-800/40 hover:border-slate-800 px-4 py-2 rounded-full cursor-pointer shadow-md"
+                className="group flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-white mb-6 transition-colors bg-[#0b1329]/60 hover:bg-[#0b1329] border border-slate-800/40 hover:border-slate-800 px-4 py-2 rounded-full cursor-pointer shadow-md"
               >
                 <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-                <span>Return to Command Console</span>
+                <span>Return to Role Gate</span>
               </button>
 
-              {/* Login main frame wrapper */}
               <motion.div
                 variants={shakeVariants}
                 animate={triggerShake ? "shake" : "default"}
               >
                 <Card
-                  className="glass-premium border shadow-2xl relative overflow-hidden text-left bg-slate-950/60"
+                  className="glass-premium border shadow-2xl relative overflow-hidden text-left bg-[#070b15]/65"
                   style={{
                     borderColor: `${theme.solid}40`,
                     boxShadow: `0 0 40px -10px ${theme.solid}25, inset 0 1px 0 rgba(255,255,255,0.05)`,
                   }}
                 >
-                  {/* Laser scan lines sweeping down when decryption is in process */}
+                  {/* Scanning Laser sweep line on Card when loading */}
                   {loading && (
                     <div 
                       className="absolute left-0 w-full h-[3px] opacity-90 pointer-events-none z-20 animate-laser-sweep"
@@ -618,7 +817,7 @@ export default function LoginPage() {
                     />
                   )}
 
-                  {/* Corner accents */}
+                  {/* Aesthetic corners */}
                   <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2" style={{ borderColor: theme.solid }} />
                   <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2" style={{ borderColor: theme.solid }} />
                   <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2" style={{ borderColor: theme.solid }} />
@@ -626,19 +825,18 @@ export default function LoginPage() {
 
                   <CardContent className="p-8 space-y-6 relative">
                     
-                    {/* Header Block with dynamic glow ring */}
+                    {/* Console Header details */}
                     <div className="flex items-start gap-4">
                       <div className="relative group">
                         <div 
-                          className="absolute -inset-1 rounded-2xl blur-md opacity-35 group-hover:opacity-60 transition duration-300 animate-pulse"
+                          className="absolute -inset-1.5 rounded-2xl blur-md opacity-35 group-hover:opacity-60 transition duration-300 animate-pulse"
                           style={{ backgroundColor: theme.solid }}
                         />
                         <div
-                          className="relative w-14 h-14 rounded-2xl flex items-center justify-center border shadow-inner transition-transform duration-300 hover:scale-105"
+                          className="relative w-14 h-14 rounded-2xl flex items-center justify-center border shadow-inner transition-transform duration-300 hover:scale-105 bg-slate-950"
                           style={{
-                            background: `${theme.solid}12`,
                             borderColor: theme.solid,
-                            boxShadow: `inset 0 0 8px ${theme.solid}15`,
+                            boxShadow: `inset 0 0 10px ${theme.solid}20`,
                           }}
                         >
                           {currentRoleConfig && (
@@ -651,26 +849,37 @@ export default function LoginPage() {
                       </div>
                       <div className="space-y-0.5">
                         <h2 className="text-xl font-bold text-white flex items-center gap-1.5">
-                          {currentRoleConfig?.title} Access
+                          {currentRoleConfig?.title} Authentication
                         </h2>
-                        <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest font-mono">
-                          {currentRoleConfig?.titleHi} • SECURE TERMINAL GATE
+                        <p className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest font-mono">
+                          {currentRoleConfig?.titleHi} • SECURE TERMINAL NODE
                         </p>
                       </div>
                     </div>
 
                     <p className="text-xs text-slate-400 leading-relaxed border-b border-slate-900 pb-4 font-medium">
-                      Decrypt your local dashboard files using security clearance keycodes to establish a secure administrative session.
+                      Authenticate with pre-registered clearance keys or utilize the biometric scanning gate.
                     </p>
 
-                    {/* Authenticator Form */}
-                    <form onSubmit={handleLoginSubmit} className="space-y-6">
+                    {/* Quick Demo Pre-fill Box */}
+                    <div className="bg-[#0b1329]/80 border border-slate-800/80 rounded-xl p-3.5 space-y-2">
+                      <div className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-300">
+                        <Cpu className="w-3.5 h-3.5 text-blue-400" />
+                        <span>Prefilled System Credentials</span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 font-medium">
+                        Console coordinates are preloaded for quick demo simulation. You may also trigger biometric authentication bypass.
+                      </p>
+                    </div>
+
+                    {/* Login inputs form */}
+                    <form onSubmit={handleLoginSubmit} className="space-y-5">
                       
-                      {/* Email Input Field */}
-                      <div className="space-y-2">
+                      {/* Email input */}
+                      <div className="space-y-1.5">
                         <div className="flex items-center justify-between">
                           <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest pl-2">
-                            Official Email Address
+                            Official Email ID / Node Identifier
                           </label>
                           {emailFocused && (
                             <motion.span 
@@ -679,7 +888,7 @@ export default function LoginPage() {
                               className="text-[9px] font-mono font-bold uppercase tracking-wider"
                               style={{ color: theme.solid }}
                             >
-                              Scanning Node...
+                              Scanning port...
                             </motion.span>
                           )}
                         </div>
@@ -687,7 +896,7 @@ export default function LoginPage() {
                           <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-300 z-10">
                             <Mail 
                               className="w-4 h-4 transition-colors" 
-                              style={{ color: emailFocused ? theme.solid : "#64748b" }} 
+                              style={{ color: emailFocused ? theme.solid : "#475569" }} 
                             />
                           </div>
                           <input
@@ -697,21 +906,21 @@ export default function LoginPage() {
                             onFocus={() => setEmailFocused(true)}
                             onBlur={() => setEmailFocused(false)}
                             placeholder="e.g. name@up.gov.in"
-                            className="w-full bg-slate-950/60 backdrop-blur-md border rounded-full pl-11 pr-4 py-3.5 text-sm text-white placeholder:text-slate-500 focus:outline-none transition-all duration-300 font-medium"
+                            className="w-full bg-[#030712]/60 backdrop-blur-md border rounded-full pl-11 pr-4 py-3.5 text-xs text-white placeholder:text-slate-500 focus:outline-none transition-all duration-300 font-semibold"
                             style={{
-                              borderColor: emailFocused ? theme.solid : "rgba(255, 255, 255, 0.08)",
+                              borderColor: emailFocused ? theme.solid : "rgba(255, 255, 255, 0.06)",
                               boxShadow: emailFocused 
                                 ? `0 0 20px ${theme.solid}20, inset 0 0 10px ${theme.solid}10` 
                                 : "inset 0 2px 4px rgba(0,0,0,0.5)",
                             }}
                             required
-                            disabled={loading || success}
+                            disabled={loading || success || biometricScanning}
                           />
                         </div>
                       </div>
 
-                      {/* Password Input Field */}
-                      <div className="space-y-2">
+                      {/* Password input */}
+                      <div className="space-y-1.5">
                         <div className="flex items-center justify-between">
                           <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest pl-2">
                             Security Passkey / Code
@@ -723,7 +932,7 @@ export default function LoginPage() {
                               className="text-[9px] font-mono font-bold uppercase tracking-wider"
                               style={{ color: theme.solid }}
                             >
-                              Securing Port
+                              Verifying port...
                             </motion.span>
                           )}
                         </div>
@@ -731,7 +940,7 @@ export default function LoginPage() {
                           <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-300 z-10">
                             <KeyRound 
                               className="w-4 h-4 transition-colors" 
-                              style={{ color: passwordFocused ? theme.solid : "#64748b" }} 
+                              style={{ color: passwordFocused ? theme.solid : "#475569" }} 
                             />
                           </div>
                           <input
@@ -741,31 +950,52 @@ export default function LoginPage() {
                             onFocus={() => setPasswordFocused(true)}
                             onBlur={() => setPasswordFocused(false)}
                             placeholder="••••"
-                            className="w-full bg-slate-950/60 backdrop-blur-md border rounded-full pl-11 pr-12 py-3.5 text-sm text-white placeholder:text-slate-500 focus:outline-none transition-all duration-300 font-medium tracking-[0.25em]"
+                            className="w-full bg-[#030712]/60 backdrop-blur-md border rounded-full pl-11 pr-12 py-3.5 text-xs text-white placeholder:text-slate-500 focus:outline-none transition-all duration-300 font-bold tracking-[0.25em]"
                             style={{
-                              borderColor: passwordFocused ? theme.solid : "rgba(255, 255, 255, 0.08)",
+                              borderColor: passwordFocused ? theme.solid : "rgba(255, 255, 255, 0.06)",
                               boxShadow: passwordFocused 
                                 ? `0 0 20px ${theme.solid}20, inset 0 0 10px ${theme.solid}10` 
                                 : "inset 0 2px 4px rgba(0,0,0,0.5)",
                             }}
                             required
-                            disabled={loading || success}
+                            disabled={loading || success || biometricScanning}
                           />
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
                             className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors cursor-pointer z-10 p-1"
-                            disabled={loading || success}
+                            disabled={loading || success || biometricScanning}
                           >
-                            {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
                         </div>
                       </div>
 
-                      {/* Error Box Notice */}
+                      {/* Dynamic Terminal Output Messages */}
+                      {terminalLogs.length > 0 && (
+                        <div className="bg-[#030712] border border-slate-900 rounded-xl p-3.5 space-y-1 font-mono text-[9px] text-cyan-400 overflow-hidden shadow-inner max-h-[140px] overflow-y-auto">
+                          <div className="flex items-center gap-1.5 border-b border-slate-900 pb-1.5 mb-1.5 text-slate-400 font-bold">
+                            <Terminal className="w-3.5 h-3.5 text-cyan-500 animate-pulse" />
+                            <span>SECURITY CORE TELEMETRY LOGS</span>
+                          </div>
+                          {terminalLogs.map((log, index) => (
+                            <motion.div 
+                              key={index}
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              className="leading-relaxed"
+                            >
+                              <span className="text-slate-600 mr-1.5">{`>`}</span>
+                              {log}
+                            </motion.div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Error panel */}
                       {error && (
                         <motion.div
-                          className="bg-rose-950/20 border border-rose-500/20 text-rose-300 text-xs font-semibold px-4 py-3 rounded-xl flex items-start gap-2.5 shadow-md animate-pulse"
+                          className="bg-rose-950/20 border border-rose-500/20 text-rose-300 text-xs font-semibold px-4 py-3 rounded-xl flex items-start gap-2.5 shadow-md"
                           initial={{ opacity: 0, y: -5 }}
                           animate={{ opacity: 1, y: 0 }}
                         >
@@ -774,62 +1004,68 @@ export default function LoginPage() {
                         </motion.div>
                       )}
 
-                      {/* Futuristic Decryption status tracker with progress bar */}
-                      {loading && (
-                        <div className="space-y-2 border-t border-slate-900 pt-3">
-                          <div className="text-[9.5px] text-slate-400 font-mono flex items-center justify-between animate-pulse">
-                            <span className="flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
-                              [DECRYPTING RSA SHA-256 KEYS]
-                            </span>
-                            <span>EST. SECURE DELAY ~ 0.4S</span>
-                          </div>
-                          <div className="h-1.5 w-full bg-slate-950 border border-white/5 rounded-full overflow-hidden relative">
-                            <motion.div
-                              className="h-full rounded-full"
-                              style={{
-                                background: `linear-gradient(90deg, ${theme.solid}, #3B82F6)`,
-                                boxShadow: `0 0 8px ${theme.solid}`,
-                              }}
-                              initial={{ width: 0 }}
-                              animate={{ width: "100%" }}
-                              transition={{ duration: 1.2, ease: "easeInOut" }}
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Submit Actions */}
+                      {/* Actions Buttons Group */}
                       <div className="space-y-3 pt-2">
+                        {/* Interactive Holographic Biometric Scanner Button */}
+                        <div className="relative group">
+                          {/* Pulsing ring around button */}
+                          <div 
+                            className={`absolute -inset-1 rounded-full blur opacity-15 group-hover:opacity-25 transition ${biometricScanning ? "opacity-35 animate-pulse" : ""}`}
+                            style={{ backgroundColor: theme.solid }}
+                          />
+                          <Button
+                            type="button"
+                            onClick={handleBiometricBypass}
+                            disabled={loading || success || biometricScanning}
+                            className="w-full bg-[#0b1329]/50 hover:bg-[#0b1329] border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white cursor-pointer py-5.5 rounded-full font-bold uppercase text-[10px] tracking-widest flex items-center justify-center gap-2.5 transition-all duration-300 relative overflow-hidden"
+                          >
+                            {/* Scanning indicator */}
+                            {biometricScanning && (
+                              <div 
+                                className="absolute left-0 w-full h-[2px] bg-cyan-400 animate-scan-biometric shadow-[0_0_8px_cyan]"
+                              />
+                            )}
+                            
+                            <Fingerprint className={`w-4.5 h-4.5 ${biometricScanning ? "text-cyan-400 animate-pulse" : "text-slate-400"}`} />
+                            <span>
+                              {biometricScanning 
+                                ? "Analyzing Retina ID..." 
+                                : "Tap to scan Biometrics (retinal/fingerprint)"}
+                            </span>
+                          </Button>
+                        </div>
+
+                        {/* Standard Authorization Submit Button */}
                         <Button
                           type="submit"
-                          disabled={loading || success}
-                          className="w-full text-white cursor-pointer py-6 rounded-full font-extrabold uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg hover:brightness-110 hover:scale-[1.01] active:scale-[0.98] transition-all duration-300"
+                          disabled={loading || success || biometricScanning}
+                          className="w-full text-white cursor-pointer py-6 rounded-full font-extrabold uppercase tracking-wider flex items-center justify-center gap-2.5 shadow-lg hover:brightness-110 hover:scale-[1.01] active:scale-[0.98] transition-all duration-300"
                           style={{
                             background: success
                               ? "#10B981"
                               : `linear-gradient(135deg, ${theme.solid}, #3B82F6)`,
-                            boxShadow: `0 4px 25px -5px ${theme.solid}60`,
+                            boxShadow: `0 4px 25px -5px ${theme.solid}50`,
                           }}
                         >
                           {loading ? (
                             <>
                               <Loader2 className="w-4.5 h-4.5 animate-spin" />
-                              <span>Decrypting Mainframe Core...</span>
+                              <span>Resolving Handshake Keys...</span>
                             </>
                           ) : success ? (
                             <>
                               <CheckCircle className="w-4.5 h-4.5 text-white animate-bounce" />
-                              <span>Handshake Cleared</span>
+                              <span>Command Credentials Cleared</span>
                             </>
                           ) : (
                             <>
                               <Lock className="w-4 h-4 text-white" />
-                              <span>Authorize & Enter Mainframe</span>
+                              <span>Authorize & Launch Console</span>
                             </>
                           )}
                         </Button>
                       </div>
+
                     </form>
                   </CardContent>
                 </Card>
