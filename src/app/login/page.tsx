@@ -769,6 +769,23 @@ export default function LoginPage() {
                 <Lock className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
                 <span>Authorized credentials mandatory. Terminal connections and biometric requests are securely archived.</span>
               </motion.div>
+
+              {/* Citizen Portal Shortcut */}
+              <motion.div
+                className="pt-2 flex items-center justify-center gap-4 text-xs"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+              >
+                <button
+                  type="button"
+                  onClick={() => router.push("/citizen")}
+                  className="inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 font-semibold bg-cyan-950/30 hover:bg-cyan-900/40 border border-cyan-800/40 px-4 py-2 rounded-full transition-all cursor-pointer shadow-sm hover:scale-105"
+                >
+                  <User className="w-3.5 h-3.5" />
+                  <span>Are you a citizen? File Grievance at Citizen Portal &rarr;</span>
+                </button>
+              </motion.div>
             </motion.div>
           ) : (
             

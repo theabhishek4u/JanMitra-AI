@@ -572,6 +572,7 @@ export function ComplaintForm({
       }
     } catch (err) {
       console.error("AI classification execution error:", err);
+      setTokenAlert(isHi ? "शिकायत दर्ज करने में समस्या आई। कृपया पुनः प्रयास करें।" : "Failed to process grievance. Please try again.");
       setStep("input");
     }
   };

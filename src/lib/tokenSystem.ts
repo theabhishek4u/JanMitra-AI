@@ -99,7 +99,14 @@ export function getTokenState(): TokenState {
     return fresh;
   }
 
-  const state: TokenState = JSON.parse(stored);
+  let state: TokenState;
+  try {
+    state = JSON.parse(stored);
+  } catch {
+    const fresh = getDefaultState();
+    saveTokenState(fresh);
+    return fresh;
+  }
 
   // Auto-reset check: if 24 hours have passed since last reset
   const lastReset = new Date(state.lastResetTimestamp).getTime();

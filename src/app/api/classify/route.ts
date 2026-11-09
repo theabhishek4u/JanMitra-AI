@@ -118,7 +118,15 @@ Return ONLY valid JSON matching this schema. No extra text, no markdown block wr
       throw new Error("Invalid classification JSON fields from Gemini response");
     }
 
-    return NextResponse.json({ ...classification, isFallback: false });
+    const localBaseline = classifyComplaint(text || "");
+    const safeClassification = {
+      ...localBaseline,
+      ...classification,
+      category: classification.category || localBaseline.category,
+      department: classification.department || localBaseline.department,
+      isFallback: false,
+    };
+    return NextResponse.json(safeClassification);
 
   } catch (error: any) {
     console.error("Error in API classify route:", error);

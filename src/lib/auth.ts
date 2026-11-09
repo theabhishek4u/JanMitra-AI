@@ -11,6 +11,80 @@ export interface AuthSession {
   mobile?: string;
 }
 
+export interface CitizenRecord {
+  id: string;
+  name: string;
+  email: string;
+  mobile: string;
+  password?: string;
+  createdAt?: string;
+}
+
+const isClient = typeof window !== "undefined";
+const CITIZENS_STORAGE_KEY = "janmitra_registered_citizens_v2";
+
+const defaultDemoCitizens: CitizenRecord[] = [
+  {
+    id: "cit-001",
+    name: "Rahul Sharma",
+    email: "rahul@gmail.com",
+    mobile: "9876543210",
+    password: "1234",
+    createdAt: "2026-05-01T10:00:00Z",
+  },
+  {
+    id: "cit-002",
+    name: "Priya Verma",
+    email: "priya@gmail.com",
+    mobile: "9876543211",
+    password: "1234",
+    createdAt: "2026-05-02T10:00:00Z",
+  },
+  {
+    id: "cit-003",
+    name: "Amit Patel",
+    email: "amit@gmail.com",
+    mobile: "9876543212",
+    password: "1234",
+    createdAt: "2026-05-03T10:00:00Z",
+  },
+];
+
+let memoryCitizens: CitizenRecord[] = JSON.parse(JSON.stringify(defaultDemoCitizens));
+
+export function getLocalCitizens(): CitizenRecord[] {
+  if (!isClient) {
+    return memoryCitizens;
+  }
+  try {
+    const raw = localStorage.getItem(CITIZENS_STORAGE_KEY);
+    if (!raw) {
+      localStorage.setItem(CITIZENS_STORAGE_KEY, JSON.stringify(defaultDemoCitizens));
+      return JSON.parse(JSON.stringify(defaultDemoCitizens));
+    }
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed;
+    }
+    localStorage.setItem(CITIZENS_STORAGE_KEY, JSON.stringify(defaultDemoCitizens));
+    return JSON.parse(JSON.stringify(defaultDemoCitizens));
+  } catch (err) {
+    return JSON.parse(JSON.stringify(defaultDemoCitizens));
+  }
+}
+
+export function saveLocalCitizens(citizens: CitizenRecord[]) {
+  if (!isClient) {
+    memoryCitizens = citizens;
+    return;
+  }
+  try {
+    localStorage.setItem(CITIZENS_STORAGE_KEY, JSON.stringify(citizens));
+  } catch (err) {
+    console.warn("Failed to persist citizens locally:", err);
+  }
+}
+
 // Keeping these for legacy compat if any components read them directly
 export function getCookie(name: string): string | null {
   if (typeof document === "undefined") return null;
@@ -43,10 +117,12 @@ export function eraseCookie(name: string) {
 }
 
 /**
- * Gets the current auth session from Supabase.
- * Returns null if not authenticated or if an error occurs.
+ * Gets the current auth session from Supabase or Local Storage.
  */
 export async function getAuthSessionAsync(): Promise<AuthSession | null> {
+  const local = getAuthSession();
+  if (local) return local;
+
   if (typeof window === "undefined") return null;
 
   try {
@@ -56,9 +132,6 @@ export async function getAuthSessionAsync(): Promise<AuthSession | null> {
       return null;
     }
 
-    // Determine role based on user metadata or a dedicated 'users' table
-    // For simplicity, falling back to local storage sync if metadata isn't set,
-    // but ideally we fetch the user's role from public.users
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('role, name')
@@ -77,14 +150,12 @@ export async function getAuthSessionAsync(): Promise<AuthSession | null> {
       name: userData.name
     };
   } catch (err) {
-    console.error("Error fetching session:", err);
     return null;
   }
 }
 
 /**
  * Legacy synchronous getter - relies on local storage cache
- * Only use for initial renders where async isn't possible yet.
  */
 export function getAuthSession(): AuthSession | null {
   if (typeof window === "undefined") return null;
@@ -111,7 +182,11 @@ export function setAuthSession(session: AuthSession) {
 
 export async function clearAuthSessionAsync() {
   if (typeof window === "undefined") return;
-  await supabase.auth.signOut();
+  try {
+    await supabase.auth.signOut();
+  } catch {
+    // ignore
+  }
   clearAuthSession();
 }
 
@@ -121,47 +196,75 @@ export function clearAuthSession() {
   eraseCookie("janmitra_auth");
 }
 
-export async function registerCitizen(name: string, email: string, mobile: string, password: string): Promise<{ success: boolean; error?: string; session?: AuthSession }> {
+export async function registerCitizen(
+  name: string,
+  email: string,
+  mobile: string,
+  password: string
+): Promise<{ success: boolean; error?: string; session?: AuthSession }> {
   try {
     const cleanEmail = email.toLowerCase().trim();
     const cleanMobile = mobile.trim();
+    const cleanName = name.trim();
 
-    // Check if email already exists
-    const { data: existingEmail } = await supabase
-      .from("citizens")
-      .select("id")
-      .eq("email", cleanEmail)
-      .maybeSingle();
-
-    if (existingEmail) {
+    // 1. Check local citizens cache first
+    const localCitizens = getLocalCitizens();
+    if (localCitizens.some(c => c.email.toLowerCase() === cleanEmail)) {
       return { success: false, error: "Email ID is already registered." };
     }
-
-    // Check if mobile already exists
-    const { data: existingMobile } = await supabase
-      .from("citizens")
-      .select("id")
-      .eq("mobile", cleanMobile)
-      .maybeSingle();
-
-    if (existingMobile) {
+    if (localCitizens.some(c => c.mobile === cleanMobile)) {
       return { success: false, error: "Mobile number is already registered." };
     }
 
-    // Insert new citizen
-    const { data: newCitizen, error } = await supabase
-      .from("citizens")
-      .insert({
-        name: name.trim(),
+    // 2. Try Supabase verification if online
+    try {
+      const { data: existingEmail } = await supabase
+        .from("citizens")
+        .select("id")
+        .eq("email", cleanEmail)
+        .maybeSingle();
+
+      if (existingEmail) {
+        return { success: false, error: "Email ID is already registered." };
+      }
+
+      const { data: existingMobile } = await supabase
+        .from("citizens")
+        .select("id")
+        .eq("mobile", cleanMobile)
+        .maybeSingle();
+
+      if (existingMobile) {
+        return { success: false, error: "Mobile number is already registered." };
+      }
+    } catch {
+      // Supabase offline, proceed with local check
+    }
+
+    // 3. Create new citizen record
+    const newId = `cit-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const newCitizen: CitizenRecord = {
+      id: newId,
+      name: cleanName,
+      email: cleanEmail,
+      mobile: cleanMobile,
+      password,
+      createdAt: new Date().toISOString(),
+    };
+
+    saveLocalCitizens([...localCitizens, newCitizen]);
+
+    // 4. Try background insert to Supabase
+    try {
+      await supabase.from("citizens").insert({
+        id: newId,
+        name: cleanName,
         email: cleanEmail,
         mobile: cleanMobile,
         password: password,
-      })
-      .select()
-      .single();
-
-    if (error || !newCitizen) {
-      return { success: false, error: error?.message || "Registration failed." };
+      });
+    } catch {
+      // Supabase offline, local record is safe
     }
 
     const session: AuthSession = {
@@ -179,29 +282,62 @@ export async function registerCitizen(name: string, email: string, mobile: strin
   }
 }
 
-export async function loginCitizen(identifier: string, password: string): Promise<{ success: boolean; error?: string; session?: AuthSession }> {
+export async function loginCitizen(
+  identifier: string,
+  password: string
+): Promise<{ success: boolean; error?: string; session?: AuthSession }> {
   try {
     const cleanId = identifier.trim();
-    const { data: citizen, error } = await supabase
-      .from("citizens")
-      .select("*")
-      .or(`email.eq.${cleanId.toLowerCase()},mobile.eq.${cleanId}`)
-      .maybeSingle();
+    const cleanLower = cleanId.toLowerCase();
 
-    if (error || !citizen) {
+    // 1. Try Supabase first if available
+    try {
+      const { data: citizen, error } = await supabase
+        .from("citizens")
+        .select("*")
+        .or(`email.eq.${cleanLower},mobile.eq.${cleanId}`)
+        .maybeSingle();
+
+      if (!error && citizen) {
+        if (citizen.password !== password) {
+          return { success: false, error: "Incorrect security credentials." };
+        }
+
+        const session: AuthSession = {
+          role: "citizen",
+          email: citizen.email,
+          name: citizen.name,
+          id: citizen.id,
+          mobile: citizen.mobile,
+          authenticatedAt: new Date().toISOString(),
+        };
+
+        return { success: true, session };
+      }
+    } catch {
+      // Supabase unreachable, fallback to local store
+    }
+
+    // 2. Check local citizens storage
+    const localCitizens = getLocalCitizens();
+    const matched = localCitizens.find(
+      c => c.email.toLowerCase() === cleanLower || c.mobile === cleanId
+    );
+
+    if (!matched) {
       return { success: false, error: "Invalid credentials or account does not exist." };
     }
 
-    if (citizen.password !== password) {
+    if (matched.password !== password) {
       return { success: false, error: "Incorrect security credentials." };
     }
 
     const session: AuthSession = {
       role: "citizen",
-      email: citizen.email,
-      name: citizen.name,
-      id: citizen.id,
-      mobile: citizen.mobile,
+      email: matched.email,
+      name: matched.name,
+      id: matched.id,
+      mobile: matched.mobile,
       authenticatedAt: new Date().toISOString(),
     };
 
@@ -211,29 +347,43 @@ export async function loginCitizen(identifier: string, password: string): Promis
   }
 }
 
-export async function resetCitizenPassword(email: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
+export async function resetCitizenPassword(
+  email: string,
+  newPassword: string
+): Promise<{ success: boolean; error?: string }> {
   try {
     const cleanEmail = email.toLowerCase().trim();
+    const localCitizens = getLocalCitizens();
+    const index = localCitizens.findIndex(c => c.email.toLowerCase() === cleanEmail);
 
-    // Check if email exists in database
-    const { data: citizen, error: findError } = await supabase
-      .from("citizens")
-      .select("id")
-      .eq("email", cleanEmail)
-      .maybeSingle();
+    if (index === -1) {
+      // Try checking Supabase
+      try {
+        const { data: citizen } = await supabase
+          .from("citizens")
+          .select("id")
+          .eq("email", cleanEmail)
+          .maybeSingle();
 
-    if (findError || !citizen) {
-      return { success: false, error: "No registered citizen account found with this email." };
+        if (!citizen) {
+          return { success: false, error: "No registered citizen account found with this email." };
+        }
+      } catch {
+        return { success: false, error: "No registered citizen account found with this email." };
+      }
+    } else {
+      localCitizens[index].password = newPassword;
+      saveLocalCitizens(localCitizens);
     }
 
-    // Update the password in Supabase citizens table
-    const { error: updateError } = await supabase
-      .from("citizens")
-      .update({ password: newPassword })
-      .eq("email", cleanEmail);
-
-    if (updateError) {
-      return { success: false, error: updateError.message };
+    // Attempt Supabase update
+    try {
+      await supabase
+        .from("citizens")
+        .update({ password: newPassword })
+        .eq("email", cleanEmail);
+    } catch {
+      // ignore
     }
 
     return { success: true };
@@ -243,34 +393,30 @@ export async function resetCitizenPassword(email: string, newPassword: string): 
 }
 
 /**
- * Fetch all registered citizens from the Supabase citizens table.
- * Excludes plain-text passwords and includes fallback schema support.
+ * Fetch all registered citizens.
  */
 export async function getRegisteredCitizens(): Promise<any[]> {
+  // Try Supabase first
   try {
     const { data, error } = await supabase
       .from("citizens")
       .select("id, name, email, mobile, created_at")
       .order("name", { ascending: true });
 
-    if (error) {
-      console.warn("Retrying fetch without created_at ordering:", error.message);
-      const { data: fallbackData, error: fallbackError } = await supabase
-        .from("citizens")
-        .select("id, name, email, mobile");
-
-      if (fallbackError) {
-        console.error("Error in fallback fetch:", fallbackError.message);
-        return [];
-      }
-      return fallbackData || [];
+    if (!error && data && data.length > 0) {
+      return data;
     }
-
-    return data || [];
-  } catch (err) {
-    console.error("Unexpected error in getRegisteredCitizens:", err);
-    return [];
+  } catch {
+    // fallback
   }
+
+  // Fallback to local citizens
+  const locals = getLocalCitizens();
+  return locals.map(c => ({
+    id: c.id,
+    name: c.name,
+    email: c.email,
+    mobile: c.mobile,
+    created_at: c.createdAt || new Date().toISOString(),
+  }));
 }
-
-

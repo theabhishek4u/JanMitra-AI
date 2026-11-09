@@ -1,23 +1,73 @@
-import { Complaint, ComplaintStatus, DashboardStats, AnalyticsData, Priority, Notification, ResolutionProof, CitizenVerification } from "@/types";
+import { Complaint, ComplaintStatus, DashboardStats, AnalyticsData, Priority, Notification, ResolutionProof, CitizenVerification, TimelineEvent } from "@/types";
 import { supabase } from "./supabaseClient";
 import { getDepartmentById, getDepartmentForCategory } from "@/data/departments";
 import { analyzeComplaintTrust } from "@/lib/fakeDetection";
+import { mockComplaints } from "@/data/complaints";
 
 const isClient = typeof window !== "undefined";
 const CITIZEN_NOTIF_KEY = "janmitra_citizen_notifications";
 const OFFICER_NOTIF_KEY = "janmitra_officer_notifications";
+const COMPLAINTS_STORAGE_KEY = "janmitra_complaints_v2";
+
+// In-memory store fallback for SSR and Node.js test runs
+let memoryComplaints: Complaint[] = JSON.parse(JSON.stringify(mockComplaints));
+
+// ============================================
+// Local Storage & Hybrid Persistence Helpers
+// ============================================
+export function getLocalComplaintsStore(): Complaint[] {
+  if (!isClient) {
+    return memoryComplaints;
+  }
+  try {
+    const raw = localStorage.getItem(COMPLAINTS_STORAGE_KEY);
+    if (!raw) {
+      localStorage.setItem(COMPLAINTS_STORAGE_KEY, JSON.stringify(mockComplaints));
+      return JSON.parse(JSON.stringify(mockComplaints));
+    }
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed;
+    }
+    localStorage.setItem(COMPLAINTS_STORAGE_KEY, JSON.stringify(mockComplaints));
+    return JSON.parse(JSON.stringify(mockComplaints));
+  } catch (err) {
+    console.warn("Failed reading local complaints store, using default mock data:", err);
+    return JSON.parse(JSON.stringify(mockComplaints));
+  }
+}
+
+export function saveLocalComplaintsStore(complaints: Complaint[]) {
+  if (!isClient) {
+    memoryComplaints = complaints;
+    return;
+  }
+  try {
+    localStorage.setItem(COMPLAINTS_STORAGE_KEY, JSON.stringify(complaints));
+  } catch (err) {
+    console.warn("Failed saving local complaints store:", err);
+  }
+}
 
 // Notifications Helpers
 export function getCitizenNotifications(): Notification[] {
   if (!isClient) return [];
-  const data = localStorage.getItem(CITIZEN_NOTIF_KEY);
-  return data ? JSON.parse(data) : [];
+  try {
+    const data = localStorage.getItem(CITIZEN_NOTIF_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
 }
 
 export function getOfficerNotifications(): Notification[] {
   if (!isClient) return [];
-  const data = localStorage.getItem(OFFICER_NOTIF_KEY);
-  return data ? JSON.parse(data) : [];
+  try {
+    const data = localStorage.getItem(OFFICER_NOTIF_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
 }
 
 export function addCitizenNotification(
@@ -38,7 +88,11 @@ export function addCitizenNotification(
   };
   notifs.unshift(newNotif);
   if (isClient) {
-    localStorage.setItem(CITIZEN_NOTIF_KEY, JSON.stringify(notifs));
+    try {
+      localStorage.setItem(CITIZEN_NOTIF_KEY, JSON.stringify(notifs));
+    } catch {
+      // ignore
+    }
   }
   return newNotif;
 }
@@ -61,7 +115,11 @@ export function addOfficerNotification(
   };
   notifs.unshift(newNotif);
   if (isClient) {
-    localStorage.setItem(OFFICER_NOTIF_KEY, JSON.stringify(notifs));
+    try {
+      localStorage.setItem(OFFICER_NOTIF_KEY, JSON.stringify(notifs));
+    } catch {
+      // ignore
+    }
   }
   return newNotif;
 }
@@ -71,14 +129,22 @@ export function markNotificationAsRead(id: string, role: "citizen" | "officer") 
   const notifs = role === "citizen" ? getCitizenNotifications() : getOfficerNotifications();
   const updated = notifs.map((n) => (n.id === id ? { ...n, read: true } : n));
   if (isClient) {
-    localStorage.setItem(key, JSON.stringify(updated));
+    try {
+      localStorage.setItem(key, JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
   }
 }
 
 export function clearNotifications(role: "citizen" | "officer") {
   const key = role === "citizen" ? CITIZEN_NOTIF_KEY : OFFICER_NOTIF_KEY;
   if (isClient) {
-    localStorage.setItem(key, JSON.stringify([]));
+    try {
+      localStorage.setItem(key, JSON.stringify([]));
+    } catch {
+      // ignore
+    }
   }
 }
 
@@ -107,18 +173,18 @@ function mapComplaint(row: any, updates: any[] = []): Complaint {
     aiSummary: row.ai_summary,
     aiSummaryHi: row.ai_summary_hi || row.ai_summary,
     aiConfidence: row.ai_confidence,
-    timeline: updates.map(u => ({
+    timeline: (updates || []).map(u => ({
       id: u.id,
       status: u.status as ComplaintStatus,
       message: u.message,
       messageHi: u.message_hi || u.message,
-      timestamp: u.created_at,
-      isActive: true, // Will compute active based on logic if needed
+      timestamp: u.created_at || u.timestamp || new Date().toISOString(),
+      isActive: true,
     })).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    createdAt: row.created_at || new Date().toISOString(),
+    updatedAt: row.updated_at || new Date().toISOString(),
     resolvedAt: row.resolved_at,
-    escalationLevel: row.escalation_level,
+    escalationLevel: row.escalation_level || 0,
     assignedOfficer: row.assigned_officer,
     trustAnalysis: row.trust_analysis,
     resolutionProof: row.resolution_proof,
@@ -127,38 +193,50 @@ function mapComplaint(row: any, updates: any[] = []): Complaint {
 }
 
 export async function getComplaints(citizenId?: string): Promise<Complaint[]> {
-  let query = supabase.from("complaints").select("*");
-  if (citizenId) {
-    query = query.eq("citizen_id", citizenId);
+  let rawList: Complaint[] = [];
+
+  // Try Supabase first if available
+  try {
+    let query = supabase.from("complaints").select("*");
+    if (citizenId) {
+      query = query.eq("citizen_id", citizenId);
+    }
+    const { data: complaints, error: cErr } = await query;
+    if (!cErr && complaints && complaints.length > 0) {
+      const { data: updates } = await supabase.from("complaint_updates").select("*");
+      const updatesByComplaint = (updates || []).reduce((acc: any, u: any) => {
+        if (!acc[u.complaint_id]) acc[u.complaint_id] = [];
+        acc[u.complaint_id].push(u);
+        return acc;
+      }, {});
+      rawList = complaints.map(c => mapComplaint(c, updatesByComplaint[c.id] || []));
+    }
+  } catch (err) {
+    // Supabase unreachable or network failure; continue to local fallback
   }
-  const { data: complaints, error: cErr } = await query;
-    
-  if (cErr || !complaints) return [];
 
-  const { data: updates, error: uErr } = await supabase
-    .from("complaint_updates")
-    .select("*");
-    
-  const updatesByComplaint = (updates || []).reduce((acc: any, u: any) => {
-    if (!acc[u.complaint_id]) acc[u.complaint_id] = [];
-    acc[u.complaint_id].push(u);
-    return acc;
-  }, {});
+  // If Supabase didn't provide rows, use local store
+  if (rawList.length === 0) {
+    const localStore = getLocalComplaintsStore();
+    if (citizenId) {
+      rawList = localStore.filter(c => c.citizenId === citizenId);
+    } else {
+      rawList = [...localStore];
+    }
+  }
 
-  const mapped = complaints.map(c => mapComplaint(c, updatesByComplaint[c.id] || []));
-  
   // Clustering logic for hotspots
   const activeGroups: Record<string, number> = {};
-  mapped.forEach((c) => {
+  rawList.forEach((c) => {
     if (c.status !== "resolved") {
-      const key = `${c.area.toLowerCase().trim()}_${c.category.toLowerCase().trim()}`;
+      const key = `${(c.area || "").toLowerCase().trim()}_${(c.category || "").toLowerCase().trim()}`;
       activeGroups[key] = (activeGroups[key] || 0) + 1;
     }
   });
 
-  const processed = mapped.map((c) => {
+  const processed = rawList.map((c) => {
     if (c.status !== "resolved") {
-      const key = `${c.area.toLowerCase().trim()}_${c.category.toLowerCase().trim()}`;
+      const key = `${(c.area || "").toLowerCase().trim()}_${(c.category || "").toLowerCase().trim()}`;
       const count = activeGroups[key] || 0;
       if (count >= 2) {
         return {
@@ -192,75 +270,145 @@ export async function getComplaints(citizenId?: string): Promise<Complaint[]> {
 }
 
 export async function getComplaintById(id: string): Promise<Complaint | undefined> {
-  const { data, error } = await supabase.from("complaints").select("*").eq("id", id).single();
-  if (error || !data) return undefined;
-  const { data: updates } = await supabase.from("complaint_updates").select("*").eq("complaint_id", id);
-  return mapComplaint(data, updates || []);
+  // Try Supabase first
+  try {
+    const { data, error } = await supabase.from("complaints").select("*").eq("id", id).single();
+    if (!error && data) {
+      const { data: updates } = await supabase.from("complaint_updates").select("*").eq("complaint_id", id);
+      return mapComplaint(data, updates || []);
+    }
+  } catch {
+    // ignore
+  }
+
+  // Local fallback
+  const localList = getLocalComplaintsStore();
+  return localList.find(c => c.id.toUpperCase() === id.toUpperCase());
 }
 
 export async function addComplaint(complaintData: Partial<Complaint>): Promise<Complaint | null> {
   const year = new Date().getFullYear();
-  // Instead of counting locally, we use UUID or generate a random short ID for simplicity, 
-  // or fetch count from DB.
-  const { count } = await supabase.from("complaints").select("*", { count: "exact", head: true });
-  const index = String((count || 0) + 1).padStart(3, "0");
-  const id = `JM-${year}-${index}-${Math.floor(Math.random() * 1000)}`;
-  
+  const currentLocal = getLocalComplaintsStore();
+  const index = String(currentLocal.length + 1).padStart(3, "0");
+  const id = complaintData.id || `JM-${year}-${index}-${Math.floor(Math.random() * 1000)}`;
+
   const dept = complaintData.category 
     ? getDepartmentForCategory(complaintData.category as any)
     : undefined;
 
-  const trustAnalysis = analyzeComplaintTrust(complaintData as any, []); // Simplified for now
-  
-  const newRow = {
+  const trustAnalysis = analyzeComplaintTrust(complaintData as any, currentLocal);
+
+  const initialTimeline: TimelineEvent[] = [
+    {
+      id: `t1-${Date.now()}`,
+      status: "submitted",
+      message: "Complaint submitted successfully by citizen.",
+      messageHi: "नागरिक द्वारा शिकायत सफलतापूर्वक दर्ज की गई।",
+      timestamp: new Date().toISOString(),
+      isActive: false,
+    },
+    {
+      id: `t2-${Date.now()}`,
+      status: "ai_analyzing",
+      message: "AI Classification Complete",
+      messageHi: "AI विश्लेषण पूर्ण",
+      timestamp: new Date().toISOString(),
+      isActive: false,
+    },
+    {
+      id: `t3-${Date.now()}`,
+      status: "department_assigned",
+      message: `Routed to ${dept?.name || "department"} automatically.`,
+      messageHi: `${dept?.nameHi || "विभाग"} को स्वचालित रूप से आवंटित।`,
+      timestamp: new Date().toISOString(),
+      isActive: true,
+    },
+  ];
+
+  const newComplaint: Complaint = {
     id,
     title: complaintData.title || "Civic Issue Reported",
-    title_hi: complaintData.titleHi || "नागरिक समस्या दर्ज",
+    titleHi: complaintData.titleHi || "नागरिक समस्या दर्ज",
     description: complaintData.description || "",
-    description_hi: complaintData.descriptionHi || "",
+    descriptionHi: complaintData.descriptionHi || "",
     category: complaintData.category || "Garbage / Sanitation",
-    category_hi: complaintData.categoryHi || "कचरा / स्वच्छता",
+    categoryHi: complaintData.categoryHi || "कचरा / स्वच्छता",
     priority: complaintData.priority || "medium",
     status: complaintData.status || "submitted",
-    department_id: dept?.id || "nagar-nigam",
+    department: dept?.name || "Lucknow Nagar Nigam",
+    departmentHi: dept?.nameHi || "लखनऊ नगर निगम",
     latitude: complaintData.latitude || 26.8467,
     longitude: complaintData.longitude || 80.9462,
     area: complaintData.area || "Gomti Nagar, Lucknow",
-    citizen_id: complaintData.citizenId || null,
-    citizen_name: complaintData.citizenName || "Demo Citizen",
-    citizen_phone: complaintData.citizenPhone || "+91 99999 88888",
-    image_url: complaintData.imageUrl,
-    voice_url: complaintData.voiceUrl,
-    ai_summary: complaintData.aiSummary || "Awaiting AI summarization.",
-    ai_summary_hi: complaintData.aiSummaryHi || "AI सारांश लंबित।",
-    ai_confidence: complaintData.aiConfidence || 0.90,
-    trust_analysis: trustAnalysis,
-    trust_score: trustAnalysis.trustScore / 100,
-    escalation_level: 0,
-    assigned_officer: dept?.officerName || "Shri Rajesh Kumar",
+    citizenId: complaintData.citizenId || "cit-demo",
+    citizenName: complaintData.citizenName || "Demo Citizen",
+    citizenPhone: complaintData.citizenPhone || "+91 99999 88888",
+    imageUrl: complaintData.imageUrl,
+    voiceUrl: complaintData.voiceUrl,
+    aiSummary: complaintData.aiSummary || "Awaiting AI summarization.",
+    aiSummaryHi: complaintData.aiSummaryHi || "AI सारांश लंबित।",
+    aiConfidence: complaintData.aiConfidence || 0.90,
+    timeline: initialTimeline,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    escalationLevel: 0,
+    assignedOfficer: dept?.officerName || "Shri Rajesh Kumar",
+    trustAnalysis,
   };
 
-  const { data, error } = await supabase.from("complaints").insert(newRow).select().single();
-  
-  if (error || !data) {
-    console.error("Error inserting complaint:", error ? JSON.stringify(error) : 'No data returned');
-    console.error("Error details:", error?.message, error?.details, error?.hint);
-    return null;
+  // Always save to local store first for instant UI response and offline safety
+  saveLocalComplaintsStore([newComplaint, ...currentLocal]);
+
+  // Attempt to sync to Supabase in the background
+  try {
+    const newRow = {
+      id,
+      title: newComplaint.title,
+      title_hi: newComplaint.titleHi,
+      description: newComplaint.description,
+      description_hi: newComplaint.descriptionHi,
+      category: newComplaint.category,
+      category_hi: newComplaint.categoryHi,
+      priority: newComplaint.priority,
+      status: newComplaint.status,
+      department_id: dept?.id || "nagar-nigam",
+      latitude: newComplaint.latitude,
+      longitude: newComplaint.longitude,
+      area: newComplaint.area,
+      citizen_id: newComplaint.citizenId,
+      citizen_name: newComplaint.citizenName,
+      citizen_phone: newComplaint.citizenPhone,
+      image_url: newComplaint.imageUrl,
+      voice_url: newComplaint.voiceUrl,
+      ai_summary: newComplaint.aiSummary,
+      ai_summary_hi: newComplaint.aiSummaryHi,
+      ai_confidence: newComplaint.aiConfidence,
+      trust_analysis: trustAnalysis,
+      trust_score: trustAnalysis.trustScore / 100,
+      escalation_level: 0,
+      assigned_officer: newComplaint.assignedOfficer,
+    };
+
+    const { error: insErr } = await supabase.from("complaints").insert(newRow);
+    if (!insErr) {
+      const updates = [
+        { complaint_id: id, status: "submitted", message: "Complaint submitted successfully by citizen.", message_hi: "नागरिक द्वारा शिकायत सफलतापूर्वक दर्ज की गई।" },
+        { complaint_id: id, status: "ai_analyzing", message: `AI Classification Complete`, message_hi: `AI विश्लेषण पूर्ण` },
+        { complaint_id: id, status: "department_assigned", message: `Routed to department automatically.`, message_hi: `स्वचालित रूप से आवंटित।` },
+      ];
+      await supabase.from("complaint_updates").insert(updates);
+    }
+  } catch (err) {
+    // Supabase unavailable; local storage has the complaint safely
   }
 
-  // Insert timeline updates
-  const updates = [
-    { complaint_id: id, status: "submitted", message: "Complaint submitted successfully by citizen.", message_hi: "नागरिक द्वारा शिकायत सफलतापूर्वक दर्ज की गई।" },
-    { complaint_id: id, status: "ai_analyzing", message: `AI Classification Complete`, message_hi: `AI विश्लेषण पूर्ण` },
-    { complaint_id: id, status: "department_assigned", message: `Routed to department automatically.`, message_hi: `स्वचालित रूप से आवंटित।` },
-  ];
-  await supabase.from("complaint_updates").insert(updates);
+  if (isClient) {
+    window.dispatchEvent(new CustomEvent("janmitra-db-change"));
+  }
 
-  if (isClient) window.dispatchEvent(new CustomEvent("janmitra-db-change"));
+  addOfficerNotification("update", `New grievance filed: ${newComplaint.id}`, `नई शिकायत दर्ज: ${newComplaint.id}`, newComplaint.id);
 
-  addOfficerNotification("update", `New grievance filed: ${newRow.id}`, `नई शिकायत दर्ज: ${newRow.id}`, newRow.id);
-  
-  return (await getComplaintById(id)) || null;
+  return newComplaint;
 }
 
 export async function updateComplaintStatus(
@@ -270,23 +418,25 @@ export async function updateComplaintStatus(
   noteEn?: string, 
   noteHi?: string
 ): Promise<Complaint | undefined> {
-  const { data: c } = await supabase.from("complaints").select("*").eq("id", id).single();
-  if (!c) return undefined;
+  const localList = getLocalComplaintsStore();
+  const index = localList.findIndex(c => c.id.toUpperCase() === id.toUpperCase());
+  if (index === -1) return undefined;
 
+  const c = localList[index];
   let defaultMsgEn = `Status updated to ${status.replace(/_/g, " ")}.`;
   let defaultMsgHi = `स्थिति बदलकर ${status} कर दी गई है।`;
-  let resolvedAt = c.resolved_at;
-  let escLevel = c.escalation_level;
+  let resolvedAt = c.resolvedAt;
+  let escLevel = c.escalationLevel;
 
   if (status === "officer_reviewing") {
-    defaultMsgEn = `Officer ${officerName || c.assigned_officer} has begun reviewing the grievance.`;
-    defaultMsgHi = `अधिकारी ${officerName || c.assigned_officer} ने शिकायत की समीक्षा शुरू कर दी है।`;
+    defaultMsgEn = `Officer ${officerName || c.assignedOfficer} has begun reviewing the grievance.`;
+    defaultMsgHi = `अधिकारी ${officerName || c.assignedOfficer} ने शिकायत की समीक्षा शुरू कर दी है।`;
   } else if (status === "resolved") {
     defaultMsgEn = `Issue resolved completely. Resolution verified by department.`;
     defaultMsgHi = `समस्या का पूर्ण निवारण हो चुका है। विभाग द्वारा निवारण की पुष्टि की गई है।`;
     resolvedAt = new Date().toISOString();
   } else if (status === "escalated") {
-    escLevel = c.escalation_level + 1;
+    escLevel = (c.escalationLevel || 0) + 1;
     defaultMsgEn = `Ticket escalated to Level ${escLevel}.`;
     defaultMsgHi = `शिकायत को स्तर ${escLevel} पर प्रेषित किया गया।`;
   }
@@ -294,37 +444,82 @@ export async function updateComplaintStatus(
   const finalMsgEn = noteEn ? `${defaultMsgEn} Note: ${noteEn}` : defaultMsgEn;
   const finalMsgHi = noteHi ? `${defaultMsgHi} टिप्पणी: ${noteHi}` : defaultMsgHi;
 
-  await supabase.from("complaints").update({ status, resolved_at: resolvedAt, escalation_level: escLevel }).eq("id", id);
-  await supabase.from("complaint_updates").insert({ complaint_id: id, status, message: finalMsgEn, message_hi: finalMsgHi });
+  const newTimelineItem: TimelineEvent = {
+    id: `t-${Date.now()}`,
+    status,
+    message: finalMsgEn,
+    messageHi: finalMsgHi,
+    timestamp: new Date().toISOString(),
+    isActive: true,
+  };
+
+  const updatedComplaint: Complaint = {
+    ...c,
+    status,
+    resolvedAt,
+    escalationLevel: escLevel,
+    updatedAt: new Date().toISOString(),
+    timeline: [...(c.timeline || []), newTimelineItem],
+  };
+
+  localList[index] = updatedComplaint;
+  saveLocalComplaintsStore(localList);
+
+  // Background sync with Supabase
+  try {
+    await supabase.from("complaints").update({ status, resolved_at: resolvedAt, escalation_level: escLevel }).eq("id", id);
+    await supabase.from("complaint_updates").insert({ complaint_id: id, status, message: finalMsgEn, message_hi: finalMsgHi });
+  } catch {
+    // ignore
+  }
 
   if (isClient) window.dispatchEvent(new CustomEvent("janmitra-db-change"));
   addCitizenNotification(status === "resolved" ? "resolution" : "update", finalMsgEn, finalMsgHi, id);
 
-  return getComplaintById(id);
+  return updatedComplaint;
 }
 
 export async function mergeDuplicateComplaint(id: string, parentId: string): Promise<Complaint | undefined> {
   const msgEn = `Merged with similar nearby complaint ${parentId}. Action consolidated.`;
   const msgHi = `समान क्षेत्र की शिकायत ${parentId} के साथ एकीकृत किया गया। संयुक्त निवारण कार्यवाही जारी।`;
   
-  await supabase.from("complaints").update({ status: "resolved", resolved_at: new Date().toISOString() }).eq("id", id);
-  await supabase.from("complaint_updates").insert({ complaint_id: id, status: "resolved", message: msgEn, message_hi: msgHi });
-
-  if (isClient) window.dispatchEvent(new CustomEvent("janmitra-db-change"));
-  return getComplaintById(id);
+  return updateComplaintStatus(id, "resolved", undefined, msgEn, msgHi);
 }
 
 export async function updateComplaintVerdict(id: string, verdict: "safe" | "spam"): Promise<Complaint | undefined> {
-  const { data: c } = await supabase.from("complaints").select("*").eq("id", id).single();
-  if (!c) return undefined;
-  
-  const trustAnalysis = c.trust_analysis || {};
+  const localList = getLocalComplaintsStore();
+  const index = localList.findIndex(c => c.id.toUpperCase() === id.toUpperCase());
+  if (index === -1) return undefined;
+
+  const c = localList[index];
+  const trustAnalysis = c.trustAnalysis || {
+    trustLevel: "medium",
+    trustScore: 50,
+    flags: [],
+    reasons: [],
+    analyzedAt: new Date().toISOString(),
+    reviewedByOfficer: false,
+  };
   trustAnalysis.reviewedByOfficer = true;
   trustAnalysis.officerVerdict = verdict;
 
-  await supabase.from("complaints").update({ trust_analysis: trustAnalysis }).eq("id", id);
+  const updatedComplaint: Complaint = {
+    ...c,
+    trustAnalysis,
+    updatedAt: new Date().toISOString(),
+  };
+
+  localList[index] = updatedComplaint;
+  saveLocalComplaintsStore(localList);
+
+  try {
+    await supabase.from("complaints").update({ trust_analysis: trustAnalysis }).eq("id", id);
+  } catch {
+    // ignore
+  }
+
   if (isClient) window.dispatchEvent(new CustomEvent("janmitra-db-change"));
-  return getComplaintById(id);
+  return updatedComplaint;
 }
 
 export async function getSuspiciousComplaints(): Promise<Complaint[]> {
@@ -335,35 +530,111 @@ export async function getSuspiciousComplaints(): Promise<Complaint[]> {
 export async function submitResolutionProof(
   id: string, proofPhotoUrl: string, noteEn: string, noteHi: string, officerName: string
 ): Promise<Complaint | undefined> {
-  const proof = { photoUrl: proofPhotoUrl, note: noteEn, noteHi, submittedAt: new Date().toISOString(), officerName };
+  const localList = getLocalComplaintsStore();
+  const index = localList.findIndex(c => c.id.toUpperCase() === id.toUpperCase());
+  if (index === -1) return undefined;
+
+  const proof: ResolutionProof = {
+    photoUrl: proofPhotoUrl,
+    note: noteEn,
+    noteHi,
+    submittedAt: new Date().toISOString(),
+    officerName
+  };
+
   const msg = `Resolution proof submitted by ${officerName}. "${noteEn}" — Awaiting citizen confirmation.`;
   const msgHi = `${officerName} द्वारा समाधान प्रमाण प्रस्तुत: "${noteHi}" — नागरिक पुष्टि की प्रतीक्षा में।`;
-  
-  await supabase.from("complaints").update({ status: "pending_citizen_confirmation", resolution_proof: proof }).eq("id", id);
-  await supabase.from("complaint_updates").insert({ complaint_id: id, status: "pending_citizen_confirmation", message: msg, message_hi: msgHi });
+
+  const newTimelineItem: TimelineEvent = {
+    id: `t-${Date.now()}`,
+    status: "pending_citizen_confirmation",
+    message: msg,
+    messageHi: msgHi,
+    timestamp: new Date().toISOString(),
+    isActive: true,
+  };
+
+  const updatedComplaint: Complaint = {
+    ...localList[index],
+    status: "pending_citizen_confirmation",
+    resolutionProof: proof,
+    updatedAt: new Date().toISOString(),
+    timeline: [...(localList[index].timeline || []), newTimelineItem],
+  };
+
+  localList[index] = updatedComplaint;
+  saveLocalComplaintsStore(localList);
+
+  try {
+    await supabase.from("complaints").update({ status: "pending_citizen_confirmation", resolution_proof: proof }).eq("id", id);
+    await supabase.from("complaint_updates").insert({ complaint_id: id, status: "pending_citizen_confirmation", message: msg, message_hi: msgHi });
+  } catch {
+    // ignore
+  }
 
   if (isClient) window.dispatchEvent(new CustomEvent("janmitra-db-change"));
   addCitizenNotification("resolution", "🔔 Resolution proof submitted. Please confirm.", "🔔 समाधान प्रमाण प्रस्तुत। पुष्टि करें।", id);
-  return getComplaintById(id);
+  return updatedComplaint;
 }
 
 export async function citizenVerifyResolution(
   id: string, verified: boolean, feedback: string, feedbackHi: string, rejectionPhotoUrl?: string
 ): Promise<Complaint | undefined> {
+  const localList = getLocalComplaintsStore();
+  const index = localList.findIndex(c => c.id.toUpperCase() === id.toUpperCase());
+  if (index === -1) return undefined;
+
   const now = new Date().toISOString();
-  const ver = { verified, feedback, feedbackHi, photoUrl: rejectionPhotoUrl, submittedAt: now };
-  const status = verified ? "resolved" : "reopened";
+  const ver: CitizenVerification = {
+    verified,
+    feedback,
+    feedbackHi,
+    photoUrl: rejectionPhotoUrl,
+    submittedAt: now
+  };
+  const status: ComplaintStatus = verified ? "resolved" : "reopened";
   const msg = verified ? `✅ Citizen confirmed: Issue is resolved. "${feedback}"` : `❌ Citizen REJECTED resolution: "${feedback}"`;
   const msgHi = verified ? `✅ नागरिक द्वारा पुष्टि: समस्या हल हो गई है। "${feedbackHi}"` : `❌ नागरिक ने समाधान अस्वीकार किया: "${feedbackHi}"`;
 
-  const updatePayload: any = { status, citizen_verification: ver };
-  if (verified) updatePayload.resolved_at = now;
+  const newTimelineItem: TimelineEvent = {
+    id: `t-${Date.now()}`,
+    status,
+    message: msg,
+    messageHi: msgHi,
+    timestamp: now,
+    isActive: true,
+  };
 
-  await supabase.from("complaints").update(updatePayload).eq("id", id);
-  await supabase.from("complaint_updates").insert({ complaint_id: id, status, message: msg, message_hi: msgHi });
+  const updatedComplaint: Complaint = {
+    ...localList[index],
+    status,
+    citizenVerification: ver,
+    resolvedAt: verified ? now : undefined,
+    updatedAt: now,
+    timeline: [...(localList[index].timeline || []), newTimelineItem],
+  };
+
+  localList[index] = updatedComplaint;
+  saveLocalComplaintsStore(localList);
+
+  try {
+    const updatePayload: any = { status, citizen_verification: ver };
+    if (verified) updatePayload.resolved_at = now;
+    await supabase.from("complaints").update(updatePayload).eq("id", id);
+    await supabase.from("complaint_updates").insert({ complaint_id: id, status, message: msg, message_hi: msgHi });
+  } catch {
+    // ignore
+  }
 
   if (isClient) window.dispatchEvent(new CustomEvent("janmitra-db-change"));
-  return getComplaintById(id);
+  addOfficerNotification(
+    verified ? "resolution" : "update",
+    `Citizen feedback received on ${id}: ${verified ? "Confirmed" : "Rejected"}`,
+    `शिकायत ${id} पर नागरिक प्रतिक्रिया प्राप्त: ${verified ? "पुष्टि की गई" : "अस्वीकार किया गया"}`,
+    id
+  );
+
+  return updatedComplaint;
 }
 
 export async function getPendingVerificationComplaints(): Promise<Complaint[]> {
@@ -380,9 +651,12 @@ export async function getStats(): Promise<DashboardStats> {
   const escalated = db.filter((c) => c.status === "escalated" || c.escalationLevel > 0).length;
 
   return {
-    total, pending, resolved, highPriority,
+    total,
+    pending,
+    resolved,
+    highPriority,
     avgResolutionHours: 24,
-    satisfactionRate: Math.round((resolved / (total || 1)) * 30 + 68),
+    satisfactionRate: total > 0 ? Math.min(99, Math.round((resolved / total) * 30 + 68)) : 94,
     aiAccuracy: 95,
     escalated,
   };
@@ -407,23 +681,52 @@ export async function getAnalytics(): Promise<AnalyticsData> {
   const priorityMap = { high: 0, medium: 0, low: 0 };
 
   db.forEach((c) => {
-    if (categoriesMap[c.category]) categoriesMap[c.category].value += 1;
-    else categoriesMap["Garbage / Sanitation"].value += 1;
+    if (categoriesMap[c.category]) {
+      categoriesMap[c.category].value += 1;
+    } else {
+      categoriesMap["Garbage / Sanitation"].value += 1;
+    }
 
     const dept = c.department || "Lucknow Nagar Nigam";
-    if (!departmentsMap[dept]) departmentsMap[dept] = { resolved: 0, pending: 0, totalDays: 0, count: 0 };
-    if (c.status === "resolved") departmentsMap[dept].resolved += 1;
-    else departmentsMap[dept].pending += 1;
+    if (!departmentsMap[dept]) {
+      departmentsMap[dept] = { resolved: 0, pending: 0, totalDays: 0, count: 0 };
+    }
+    if (c.status === "resolved") {
+      departmentsMap[dept].resolved += 1;
+    } else {
+      departmentsMap[dept].pending += 1;
+    }
     departmentsMap[dept].count += 1;
 
-    if (!areaMap[c.area]) areaMap[c.area] = { count: 0, lat: c.latitude || 26.8567, lng: c.longitude || 80.9462 };
-    areaMap[c.area].count += 1;
-    priorityMap[c.priority] += 1;
+    const areaName = c.area || "Gomti Nagar, Lucknow";
+    if (!areaMap[areaName]) {
+      areaMap[areaName] = { count: 0, lat: c.latitude || 26.8567, lng: c.longitude || 80.9462 };
+    }
+    areaMap[areaName].count += 1;
+    if (priorityMap[c.priority] !== undefined) {
+      priorityMap[c.priority] += 1;
+    }
   });
 
-  const categoryDistribution = Object.entries(categoriesMap).map(([name, data]) => ({ name, value: data.value === 0 ? 1 : data.value, color: data.color }));
-  const departmentEfficiency = Object.entries(departmentsMap).map(([name, data]) => ({ department: name, resolved: data.resolved, pending: data.pending || 1, avgDays: 3 }));
-  const areaWiseData = Object.entries(areaMap).map(([area, data]) => ({ area, complaints: data.count, lat: data.lat, lng: data.lng }));
+  const categoryDistribution = Object.entries(categoriesMap).map(([name, data]) => ({
+    name,
+    value: data.value === 0 ? 1 : data.value,
+    color: data.color,
+  }));
+
+  const departmentEfficiency = Object.entries(departmentsMap).map(([name, data]) => ({
+    department: name,
+    resolved: data.resolved,
+    pending: data.pending || 1,
+    avgDays: 3,
+  }));
+
+  const areaWiseData = Object.entries(areaMap).map(([area, data]) => ({
+    area,
+    complaints: data.count,
+    lat: data.lat,
+    lng: data.lng,
+  }));
 
   return {
     complaintTrends: [
@@ -431,7 +734,9 @@ export async function getAnalytics(): Promise<AnalyticsData> {
       { date: "May 21", count: 43, resolved: 31 },
       { date: "May 22", count: db.length + 10, resolved: db.filter(c => c.status === "resolved").length + 5 },
     ],
-    categoryDistribution, departmentEfficiency, areaWiseData,
+    categoryDistribution,
+    departmentEfficiency,
+    areaWiseData,
     resolutionSpeed: [{ month: "Jan", avgHours: 48 }, { month: "May", avgHours: 24 }],
     priorityBreakdown: [
       { priority: "High", count: priorityMap.high || 3, color: "#EF4444" },
