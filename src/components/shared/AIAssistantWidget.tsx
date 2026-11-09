@@ -962,20 +962,15 @@ export function AIAssistantWidget({ inline = false }: AIAssistantWidgetProps) {
         <AnimatePresence>
           {!isOpen && (
             <motion.button
-              initial={{ scale: 0.8, opacity: 0 }}
+              initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              whileHover={{ scale: 1.1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              whileHover={{ scale: 1.05 }}
               onClick={() => setIsOpen(true)}
-              className="flex items-center justify-center w-14 h-14 rounded-full cursor-pointer relative bg-linear-to-tr from-gov-blue via-violet-600 to-ai-purple shadow-[0_0_25px_rgba(139,92,246,0.5)] border border-violet-400/30 text-white"
+              className="flex items-center gap-2 px-3.5 h-11 rounded-full cursor-pointer bg-blue-600 hover:bg-blue-500 text-white shadow-xl border border-white/10 transition-colors"
             >
-              <AnimatedBotFace className="w-9 h-9" />
-              <span className="absolute -top-1 -right-1 flex h-4 w-4">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-4 w-4 bg-cyan-500 text-[10px] text-slate-950 font-bold items-center justify-center">
-                  AI
-                </span>
-              </span>
+              <BotIcon className="w-4 h-4 text-white" />
+              <span className="text-xs font-medium">JanMitra AI</span>
             </motion.button>
           )}
         </AnimatePresence>
@@ -985,91 +980,95 @@ export function AIAssistantWidget({ inline = false }: AIAssistantWidgetProps) {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={inline ? { opacity: 0, scale: 0.98 } : { opacity: 0, y: 50, scale: 0.95 }}
+            initial={inline ? { opacity: 0, scale: 0.98 } : { opacity: 0, y: 30, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={inline ? { opacity: 0, scale: 0.98 } : { opacity: 0, y: 50, scale: 0.95 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
+            exit={inline ? { opacity: 0, scale: 0.98 } : { opacity: 0, y: 30, scale: 0.96 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
             className={
               inline
-                ? "w-full h-[600px] rounded-2xl flex flex-col overflow-hidden border border-slate-800/80 bg-slate-950/40 backdrop-blur-xl shadow-2xl relative"
-                : "w-[420px] max-w-[92vw] h-[600px] rounded-2xl flex flex-col overflow-hidden border border-slate-800/80 bg-slate-950/90 backdrop-blur-xl shadow-[0_0_50px_rgba(139,92,246,0.25)]"
+                ? "w-full h-[580px] rounded-xl flex flex-col overflow-hidden border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12151c] shadow-2xl relative"
+                : "w-[380px] max-w-[92vw] h-[540px] rounded-xl flex flex-col overflow-hidden border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12151c] shadow-2xl"
             }
           >
             {/* Header section with status, sound, language */}
-            <div className="p-4 border-b border-slate-800/80 bg-linear-to-r from-slate-950 via-slate-900/60 to-slate-950 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-violet-600/10 border border-violet-500/30 flex items-center justify-center shadow-lg relative">
-                  <AnimatedBotFace className="w-6 h-6" />
-                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-slate-950 animate-pulse"></span>
+            <div className="px-4 py-3 border-b border-slate-200 dark:border-white/8 bg-slate-50 dark:bg-[#181c24] flex items-center justify-between">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+                  <BotIcon className="w-4 h-4 text-blue-500" />
                 </div>
-                <div>
-                  <h4 className="font-semibold text-slate-200 text-sm flex items-center gap-1.5">
-                    JanMitra AI
-                    <span className="px-1.5 py-0.5 rounded bg-violet-500/10 border border-violet-500/20 text-[10px] text-violet-400 font-medium">
-                      v3.0
-                    </span>
-                  </h4>
-                  <p className="text-[10px] text-slate-400 flex items-center gap-1">
-                    Lucknow Nagar Nigam • Online • 13 Categories
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-xs truncate">
+                      JanMitra Assistant
+                    </h4>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                  </div>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                    Lucknow Municipal Redressal
                   </p>
                 </div>
               </div>
 
               {/* Utility Panel */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 shrink-0">
                 {/* Language Switcher */}
                 <button
+                  type="button"
                   onClick={() => setLanguage((l) => (l === "en" ? "hi" : "en"))}
-                  className="px-2 py-1 rounded-md text-[10px] border border-slate-800 bg-slate-900/40 hover:bg-slate-900 text-slate-300 font-medium cursor-pointer"
+                  className="px-2 py-1 rounded text-[10px] font-mono border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12151c] hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 font-medium cursor-pointer"
                 >
-                  {isHi ? "English" : "हिंदी / Hinglish"}
+                  {isHi ? "EN" : "हिन्दी"}
                 </button>
 
                 {/* Sound Toggle */}
                 <button
+                  type="button"
                   onClick={() => setAudioFeedback((a) => !a)}
-                  className="p-1.5 rounded-md hover:bg-slate-950/40 text-slate-400 hover:text-slate-300 cursor-pointer"
+                  className="p-1 rounded text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
+                  title="Toggle audio"
                 >
                   {audioFeedback ? (
-                    <Volume2 className="w-4 h-4 text-violet-400" />
+                    <Volume2 className="w-3.5 h-3.5 text-blue-500" />
                   ) : (
-                    <VolumeX className="w-4 h-4" />
+                    <VolumeX className="w-3.5 h-3.5" />
                   )}
                 </button>
 
                 {/* Close Button */}
                 {!inline && (
                   <button
+                    type="button"
                     onClick={() => setIsOpen(false)}
-                    className="p-1.5 rounded-md hover:bg-slate-900 text-slate-400 hover:text-slate-200 cursor-pointer"
+                    className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer ml-1"
+                    aria-label="Close"
                   >
-                    <X className="w-4.5 h-4.5" />
+                    <X className="w-4 h-4" />
                   </button>
                 )}
               </div>
             </div>
 
             {/* Conversational timeline scroll viewport */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-800">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3.5 text-xs bg-slate-50/50 dark:bg-transparent">
               {messages.map((msg) => (
                 <div
                   key={msg.id}
                   className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
                 >
-                  <div className="flex items-start gap-2.5 max-w-[85%]">
+                  <div className="flex items-start gap-2 max-w-[85%]">
                     {msg.sender === "ai" && (
-                      <div className="w-7 h-7 rounded-lg bg-violet-600/10 border border-violet-500/20 flex items-center justify-center shrink-0">
-                        <Sparkles className="w-4 h-4 text-violet-400" />
+                      <div className="w-6 h-6 rounded bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                        <BotIcon className="w-3.5 h-3.5 text-blue-500" />
                       </div>
                     )}
 
                     <div className="space-y-1">
                       {msg.text && (
                         <div
-                          className={`rounded-2xl px-3.5 py-2.5 text-xs shadow-md ${
+                          className={`rounded-xl px-3.5 py-2 text-xs leading-relaxed ${
                             msg.sender === "user"
-                              ? "bg-violet-600 text-white rounded-tr-none font-medium"
-                              : "bg-slate-900/60 border border-slate-800 text-slate-300 rounded-tl-none leading-relaxed whitespace-pre-line"
+                              ? "bg-blue-600 text-white rounded-tr-none"
+                              : "bg-white dark:bg-[#181c24] border border-slate-200 dark:border-white/6 text-slate-800 dark:text-slate-200 rounded-tl-none whitespace-pre-line shadow-xs"
                           }`}
                         >
                           {msg.text}
@@ -1078,52 +1077,52 @@ export function AIAssistantWidget({ inline = false }: AIAssistantWidgetProps) {
 
                       {/* ═══ GREETING CARD ═══ */}
                       {msg.isCustomCard && msg.cardType === "greeting" && (
-                        <div className="p-4 rounded-xl border border-violet-500/20 bg-violet-950/10 backdrop-blur-md space-y-3">
-                          <p className="text-xs text-slate-300 leading-relaxed">
+                        <div className="p-3.5 rounded-lg border border-slate-200 dark:border-white/8 bg-white dark:bg-[#181c24] space-y-3 shadow-xs">
+                          <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
                             {isHi
-                              ? "नमस्ते! 🙏 मैं जनमित्र AI सहायक हूँ। आप लखनऊ में नागरिक समस्याओं को सीधे बातचीत करके दर्ज कर सकते हैं, टिकट ट्रैक कर सकते हैं, या विभागीय जानकारी प्राप्त कर सकते हैं।"
-                              : "Namaste! 🙏 I am the JanMitra AI Assistant. You can file civic complaints in Lucknow directly through conversation, track tickets, view analytics, or get department info."}
+                              ? "जनमित्र नागरिक सहायता पोर्टल में आपका स्वागत है। आप लखनऊ के किसी भी वार्ड की समस्या दर्ज कर सकते हैं, टिकट स्थिति ट्रैक कर सकते हैं, या विभागीय जानकारी प्राप्त कर सकते हैं।"
+                              : "Welcome to JanMitra Civic Assistant. Inquire about grievance status, lodge ward reports in Lucknow, or review department jurisdictions."}
                           </p>
-                          <div className="border-t border-slate-800/80 pt-2">
-                            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider block mb-1.5">
+                          <div className="border-t border-slate-100 dark:border-white/6 pt-2">
+                            <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
                               {isHi ? "सुझाए गए प्रश्न" : "Suggested Prompts"}
                             </span>
                             <div className="flex flex-wrap gap-1.5">
                               <button
                                 onClick={() => handleSendMessage(isHi ? "मेरे टिकट JM-2026-008 की स्थिति बताएं" : "Track status of ticket JM-2026-008")}
-                                className="px-2.5 py-1 text-[10px] rounded-full border border-slate-800 bg-slate-900/40 hover:bg-slate-800/80 text-slate-300 text-left transition-all duration-150 cursor-pointer"
+                                className="px-2.5 py-1 text-[10px] rounded-md border border-slate-200 dark:border-white/8 bg-slate-50 dark:bg-[#12151c] hover:bg-slate-100 dark:hover:bg-[#1e232e] text-slate-700 dark:text-slate-300 text-left transition-colors cursor-pointer"
                               >
-                                📋 {isHi ? "JM-2026-008 ट्रैक करें" : "Track JM-2026-008"}
+                                {isHi ? "JM-2026-008 ट्रैक करें" : "Track JM-2026-008"}
                               </button>
                               <button
                                 onClick={() => handleSendMessage(isHi ? "आलमबाग क्षेत्र में सड़कों के गड्ढे की शिकायत दर्ज करें" : "Register a pothole complaint in Alambagh area")}
-                                className="px-2.5 py-1 text-[10px] rounded-full border border-slate-800 bg-slate-900/40 hover:bg-slate-800/80 text-slate-300 text-left transition-all duration-150 cursor-pointer"
+                                className="px-2.5 py-1 text-[10px] rounded-md border border-slate-200 dark:border-white/8 bg-slate-50 dark:bg-[#12151c] hover:bg-slate-100 dark:hover:bg-[#1e232e] text-slate-700 dark:text-slate-300 text-left transition-colors cursor-pointer"
                               >
-                                🚧 {isHi ? "सड़क गड्ढा दर्ज करें" : "File Road Complaint"}
+                                {isHi ? "सड़क गड्ढा दर्ज करें" : "File Road Complaint"}
                               </button>
                               <button
                                 onClick={() => handleSendMessage(isHi ? "सक्रिय हॉटस्पॉट विश्लेषण दिखाओ" : "Show Lucknow active hotspots")}
-                                className="px-2.5 py-1 text-[10px] rounded-full border border-slate-800 bg-slate-900/40 hover:bg-slate-800/80 text-slate-300 text-left transition-all duration-150 cursor-pointer"
+                                className="px-2.5 py-1 text-[10px] rounded-md border border-white/8 bg-[#12151c] hover:bg-[#1e232e] text-slate-300 text-left transition-colors cursor-pointer"
                               >
-                                🔥 {isHi ? "सक्रिय हॉटस्पॉट?" : "Active Hotspots"}
+                                {isHi ? "सक्रिय हॉटस्पॉट" : "Active Hotspots"}
                               </button>
                               <button
                                 onClick={() => handleSendMessage("stats")}
-                                className="px-2.5 py-1 text-[10px] rounded-full border border-slate-800 bg-slate-900/40 hover:bg-slate-800/80 text-slate-300 text-left transition-all duration-150 cursor-pointer"
+                                className="px-2.5 py-1 text-[10px] rounded-md border border-white/8 bg-[#12151c] hover:bg-[#1e232e] text-slate-300 text-left transition-colors cursor-pointer"
                               >
-                                📊 {isHi ? "आंकड़े देखें" : "View Stats"}
+                                {isHi ? "आंकड़े देखें" : "View Stats"}
                               </button>
                               <button
                                 onClick={() => handleSendMessage("department info")}
-                                className="px-2.5 py-1 text-[10px] rounded-full border border-slate-800 bg-slate-900/40 hover:bg-slate-800/80 text-slate-300 text-left transition-all duration-150 cursor-pointer"
+                                className="px-2.5 py-1 text-[10px] rounded-md border border-white/8 bg-[#12151c] hover:bg-[#1e232e] text-slate-300 text-left transition-colors cursor-pointer"
                               >
-                                🏢 {isHi ? "विभाग जानकारी" : "Dept. Info"}
+                                {isHi ? "विभाग जानकारी" : "Dept. Info"}
                               </button>
                               <button
                                 onClick={() => handleSendMessage("help")}
-                                className="px-2.5 py-1 text-[10px] rounded-full border border-slate-800 bg-slate-900/40 hover:bg-slate-800/80 text-slate-300 text-left transition-all duration-150 cursor-pointer"
+                                className="px-2.5 py-1 text-[10px] rounded-md border border-white/8 bg-[#12151c] hover:bg-[#1e232e] text-slate-300 text-left transition-colors cursor-pointer"
                               >
-                                ❓ {isHi ? "सहायता / गाइड" : "Help / Guide"}
+                                {isHi ? "सहायता / गाइड" : "Help / Guide"}
                               </button>
                             </div>
                           </div>
@@ -1517,8 +1516,8 @@ export function AIAssistantWidget({ inline = false }: AIAssistantWidgetProps) {
               )}
             </AnimatePresence>
 
-            {/* Glowing Input Box Section */}
-            <div className="p-3 border-t border-slate-800/80 bg-slate-950 flex flex-col gap-2">
+            {/* Input Box Section */}
+            <div className="p-3 border-t border-slate-200 dark:border-white/8 bg-slate-50 dark:bg-[#181c24] flex flex-col gap-2">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -1526,7 +1525,7 @@ export function AIAssistantWidget({ inline = false }: AIAssistantWidgetProps) {
                 }}
                 className="flex items-center gap-2"
               >
-                <div className="flex-1 bg-slate-900/60 rounded-xl border border-slate-800/80 focus-within:border-violet-500/60 focus-within:shadow-[0_0_12px_rgba(139,92,246,0.15)] flex items-center px-3 py-1 transition-all duration-200">
+                <div className="flex-1 bg-white dark:bg-[#12151c] rounded-lg border border-slate-200 dark:border-white/10 focus-within:border-blue-500/50 flex items-center px-3 py-0.5 transition-colors">
                   <input
                     type="text"
                     value={inputValue}
@@ -1536,51 +1535,51 @@ export function AIAssistantWidget({ inline = false }: AIAssistantWidgetProps) {
                         ? "समस्या बताएं, टिकट ट्रैक करें, या 'help' लिखें..."
                         : "Describe your issue, track a ticket, or type 'help'..."
                     }
-                    className="flex-1 bg-transparent border-0 outline-none text-slate-200 text-xs py-2 placeholder-slate-500"
+                    className="flex-1 bg-transparent border-0 outline-none text-slate-900 dark:text-slate-100 text-xs py-2 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                   
                   {/* Microphone */}
                   <button
                     type="button"
                     onClick={startVoiceRecording}
-                    className="p-1.5 rounded-lg hover:bg-slate-950 text-slate-400 hover:text-violet-400 transition-colors shrink-0 cursor-pointer"
+                    className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors shrink-0 cursor-pointer"
                     title="Voice Input"
                   >
-                    <Mic className="w-4 h-4" />
+                    <Mic className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
                 <button
                   type="submit"
                   disabled={!inputValue.trim()}
-                  className="w-9 h-9 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:bg-slate-900 disabled:text-slate-600 text-white flex items-center justify-center shrink-0 transition-colors shadow-md shadow-violet-950 cursor-pointer"
+                  className="w-8 h-8 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white flex items-center justify-center shrink-0 transition-colors cursor-pointer"
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="w-3.5 h-3.5" />
                 </button>
               </form>
 
-              {/* Quick Action Chips */}
-              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
+              {/* Action Chips */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
                 {[
-                  { label: isHi ? "📊 आंकड़े" : "📊 Stats", cmd: "stats" },
-                  { label: isHi ? "🔥 हॉटस्पॉट" : "🔥 Hotspots", cmd: "hotspots" },
-                  { label: isHi ? "📋 हाल की" : "📋 Recent", cmd: "recent complaints" },
-                  { label: isHi ? "🏢 विभाग" : "🏢 Depts", cmd: "department info" },
-                  { label: isHi ? "❓ मदद" : "❓ Help", cmd: "help" },
+                  { label: isHi ? "आंकड़े" : "Stats", cmd: "stats" },
+                  { label: isHi ? "हॉटस्पॉट" : "Hotspots", cmd: "hotspots" },
+                  { label: isHi ? "हाल की शिकायतें" : "Recent", cmd: "recent complaints" },
+                  { label: isHi ? "विभाग" : "Departments", cmd: "department info" },
+                  { label: isHi ? "सहायता" : "Help", cmd: "help" },
                 ].map((chip) => (
                   <button
                     key={chip.cmd}
                     onClick={() => handleSendMessage(chip.cmd)}
-                    className="shrink-0 px-2.5 py-1 text-[9px] font-semibold rounded-lg border border-slate-800/80 bg-slate-900/30 hover:bg-slate-800/60 text-slate-400 hover:text-slate-300 transition-all cursor-pointer"
+                    className="shrink-0 px-2 py-1 text-[10px] rounded-md border border-slate-200 dark:border-white/8 bg-white dark:bg-[#181c24] hover:bg-slate-100 dark:hover:bg-[#1e232e] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors cursor-pointer"
                   >
                     {chip.label}
                   </button>
                 ))}
               </div>
 
-              <div className="flex items-center justify-between text-[9px] text-slate-500 px-1 border-t border-slate-900 pt-1.5">
-                <span>{isHi ? "13 श्रेणियाँ • 20+ क्षेत्र • हिंदी/English" : "13 categories • 20+ areas • Hindi/English/Hinglish"}</span>
-                <span className="text-violet-400 font-medium">JanMitra AI Core v3.0</span>
+              <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 px-1 border-t border-slate-200 dark:border-white/6 pt-1.5">
+                <span>{isHi ? "13 श्रेणियाँ • 20+ वार्ड" : "13 municipal categories • 20+ wards"}</span>
+                <span className="text-slate-600 dark:text-slate-400">JanMitra Assistant</span>
               </div>
             </div>
           </motion.div>

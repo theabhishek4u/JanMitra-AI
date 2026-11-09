@@ -634,14 +634,7 @@ export default function CitizenDashboard() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen pt-28 md:pt-32 pb-24 sm:pb-12 bg-[#05070f] text-gray-100 relative overflow-hidden">
-        {/* Ambient background grids & glowing mesh orbs */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#37415112_1px,transparent_1px),linear-gradient(to_bottom,#37415112_1px,transparent_1px)] bg-size-[4rem_4rem] pointer-events-none z-0" />
-        <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
-          <div className="absolute top-20 -left-32 w-[500px] h-[500px] bg-indigo-600/8 rounded-full blur-[140px] animate-pulse duration-10000" />
-          <div className="absolute top-60 -right-32 w-[400px] h-[400px] bg-violet-600/6 rounded-full blur-[120px] animate-pulse duration-8000" />
-          <div className="absolute bottom-40 left-1/3 w-[350px] h-[350px] bg-blue-600/6 rounded-full blur-[100px]" />
-        </div>
+      <main className="min-h-screen pt-28 md:pt-32 pb-24 sm:pb-12 bg-slate-50 dark:bg-[#0c0e14] text-slate-900 dark:text-slate-100 relative transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {!session && (
             <motion.div
@@ -1160,44 +1153,36 @@ export default function CitizenDashboard() {
 
           {session && (
             <>
-              {/* Decorative Background Orbs */}
-              <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden -z-10">
-                <div className="absolute top-20 -left-32 w-96 h-96 bg-indigo-600/4 rounded-full blur-[120px]" />
-                <div className="absolute top-60 -right-32 w-80 h-80 bg-violet-600/3 rounded-full blur-[100px]" />
-                <div className="absolute bottom-40 left-1/3 w-72 h-72 bg-blue-600/3 rounded-full blur-[100px]" />
-              </div>
-
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-center gap-4 border-b border-[#1f2937]/30 pb-4">
-                  <TabsList className="hidden sm:flex bg-[#070b15]/80 border border-[#1f2937]/65 p-1 rounded-2xl h-12 gap-1.5 shadow-2xl mx-auto backdrop-blur-md">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-center gap-4 border-b border-slate-200 dark:border-white/6 pb-4">
+                  <TabsList className="hidden sm:flex bg-slate-200/80 dark:bg-[#12151c] border border-slate-300 dark:border-white/10 p-1 rounded-xl h-11 gap-1 mx-auto">
                     <TabsTrigger
                       value="new"
-                      className="gap-2 px-5 h-9.5 rounded-xl text-xs font-black transition-all duration-300 cursor-pointer data-[state=active]:bg-linear-to-r data-[state=active]:from-indigo-600/90 data-[state=active]:to-violet-600/90 data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(99,102,241,0.25)] hover:bg-[#111827]/60 text-gray-400 hover:text-gray-200"
+                      className="gap-2 px-4 h-9 rounded-lg text-xs font-medium transition-colors data-[state=active]:bg-white dark:data-[state=active]:bg-white/10 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 cursor-pointer"
                     >
-                      <Plus className="w-4 h-4 shrink-0" />
-                      {dict.newComplaint.toUpperCase()}
+                      <Plus className="w-3.5 h-3.5 shrink-0" />
+                      {dict.newComplaint}
                     </TabsTrigger>
                     <TabsTrigger
                       value="track"
-                      className="gap-2 px-5 h-9.5 rounded-xl text-xs font-black transition-all duration-300 cursor-pointer data-[state=active]:bg-linear-to-r data-[state=active]:from-indigo-600/90 data-[state=active]:to-violet-600/90 data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(99,102,241,0.25)] hover:bg-[#111827]/60 text-gray-400 hover:text-gray-200"
+                      className="gap-2 px-4 h-9 rounded-lg text-xs font-medium transition-colors data-[state=active]:bg-white dark:data-[state=active]:bg-white/10 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 cursor-pointer"
                     >
-                      <FileText className="w-4 h-4 shrink-0" />
-                      {dict.myComplaints.toUpperCase()}
+                      <FileText className="w-3.5 h-3.5 shrink-0" />
+                      {dict.myComplaints}
                     </TabsTrigger>
                     <TabsTrigger
                       value="search-track"
-                      className="gap-2 px-5 h-9.5 rounded-xl text-xs font-black transition-all duration-300 cursor-pointer data-[state=active]:bg-linear-to-r data-[state=active]:from-indigo-600/90 data-[state=active]:to-violet-600/90 data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(99,102,241,0.25)] hover:bg-[#111827]/60 text-gray-400 hover:text-gray-200"
+                      className="gap-2 px-4 h-9 rounded-lg text-xs font-medium transition-colors data-[state=active]:bg-white dark:data-[state=active]:bg-white/10 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 cursor-pointer"
                     >
-                      <Search className="w-4 h-4 shrink-0" />
-                      {isHi ? "शिकायत ट्रैक करें" : "TRACK COMPLAINT"}
+                      <Search className="w-3.5 h-3.5 shrink-0" />
+                      {isHi ? "शिकायत ट्रैक करें" : "Track grievance"}
                     </TabsTrigger>
                     <TabsTrigger
                       value="chatbot"
-                      className="gap-2 px-5 h-9.5 rounded-xl text-xs font-black transition-all duration-300 cursor-pointer data-[state=active]:bg-linear-to-r data-[state=active]:from-indigo-600/90 data-[state=active]:to-violet-600/90 data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(99,102,241,0.25)] hover:bg-[#111827]/60 text-gray-400 hover:text-gray-200"
+                      className="gap-2 px-4 h-9 rounded-lg text-xs font-medium transition-colors data-[state=active]:bg-white dark:data-[state=active]:bg-white/10 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 cursor-pointer"
                     >
-                      <Bot className="w-4 h-4 shrink-0 text-cyan-400" />
-                      {isHi ? "AI चैटबॉट" : "AI CHATBOT"}
-                      <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />
+                      <Bot className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+                      {isHi ? "एआई सहायक" : "AI Assistant"}
                     </TabsTrigger>
                   </TabsList>
                 </div>
@@ -1216,108 +1201,66 @@ export default function CitizenDashboard() {
             <TabsContent value="track">
               <div className="space-y-6 text-left">
                 {/* Merged Profile Section at the top of Complaints */}
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
                   {/* Digital ID Card Profile Card */}
-                  <div className="lg:col-span-3 bg-linear-to-br from-[#0e1726]/60 via-[#070b15]/75 to-[#090d16]/60 border border-indigo-500/25 rounded-2xl p-6 relative overflow-hidden shadow-2xl flex flex-col sm:flex-row items-center sm:items-start gap-5 group transition-all duration-300 hover:border-indigo-500/40 hover:shadow-[0_0_35px_rgba(99,102,241,0.12)] scanning-laser-container">
-                    {/* Tech grid overlay inside ID */}
-                    <div className="absolute inset-0 bg-[linear-gradient(to_right,#818cf807_1px,transparent_1px),linear-gradient(to_bottom,#818cf807_1px,transparent_1px)] bg-size-[1.5rem_1.5rem] pointer-events-none" />
-                    
-                    {/* Holographic Glowing Orbs inside ID */}
-                    <div className="absolute -right-12 -top-12 w-32 h-32 bg-[#7c3aed]/15 rounded-full filter blur-xl pointer-events-none group-hover:bg-[#7c3aed]/25 transition-all duration-500" />
-                    <div className="absolute -left-12 -bottom-12 w-32 h-32 bg-blue-500/10 rounded-full filter blur-xl pointer-events-none" />
-                    
-                    {/* ID Photo Frame with scanning effect */}
-                    <div className="relative shrink-0">
-                      <div className="w-16 h-16 rounded-xl bg-linear-to-br from-indigo-500/20 to-violet-500/20 flex items-center justify-center border border-indigo-400/40 shadow-2xl relative overflow-hidden p-0.5">
-                        <div className="absolute inset-0 bg-linear-to-b from-transparent via-indigo-500/20 to-transparent animate-pulse" />
-                        <div className="w-full h-full rounded-[10px] bg-[#05070f]/90 flex items-center justify-center border border-indigo-500/30">
-                          <User className="w-8 h-8 text-indigo-400 group-hover:scale-110 transition-transform duration-300" />
-                        </div>
-                      </div>
-                      <div className="absolute -bottom-1.5 -right-1.5 w-5 h-5 bg-emerald-500 rounded-full border-2 border-[#05070f] flex items-center justify-center shadow-lg">
-                        <ShieldCheck className="w-3 h-3 text-white" />
-                      </div>
+                  <div className="lg:col-span-3 bg-white dark:bg-[#12151c] border border-slate-200 dark:border-white/10 rounded-xl p-5 flex flex-col sm:flex-row items-center sm:items-start gap-4 shadow-xs">
+                    <div className="w-12 h-12 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+                      <User className="w-6 h-6 text-blue-500 dark:text-blue-400" />
                     </div>
                     
-                    <div className="space-y-2 text-center sm:text-left flex-1 min-w-0 z-10">
+                    <div className="space-y-1.5 text-center sm:text-left flex-1 min-w-0">
                       <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                        <h2 className="text-xl font-black text-white leading-none truncate font-sans tracking-wide">
-                          {session?.name?.toUpperCase()}
+                        <h2 className="text-base font-semibold text-slate-900 dark:text-white truncate">
+                          {session?.name}
                         </h2>
-                        <Badge variant="outline" className="border-indigo-400/40 text-indigo-400 bg-indigo-500/5 font-black uppercase text-[8.5px] px-2 py-0.5 tracking-wider rounded-md animate-pulse">
+                        <Badge variant="outline" className="border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 text-[10px] font-medium px-2 py-0.5 rounded">
                           Verified Citizen
                         </Badge>
                       </div>
                       
-                      {/* Contact Details with custom icons */}
-                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 text-xs text-gray-400 font-bold">
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
                         <span className="flex items-center gap-1.5 min-w-0 truncate">
-                          <Mail className="w-3.5 h-3.5 text-indigo-400/80 shrink-0" />
-                          <span className="truncate hover:text-white transition-colors duration-200">{session?.email}</span>
+                          <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span className="truncate">{session?.email}</span>
                         </span>
                         <span className="flex items-center gap-1.5">
-                          <Phone className="w-3.5 h-3.5 text-indigo-400/80 shrink-0" />
-                          <span className="hover:text-white transition-colors duration-200">{session?.mobile || "+91 96317 06698"}</span>
+                          <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span>{session?.mobile || "+91 96317 06698"}</span>
                         </span>
                       </div>
                       
-                      {/* Fake Chip & Barcode design */}
-                      <div className="flex items-center justify-center sm:justify-start gap-3 pt-1">
-                        {/* AI Gold Chip */}
-                        <div className="w-6 h-5 rounded-sm bg-linear-to-br from-amber-400/70 via-indigo-500/40 to-amber-500/70 border border-amber-300/40 shadow-inner relative flex items-center justify-center">
-                          <div className="w-3 h-2.5 border border-white/20 rounded-xs bg-[#05070f]/20" />
-                        </div>
-                        {/* Barcode representation */}
-                        <div className="flex gap-0.5 h-4 opacity-50 hover:opacity-80 transition-opacity">
-                          <div className="w-px bg-white h-full" />
-                          <div className="w-[2px] bg-white h-full" />
-                          <div className="w-px bg-white h-full" />
-                          <div className="w-[3px] bg-white h-full" />
-                          <div className="w-px bg-white h-full" />
-                          <div className="w-[2px] bg-white h-full" />
-                          <div className="w-[4px] bg-white h-full" />
-                          <div className="w-px bg-white h-full" />
-                        </div>
-                        <span className="text-[9px] font-mono text-gray-500 font-bold uppercase tracking-widest">
-                          JM-{session?.id?.substring(0, 8) || "CIT-2026"}
-                        </span>
+                      <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 pt-1">
+                        REG ID: <span className="text-slate-700 dark:text-slate-300">UP-CIT-{session?.id?.substring(0, 8) || "2026-0948"}</span>
                       </div>
                     </div>
 
-                    {/* Registration Date Pill */}
-                    <div className="text-[10px] font-bold text-gray-400 bg-[#070b13]/80 border border-indigo-500/20 rounded-xl px-3.5 py-2 flex items-center gap-1.5 self-center shrink-0 shadow-md">
-                      <Calendar className="w-3.5 h-3.5 text-indigo-400" />
+                    <div className="text-[11px] font-mono text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-[#181c24] border border-slate-200 dark:border-white/6 rounded-lg px-3 py-1.5 flex items-center gap-1.5 self-center sm:self-start shrink-0">
+                      <Calendar className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                       <span>
-                        REG: {session?.authenticatedAt ? new Date(session.authenticatedAt).toLocaleDateString("en-IN", { month: "short", year: "numeric" }).toUpperCase() : "JUNE 2026"}
+                        {session?.authenticatedAt ? new Date(session.authenticatedAt).toLocaleDateString("en-IN", { month: "short", year: "numeric" }) : "Active"}
                       </span>
                     </div>
                   </div>
 
                   {/* Profile Stats Grid */}
                   <div className="lg:col-span-2 grid grid-cols-3 gap-3">
-                    <div className="bg-[#090d16]/40 border border-[#1f2937]/60 rounded-2xl p-4.5 flex flex-col justify-center text-left transition-all duration-300 hover:border-indigo-500/40 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] group relative overflow-hidden">
-                      <div className="absolute -right-8 -top-8 w-16 h-16 bg-indigo-500/5 rounded-full blur-lg" />
-                      <span className="text-[9px] text-gray-500 font-black uppercase tracking-wider block">Grievances</span>
-                      <span className="text-2.5xl font-black text-white block mt-0.5 group-hover:scale-105 transition-transform duration-300">{complaints.length}</span>
-                      <span className="text-[8px] text-gray-400 font-medium mt-0.5 hidden sm:block">Total filed</span>
+                    <div className="bg-white dark:bg-[#12151c] border border-slate-200 dark:border-white/10 rounded-xl p-4 flex flex-col justify-center text-left shadow-xs">
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 block">Total</span>
+                      <span className="text-2xl font-mono font-semibold text-slate-900 dark:text-white block mt-1">{complaints.length}</span>
                     </div>
 
-                    <div className="bg-[#090d16]/40 border border-emerald-500/10 rounded-2xl p-4.5 flex flex-col justify-center text-left transition-all duration-300 hover:border-emerald-500/40 hover:shadow-[0_0_20px_rgba(16,185,129,0.15)] group relative overflow-hidden">
-                      <div className="absolute -right-8 -top-8 w-16 h-16 bg-emerald-500/5 rounded-full blur-lg" />
-                      <span className="text-[9px] text-emerald-400/80 font-black uppercase tracking-wider block">Resolved</span>
-                      <span className="text-2.5xl font-black text-emerald-400 block mt-0.5 group-hover:scale-105 transition-transform duration-300">
+                    <div className="bg-white dark:bg-[#12151c] border border-slate-200 dark:border-white/10 rounded-xl p-4 flex flex-col justify-center text-left shadow-xs">
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 block">Resolved</span>
+                      <span className="text-2xl font-mono font-semibold text-emerald-600 dark:text-emerald-400 block mt-1">
                         {complaints.filter(c => c.status === "resolved").length}
                       </span>
-                      <span className="text-[8px] text-gray-400 font-medium mt-0.5 hidden sm:block">Verified</span>
                     </div>
 
-                    <div className="bg-[#090d16]/40 border border-amber-500/10 rounded-2xl p-4.5 flex flex-col justify-center text-left transition-all duration-300 hover:border-amber-500/40 hover:shadow-[0_0_20px_rgba(245,158,11,0.15)] group relative overflow-hidden">
-                      <div className="absolute -right-8 -top-8 w-16 h-16 bg-amber-500/5 rounded-full blur-lg" />
-                      <span className="text-[9px] text-amber-400/80 font-black uppercase tracking-wider block">Active</span>
-                      <span className="text-2.5xl font-black text-amber-400 block mt-0.5 group-hover:scale-105 transition-transform duration-300">
+                    <div className="bg-white dark:bg-[#12151c] border border-slate-200 dark:border-white/10 rounded-xl p-4 flex flex-col justify-center text-left shadow-xs">
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 block">Pending</span>
+                      <span className="text-2xl font-mono font-semibold text-blue-600 dark:text-blue-400 block mt-1">
                         {complaints.filter(c => c.status !== "resolved").length}
                       </span>
-                      <span className="text-[8px] text-gray-400 font-medium mt-0.5 hidden sm:block">Processing</span>
                     </div>
                   </div>
                 </div>

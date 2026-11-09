@@ -1,74 +1,50 @@
 "use client";
 
-import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowRight, Shield, Bot } from "lucide-react";
+import { ArrowRight, Shield, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function CTA() {
   return (
-    <section className="py-24 relative overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-linear-to-br from-gov-blue via-gov-blue-dark to-ai-purple-dark opacity-95" />
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 opacity-10" style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 1px)`,
-          backgroundSize: '32px 32px',
-        }} />
-      </div>
+    <section className="py-20 border-b border-slate-200 dark:border-white/[0.06] bg-slate-50 dark:bg-[#0c0e14] transition-colors">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12151e] p-8 sm:p-12 text-left relative overflow-hidden shadow-xs">
+          
+          <div className="max-w-2xl space-y-4">
+            <div className="inline-flex items-center gap-2 text-[11px] font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/8 px-3 py-1 rounded-md">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span>Government of Uttar Pradesh Civic Gateway</span>
+            </div>
 
-      <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="space-y-6"
-        >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-sm text-white/90">
-            <Bot className="w-4 h-4" />
-            Join the Governance Revolution
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
+              Report a civic issue or access administrative command
+            </h2>
+
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
+              Citizens can file reports without registration. Zonal municipal officers and secretariat administrators can log in to monitor ward SLAs and dispatch resolution teams.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3 pt-4">
+              <Link href="/citizen">
+                <Button className="h-11 px-5 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white transition-colors cursor-pointer shadow-sm">
+                  <Shield className="w-4 h-4 mr-2" />
+                  <span>File a grievance</span>
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+              <Link href="/login">
+                <Button
+                  variant="outline"
+                  className="h-11 px-5 rounded-lg text-sm font-medium border-slate-300 dark:border-white/10 bg-white dark:bg-white/[0.03] hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+                >
+                  <Landmark className="w-4 h-4 mr-2 text-slate-500 dark:text-slate-400" />
+                  <span>Portal login (Citizen / Officer / Admin)</span>
+                </Button>
+              </Link>
+            </div>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight">
-            Ready to Transform
-            <br />
-            <span className="text-trust-green-light">Citizen Grievance Resolution?</span>
-          </h2>
-
-          <p className="text-lg text-white/70 max-w-2xl mx-auto">
-            Experience AI-powered governance that actually works. File complaints in Hindi,
-            get updates automatically, and see real resolution — not just promises.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Link href="/citizen">
-              <Button
-                size="lg"
-                className="relative overflow-hidden z-10 bg-white text-gov-blue-dark shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 h-12 px-8 text-base font-semibold group cursor-pointer before:absolute before:inset-0 before:z-[-1] before:bg-linear-to-r before:from-blue-600 before:via-violet-600 before:to-pink-600 before:scale-x-0 hover:before:scale-x-100 before:origin-left before:transition-transform before:duration-500 hover:text-white hover:border-0 border-0"
-              >
-                <Shield className="w-5 h-5 mr-2" />
-                File a Complaint Now
-                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
-            <Link href="/admin">
-              <Button
-                size="lg"
-                variant="outline"
-                className="relative overflow-hidden z-10 border-2 border-white/30 bg-transparent text-white hover:text-white hover:border-white/60 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 h-12 px-8 text-base cursor-pointer before:absolute before:inset-0 before:z-[-1] before:bg-white/15 before:scale-x-0 hover:before:scale-x-100 before:origin-left before:transition-transform before:duration-500"
-              >
-                View Analytics
-              </Button>
-            </Link>
-          </div>
-
-          <div className="flex items-center justify-center gap-6 pt-6 text-sm text-white/50">
-            <span>✓ Free for Citizens</span>
-            <span>✓ 24/7 AI Active</span>
-            <span>✓ Multilingual</span>
-          </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );
