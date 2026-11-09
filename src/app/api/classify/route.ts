@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { text, image, imageName } = body;
+  const { text, image } = body;
 
   try {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -62,7 +62,6 @@ Return ONLY valid JSON matching this schema. No extra text, no markdown block wr
 
     // Include base64 image if uploaded
     if (image) {
-      // image format is usually "data:image/jpeg;base64,..."
       const match = image.match(/^data:(image\/\w+);base64,(.+)$/);
       if (match) {
         const mimeType = match[1];
@@ -70,14 +69,18 @@ Return ONLY valid JSON matching this schema. No extra text, no markdown block wr
         parts.push({
           inlineData: {
             mimeType: mimeType,
-            data: base64Data
-          }
+            data: base64Data,
+          },
         });
       }
     }
 
-    // Call Gemini API via standard fetch
-    const response = await fetch(
+    // Call Gemini API via fetch with safe timeout to prevent Turbopack hanging
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Gemini API request timed out")), 5000)
+    );
+
+    const fetchPromise = fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
@@ -91,11 +94,13 @@ Return ONLY valid JSON matching this schema. No extra text, no markdown block wr
             },
           ],
           generationConfig: {
-            responseMimeType: "application/json"
-          }
+            responseMimeType: "application/json",
+          },
         }),
       }
     );
+
+    const response: Response = await Promise.race([fetchPromise, timeoutPromise]);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -126,16 +131,18 @@ Return ONLY valid JSON matching this schema. No extra text, no markdown block wr
       department: classification.department || localBaseline.department,
       isFallback: false,
     };
-    return NextResponse.json(safeClassification);
 
+    return NextResponse.json(safeClassification);
   } catch (error: any) {
-    console.error("Error in API classify route:", error);
-    // If anything fails, fallback to local classifier safely using the parsed text
+    console.warn("Falling back to local classifier:", error?.message || error);
     try {
       const localResult = classifyComplaint(text || "");
-      return NextResponse.json({ ...localResult, isFallback: true, error: error.message });
+      return NextResponse.json({ ...localResult, isFallback: true, error: error?.message });
     } catch (innerError: any) {
-      return NextResponse.json({ error: "Failed to classify complaint", isFallback: true, details: innerError.message }, { status: 500 });
+      return NextResponse.json(
+        { error: "Failed to classify complaint", isFallback: true, details: innerError?.message },
+        { status: 500 }
+      );
     }
   }
 }
