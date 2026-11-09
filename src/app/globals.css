@@ -2,7 +2,7 @@
 @import "./tw-animate.css";
 @import "leaflet/dist/leaflet.css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* ============================================
    JanMitra AI — Premium Design System
