@@ -1,216 +1,124 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
 import { CheckCircle2, MapPin, Clock, ShieldCheck, Activity } from "lucide-react";
-
-const stats = [
-  { value: 10247, label: "Complaints Resolved", suffix: "+", color: "#10B981" },
-  { value: 98, label: "AI Routing Accuracy", suffix: "%", color: "#7C3AED" },
-  { value: 14.5, label: "Avg Resolution Time", suffix: "h", color: "#1D4ED8" },
-  { value: 92, label: "Citizen Satisfaction", suffix: "%", color: "#F59E0B" },
-];
 
 interface LiveResolution {
   district: string;
   category: string;
   time: string;
   id: string;
+  department: string;
 }
 
 const mockLiveResolutions: LiveResolution[] = [
-  { id: "RES-941", district: "Hazratganj, Lucknow", category: "Water Pipeline Leak", time: "12 hours ago" },
-  { id: "RES-942", district: "Gomti Nagar, Lucknow", category: "Garbage Pile Cleanup", time: "8 hours ago" },
-  { id: "RES-943", district: "Sector 15, Noida", category: "Streetlight Restoration", time: "16 hours ago" },
-  { id: "RES-944", district: "Civil Lines, Prayagraj", category: "Pothole Filling", time: "4 hours ago" },
-  { id: "RES-945", district: "Taj Ganj, Agra", category: "Sewage Line Fix", time: "18 hours ago" },
-  { id: "RES-946", district: "Sigra, Varanasi", category: "Drainage Cleaning", time: "2 hours ago" },
+  { id: "RES-941", district: "Hazratganj, Ward 12", category: "Water pipeline leak", time: "12m ago", department: "Jal Nigam" },
+  { id: "RES-942", district: "Gomti Nagar, Ward 42", category: "Garbage collection backlog", time: "34m ago", department: "Nagar Nigam" },
+  { id: "RES-943", district: "Alambagh, Ward 08", category: "Faulty transformer repair", time: "1h ago", department: "UPPCL" },
+  { id: "RES-944", district: "Indira Nagar, Ward 19", category: "Pothole surface patching", time: "2h ago", department: "PWD" },
+  { id: "RES-945", district: "Chowk, Ward 03", category: "Drainage desilting & clearing", time: "3h ago", department: "Jal Nigam" },
+  { id: "RES-946", district: "Rajajipuram, Ward 24", category: "Street light pole restoration", time: "4h ago", department: "Nagar Nigam" },
 ];
 
-function useCountUp(target: number, duration: number = 2000, start: boolean = false) {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    if (!start) return;
-    let startTime: number;
-    let animFrame: number;
-
-    function animate(timestamp: number) {
-      if (!startTime) startTime = timestamp;
-      const progress = Math.min((timestamp - startTime) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
-      setCount(Math.floor(eased * target));
-      if (progress < 1) {
-        animFrame = requestAnimationFrame(animate);
-      }
-    }
-
-    animFrame = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animFrame);
-  }, [target, duration, start]);
-
-  return count;
-}
-
-function StatCard({
-  value,
-  label,
-  suffix,
-  color,
-  delay,
-}: {
-  value: number;
-  label: string;
-  suffix: string;
-  color: string;
-  delay: number;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  const count = useCountUp(value, 2000, inView);
-
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setInView(true); },
-      { threshold: 0.2 }
-    );
-    if (ref.current) obs.observe(ref.current);
-    return () => obs.disconnect();
-  }, []);
-
-  return (
-    <motion.div
-      ref={ref}
-      className="glass-card premium-glow-border rounded-2xl p-6 text-center backdrop-blur-md relative overflow-hidden"
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay }}
-      whileHover={{ y: -4 }}
-    >
-      {/* Dynamic glow background */}
-      <div 
-        className="absolute -top-12 -right-12 w-24 h-24 rounded-full opacity-5 pointer-events-none filter blur-xl"
-        style={{ backgroundColor: color }}
-      />
-
-      <div className="text-2xl sm:text-4xl lg:text-5xl font-extrabold mb-2 font-mono flex items-center justify-center tracking-tight" style={{ color }}>
-        {count.toLocaleString()}
-        <span className="text-[0.6em] font-bold ml-0.5">{suffix}</span>
-      </div>
-      <div className="text-xs sm:text-sm text-muted-foreground font-semibold uppercase tracking-wider">{label}</div>
-    </motion.div>
-  );
-}
+const telemetryStats = [
+  { label: "Grievances resolved", value: "10,247", delta: "+12% vs last month" },
+  { label: "Routing accuracy", value: "98.4%", delta: "+1.2% model gain" },
+  { label: "Mean resolution SLA", value: "14.5h", delta: "-3.2h reduction" },
+  { label: "Active citizen audit", value: "92.8%", delta: "Direct citizen verification" },
+];
 
 export function Statistics() {
   const [tickerIndex, setTickerIndex] = useState(0);
 
-  // Cycle recent resolution feed items
   useEffect(() => {
     const interval = setInterval(() => {
       setTickerIndex((prev) => (prev + 1) % mockLiveResolutions.length);
-    }, 3000);
+    }, 4000);
     return () => clearInterval(interval);
   }, []);
 
-  // Display a triplet for continuous motion feed
-  const activeResolution = mockLiveResolutions[tickerIndex];
-  const nextResolution = mockLiveResolutions[(tickerIndex + 1) % mockLiveResolutions.length];
-  const thirdResolution = mockLiveResolutions[(tickerIndex + 2) % mockLiveResolutions.length];
-
   return (
-    <section className="py-24 relative overflow-hidden">
-      {/* Background decoration grid */}
-      <div className="absolute top-1/2 left-0 right-0 h-px bg-border/20 pointer-events-none" />
-      <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[350px] h-[350px] rounded-full bg-trust-green/5 blur-[100px] pointer-events-none" />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <motion.div
-          className="text-center mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-trust-green/10 border border-trust-green/20 text-xs font-bold text-trust-green uppercase tracking-wider mb-4 animate-pulse">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            Verified Metrics
+    <section className="py-20 border-b border-slate-200 dark:border-white/[0.06] bg-slate-50 dark:bg-[#0c0e14] transition-colors" id="stats">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Section Header */}
+        <div className="max-w-2xl text-left mb-12 space-y-2">
+          <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+            Operational Telemetry
           </span>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
-            Transforming <span className="gradient-text">Governance</span> at Scale
+          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+            Civic redressal metrics at state scale
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Providing transparency, accountabilty, and velocity to citizen complaints across Uttar Pradesh.
+          <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+            Real-time performance indicators measuring turnaround velocity, departmental compliance, and citizen satisfaction across Uttar Pradesh.
           </p>
-        </motion.div>
+        </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-16">
-          {stats.map((stat, i) => (
-            <StatCard key={stat.label} {...stat} delay={i * 0.08} />
+        {/* 4 Stat Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+          {telemetryStats.map((stat) => (
+            <div
+              key={stat.label}
+              className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12151e] p-5 sm:p-6 text-left space-y-2 shadow-xs transition-colors"
+            >
+              <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                {stat.label}
+              </div>
+              <div className="text-2xl sm:text-3xl lg:text-4xl font-mono font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
+                {stat.value}
+              </div>
+              <div className="text-xs text-blue-600 dark:text-blue-400 font-medium pt-1">
+                {stat.delta}
+              </div>
+            </div>
           ))}
         </div>
 
-        {/* Recent Resolutions Live Activity Ticker Mockup */}
-        <motion.div
-          className="glass-card premium-glow-border rounded-2xl p-6 md:p-8 backdrop-blur-md"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-border/50 pb-5 mb-6 gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-trust-green/10 flex items-center justify-center text-trust-green radar-glow relative">
-                <Activity className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-bold text-base md:text-lg">Recent Resolved Grievances</h3>
-                <p className="text-xs text-muted-foreground">Auto-Escalation & Resolution Audit Ticker</p>
-              </div>
+        {/* Live Resolution Audit Ledger Ticker */}
+        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12151e] p-5 text-left shadow-xs transition-colors">
+          <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-white/6">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+                Live Redressal Ledger
+              </span>
             </div>
-            <div className="flex items-center gap-2 bg-muted/60 border border-border/40 px-3 py-1.5 rounded-lg text-xs font-mono">
-              <span className="w-2 h-2 rounded-full bg-trust-green animate-ping" />
-              <span>LIVE DATABASE COUNTER</span>
-            </div>
+            <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+              Auto-sync active • Lucknow District
+            </span>
           </div>
 
-          {/* Scrolling ticker grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <AnimatePresence mode="popLayout">
-              {[activeResolution, nextResolution, thirdResolution].map((item, index) => (
-                <motion.div
-                  key={`${item.id}-${index}`}
-                  className="bg-muted/30 border border-border/30 rounded-xl p-4.5 flex flex-col justify-between h-[120px] transition-all hover:bg-muted/50 hover:border-border/60"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.4 }}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {[0, 1, 2].map((offset) => {
+              const item = mockLiveResolutions[(tickerIndex + offset) % mockLiveResolutions.length];
+              return (
+                <div
+                  key={item.id}
+                  className="rounded-lg border border-slate-100 dark:border-white/6 bg-slate-50 dark:bg-white/[0.02] p-3 text-xs space-y-1.5 transition-colors"
                 >
-                  <div className="flex justify-between items-start">
-                    <span className="text-[10px] font-mono text-muted-foreground font-semibold">TICKET {item.id}</span>
-                    <span className="text-[10px] font-bold text-trust-green bg-trust-green/8 border border-trust-green/20 px-2 py-0.5 rounded-full flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3 text-trust-green" /> RESOLVED
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-[10px] text-blue-600 dark:text-blue-400 font-medium">
+                      {item.id}
+                    </span>
+                    <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400">
+                      {item.time}
                     </span>
                   </div>
-                  
-                  <div className="my-2">
-                    <h4 className="text-xs font-bold text-foreground/90">{item.category}</h4>
-                    <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                      <MapPin className="w-3.5 h-3.5 text-gov-blue" />
-                      {item.district}
-                    </div>
+                  <div className="font-medium text-slate-800 dark:text-slate-200 truncate">
+                    {item.category}
                   </div>
-
-                  <div className="text-[10px] text-muted-foreground font-mono flex items-center gap-1 pt-1.5 border-t border-border/20">
-                    <Clock className="w-3 h-3 text-muted-foreground" />
-                    <span>Resolution: {item.time}</span>
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-0.5">
+                    <span className="truncate">{item.district}</span>
+                    <span className="font-mono text-[10px] text-slate-600 dark:text-slate-400 shrink-0">
+                      {item.department}
+                    </span>
                   </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+                </div>
+              );
+            })}
           </div>
-        </motion.div>
+        </div>
+
       </div>
     </section>
   );

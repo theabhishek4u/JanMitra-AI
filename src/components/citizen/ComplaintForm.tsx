@@ -8,8 +8,6 @@ import {
   MicOff,
   MapPin,
   Upload,
-  Brain,
-  Sparkles,
   CheckCircle2,
   AlertTriangle,
   Clock,
@@ -21,7 +19,7 @@ import {
   User,
   Phone,
   Coins,
-  Zap,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -49,7 +47,6 @@ export function ComplaintForm({
   const [text, setText] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [isFocused, setIsFocused] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [location, setLocation] = useState<{ lat: number; lng: number; area: string } | null>(null);
   const [classification, setClassification] = useState<AIClassification | null>(null);
@@ -59,9 +56,8 @@ export function ComplaintForm({
   const [photoName, setPhotoName] = useState<string>("");
   const [userPriority, setUserPriority] = useState<"Auto" | "Normal" | "Important" | "Emergency">("Auto");
   
-  // Image Diagnostic Scan states
+  // Image scan state
   const [isScanningImage, setIsScanningImage] = useState(false);
-  const [scanProgress, setScanProgress] = useState(0);
 
   // Token System States
   const [tokenState, setTokenState] = useState(() => getTokenState());
@@ -109,7 +105,6 @@ export function ComplaintForm({
       const mockName = isHi ? "राकेश कुमार" : "Rakesh Kumar";
       const mockPhone = "+91 99887 76655";
       
-      // Pin location
       setLocation({
         lat: 26.8532,
         lng: 80.9723,
@@ -120,25 +115,10 @@ export function ComplaintForm({
       setName(mockName);
       setPhone(mockPhone);
       
-      // Beautiful custom mockup SVG garbage image
-      const garbageMockImage = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 100 100'><defs><linearGradient id='bgGrad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%230b0b0f'/><stop offset='100%' stop-color='%23181824'/></linearGradient><linearGradient id='trashGrad' x1='0%' y1='0%' x2='0%' y2='100%'><stop offset='0%' stop-color='%233f3f46'/><stop offset='100%' stop-color='%2327272a'/></linearGradient><linearGradient id='glowGrad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%23a78bfa'/><stop offset='100%' stop-color='%23ec4899'/></linearGradient><filter id='neonGlow'><feGaussianBlur stdDeviation='1.5' result='coloredBlur'/><feMerge><feMergeNode in='coloredBlur'/><feMergeNode in='SourceGraphic'/></feMerge></filter></defs><rect width='100%' height='100%' fill='url(%23bgGrad)' rx='4'/><path d='M0,20 L100,20 M0,40 L100,40 M0,60 L100,60 M0,80 L100,80 M20,0 L20,100 M40,0 L40,100 M60,0 L60,100 M80,0 L80,100' stroke='%23ffffff' stroke-width='0.1' stroke-opacity='0.15' /><circle cx='50' cy='50' r='35' fill='none' stroke='%238b5cf6' stroke-width='0.5' stroke-dasharray='1 3' stroke-opacity='0.4'/><circle cx='50' cy='50' r='15' fill='none' stroke='%23ec4899' stroke-width='0.3' stroke-opacity='0.3'/><path d='M25,75 Q40,45 55,75 Z' fill='url(%23trashGrad)' opacity='0.8' stroke='%2352525b' stroke-width='0.5'/><path d='M45,75 Q60,50 75,75 Z' fill='url(%23trashGrad)' opacity='0.7' stroke='%2352525b' stroke-width='0.5'/><path d='M35,78 Q50,38 65,78 Z' fill='url(%23trashGrad)' stroke='%238b5cf6' stroke-width='0.8' filter='url(%23neonGlow)'/><rect x='62' y='68' width='8' height='10' rx='1' fill='%2352525b' transform='rotate(15, 66, 73)' stroke='%23a78bfa' stroke-width='0.4'/><line x1='63' y1='70' x2='71' y2='72' stroke='%233f3f46' stroke-width='0.5'/><circle cx='48' cy='55' r='2.5' fill='%23ef4444' filter='url(%23neonGlow)'/><line x1='48' y1='55' x2='30' y2='45' stroke='%23ef4444' stroke-width='0.4' stroke-dasharray='1 1'/><rect x='15' y='38' width='14' height='6' rx='1' fill='%23ef4444' fill-opacity='0.15' stroke='%23ef4444' stroke-width='0.4'/><text x='22' y='42' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='3.5' fill='%23ef4444' font-weight='bold'>BIO</text><circle cx='58' cy='63' r='2' fill='%23f59e0b' filter='url(%23neonGlow)'/><line x1='58' y1='63' x2='72' y2='52' stroke='%23f59e0b' stroke-width='0.4' stroke-dasharray='1 1'/><rect x='73' y='48' width='14' height='6' rx='1' fill='%23f59e0b' fill-opacity='0.15' stroke='%23f59e0b' stroke-width='0.4'/><text x='80' y='52' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='3.5' fill='%23f59e0b' font-weight='bold'>HAZARD</text><path d='M5,12 L5,5 L12,5' fill='none' stroke='%238b5cf6' stroke-width='0.8'/><path d='M95,12 L95,5 L88,5' fill='none' stroke='%238b5cf6' stroke-width='0.8'/><path d='M5,88 L5,95 L12,95' fill='none' stroke='%238b5cf6' stroke-width='0.8'/><path d='M95,88 L95,95 L88,95' fill='none' stroke='%238b5cf6' stroke-width='0.8'/><text x='50%' y='15%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='5' fill='url(%23glowGrad)' font-weight='black' letter-spacing='0.5'>EVIDENCE IDENTIFIED</text><text x='50%' y='88%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='4' fill='%23a78bfa' font-weight='medium'>Gomti Nagar, Lucknow</text></svg>";
+      const garbageMockImage = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 100 100'><rect width='100%' height='100%' fill='%2312151c'/><path d='M20,70 L50,30 L80,70 Z' fill='%232a303c' stroke='%233f4756' stroke-width='1'/><circle cx='50' cy='45' r='12' fill='%23e0e7ff' fill-opacity='0.15'/><text x='50' y='85' fill='%2394a3b8' font-size='5' text-anchor='middle' font-family='monospace'>EVIDENCE ATTACHMENT</text></svg>";
       
       setPhoto(garbageMockImage);
-      setPhotoName("Gomti_Nagar_Garbage.jpg");
-      
-      // Trigger neon diagnostic scanner animation
-      setIsScanningImage(true);
-      setScanProgress(0);
-      
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 10;
-        setScanProgress(progress);
-        if (progress >= 100) {
-          clearInterval(interval);
-          setIsScanningImage(false);
-        }
-      }, 150);
+      setPhotoName("Gomti_Nagar_Evidence.jpg");
     };
 
     window.addEventListener("janmitra-autofill", handleAutofill);
@@ -161,41 +141,41 @@ export function ComplaintForm({
   }, [isHi]);
 
   const dict = {
-    describeTitle: isHi ? "🚨 अपनी समस्या दर्ज करें" : "🚨 Report Your Issue",
-    subtitleText: isHi ? "आज आप किस समस्या का सामना कर रहे हैं?" : "What problem are you facing today?",
-    voiceRecording: isHi ? "ऑडियो इनपुट रिकॉर्डिंग चालू..." : "Recording Audio Input...",
-    voiceInput: isHi ? "🎤 अपनी शिकायत बोलें" : "🎤 Speak Complaint",
-    uploadPhoto: isHi ? "📷 फोटो जोड़ें" : "📷 Add Photo",
-    photoAttached: isHi ? "📷 तस्वीर संलग्न है" : "📷 Photo Attached",
-    detectLocation: isHi ? "📍 स्वतः स्थान पता करें" : "📍 Auto Detect Location",
-    pinnedArea: isHi ? "रिवर्स-जियोकोडेड पिन किया गया क्षेत्र" : "Reverse-Geocoded Pinned Area",
-    yourDetails: isHi ? "आपका विवरण" : "Your Details",
-    namePlaceholder: isHi ? "आपका नाम" : "Your Name",
-    phonePlaceholder: isHi ? "फ़ोन नंबर" : "Phone Number",
-    submitBtn: isHi ? " शिकायत जमा करें" : "Submit Complaint",
-    submitSubText: isHi ? "AI स्वचालित रूप से सही विभाग को शिकायत भेजेगा" : "AI will automatically route to correct department",
-    analyzingTitle: isHi ? "AI आपकी शिकायत का विश्लेषण कर रहा है" : "AI is Analyzing Your Complaint",
-    analyzingDesc: isHi ? "वास्तविक समय में श्रेणियों का वर्गीकरण, तात्कालिकता का पता लगाना और विभाग आवंटन..." : "Classifying categories, detecting urgency & routing in real-time...",
-    successTitle: isHi ? "शिकायत सफलतापूर्वक दर्ज की गई!" : "Complaint Registered Successfully!",
-    trackRealtime: isHi ? "वास्तविक समय में प्रगति को ट्रैक करें" : "Track progress in real-time",
-    photoAttachment: isHi ? "फोटो संलग्नक" : "Photo Attachment",
-    scannedAI: isHi ? "AI विज़न द्वारा स्कैन किया गया" : "Scanned by AI Vision",
-    aiClassification: isHi ? "AI वर्गीकरण परिणाम" : "AI Classification Results",
-    confidence: isHi ? "सटीकता" : "Confidence",
+    describeTitle: isHi ? "शिकायत दर्ज करें" : "Report grievance",
+    subtitleText: isHi ? "नागरिक समस्या का विवरण दर्ज करें। एआई सीधे संबंधित विभाग को अग्रेषित करेगा।" : "Detail your municipal issue. The system verifies and routes directly to the department.",
+    voiceRecording: isHi ? "ध्वनि इनपुट रिकॉर्डिंग जारी..." : "Recording audio input...",
+    voiceInput: isHi ? "बोलकर दर्ज करें" : "Speak grievance",
+    uploadPhoto: isHi ? "फोटो संलग्न करें" : "Attach photo",
+    photoAttached: isHi ? "फोटो संलग्न है" : "Photo attached",
+    detectLocation: isHi ? "स्थान पहचानें" : "Auto-detect location",
+    pinnedArea: isHi ? "निर्धारित क्षेत्र" : "Identified Ward / Area",
+    yourDetails: isHi ? "नागरिक विवरण" : "Citizen particulars",
+    namePlaceholder: isHi ? "नागरिक का नाम" : "Full name",
+    phonePlaceholder: isHi ? "मोबाइल नंबर" : "Phone number",
+    submitBtn: isHi ? "शिकायत प्रेषित करें" : "Submit grievance",
+    submitSubText: isHi ? "सत्यापन एवं विभागीय आवंटन स्वचालित रूप से होगा" : "Verified docket is generated and dispatched to the field authority",
+    analyzingTitle: isHi ? "शिकायत का सत्यापन एवं विश्लेषण" : "Processing municipal docket",
+    analyzingDesc: isHi ? "श्रेणी वर्गीकरण, तात्कालिकता निर्धारण एवं विभागीय आवंटन..." : "Classifying grievance, calculating SLA, and assigning nodal department...",
+    successTitle: isHi ? "शिकायत सफलतापूर्वक पंजीकृत" : "Grievance registered successfully",
+    trackRealtime: isHi ? "स्थिति एवं निवारण प्रगति ट्रैक करें" : "Track field action and resolution timeline",
+    photoAttachment: isHi ? "संलग्न साक्ष्य" : "Attached evidence",
+    scannedAI: isHi ? "साक्ष्य सत्यापित" : "Evidence verified",
+    aiClassification: isHi ? "विभागीय आवंटन विवरण" : "Docket dispatch details",
+    confidence: isHi ? "सटीकता" : "confidence",
     category: isHi ? "श्रेणी" : "Category",
     priority: isHi ? "प्राथमिकता" : "Priority",
-    department: isHi ? "विभाग" : "Department",
-    estResolution: isHi ? "अनुमानित समाधान समय" : "Est. Resolution",
+    department: isHi ? "संबद्ध विभाग" : "Nodal Department",
+    estResolution: isHi ? "समाधान समय सीमा" : "Standard SLA",
     days: isHi ? "दिन" : "days",
-    aiOfficerSummary: isHi ? "AI अधिकारी सारांश" : "AI Officer Summary",
-    notificationSent: isHi ? "नागरिक एसएमएस सूचना प्रेषित:" : "Notification sent:",
-    fileAnother: isHi ? "एक और शिकायत दर्ज करें" : "File Another Complaint",
-    trackThis: isHi ? "शिकायत ट्रैक करें" : "Track This Complaint",
-    placeholderText: isHi ? "समस्या का विस्तार से वर्णन करें (जैसे, गोमती नगर मुख्य मार्ग पर 3 दिनों से स्ट्रीट लाइट खराब है...)" : "Describe the issue in detail (e.g., Streetlight broken on Main Road Gomti Nagar for 3 days...)",
-    selectPriority: isHi ? "प्राथमिकता चुनें" : "Select Priority",
-    priorityAuto: isHi ? "ऑटो (AI तय करेगा)" : "Auto-Detect",
-    priorityNormal: isHi ? "सामान्य" : "Normal",
-    priorityImportant: isHi ? "महत्वपूर्ण" : "Important",
+    aiOfficerSummary: isHi ? "प्राधिकृत अधिकारी हेतु सारांश" : "Authorized officer briefing",
+    notificationSent: isHi ? "एसएमएस पावती प्रेषित:" : "SMS acknowledgment sent:",
+    fileAnother: isHi ? "अन्य शिकायत दर्ज करें" : "File another grievance",
+    trackThis: isHi ? "शिकायत ट्रैक करें" : "Track grievance",
+    placeholderText: isHi ? "समस्या का विवरण दर्ज करें (उदा. गोमती नगर मुख्य मार्ग पर स्ट्रीट लाइट खराब है और गड्ढे बने हैं...)" : "Provide clear details of the issue (e.g., Streetlight dysfunctional and overflowing storm drain on Main Road, Ward 12...)",
+    selectPriority: isHi ? "प्राथमिकता स्तर" : "Priority level",
+    priorityAuto: isHi ? "स्वचालित (सिस्टम)" : "System (Auto)",
+    priorityNormal: isHi ? "सामान्य" : "Standard",
+    priorityImportant: isHi ? "महत्वपूर्ण" : "Urgent",
     priorityEmergency: isHi ? "आपातकालीन" : "Emergency",
   };
 
@@ -210,26 +190,13 @@ export function ComplaintForm({
       const reader = new FileReader();
       reader.onload = (event) => {
         setPhoto(event.target?.result as string);
-        
-        // Trigger visual neon diagnostic scanner
-        setIsScanningImage(true);
-        setScanProgress(0);
-
-        let progress = 0;
-        const interval = setInterval(() => {
-          progress += 10;
-          setScanProgress(progress);
-          if (progress >= 100) {
-            clearInterval(interval);
-            setIsScanningImage(false);
-          }
-        }, 150);
+        setIsScanningImage(false);
 
         if (!text.trim()) {
           if (isHi) {
-            setText(`[AI विज़न स्कैन: फोटो अपलोड (${file.name})] गोमती नगर में सड़क क्षति और कचरे की समस्या देखी गई है। कृपया शीघ्र समाधान करें।`);
+            setText(`[संलग्न साक्ष्य: ${file.name}] क्षेत्र में नागरिक समस्या की सूचना। कृपया तत्काल निरीक्षण कर समाधान कराएं।`);
           } else {
-            setText(`[AI Vision Scan: Photo uploaded (${file.name})] Gomti Nagar road damage and garbage issue detected. Please resolve immediately.`);
+            setText(`[Attached photo: ${file.name}] Civic issue reported in Lucknow municipal ward. Immediate departmental resolution requested.`);
           }
         }
       };
@@ -281,7 +248,6 @@ export function ComplaintForm({
     }
   }, [isHi, language]);
 
-  // Speech Recording via Web Speech API (Client-side real-time transcript) with fallback to MediaRecorder & backend API
   const startVoiceRecording = useCallback(async () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
@@ -314,17 +280,13 @@ export function ComplaintForm({
 
         recognition.onerror = (event: any) => {
           console.warn("Native Speech Recognition error, cascading to fallback:", event.error);
-          recognition.onend = null; // Prevent onend from toggling recording state back to false immediately
+          recognition.onend = null;
           try {
             recognition.stop();
           } catch (e) {}
 
           if (event.error === "no-speech") {
-            // Silence/pause detected. Stop recording state gracefully without replacing user input!
             setIsRecording(false);
-          } else if (event.error === "not-allowed" || event.error === "permission") {
-            // Blocked, try MediaRecorder fallback
-            runMediaRecorderFallback();
           } else {
             runMediaRecorderFallback();
           }
@@ -341,7 +303,6 @@ export function ComplaintForm({
       }
     }
 
-    // Secondary fallback: MediaRecorder with backend endpoint
     runMediaRecorderFallback();
 
     async function runMediaRecorderFallback() {
@@ -361,15 +322,6 @@ export function ComplaintForm({
         } else if (MediaRecorder.isTypeSupported("audio/webm")) {
           options = { mimeType: "audio/webm" };
           mimeType = "audio/webm";
-        } else if (MediaRecorder.isTypeSupported("audio/ogg")) {
-          options = { mimeType: "audio/ogg" };
-          mimeType = "audio/ogg";
-        } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
-          options = { mimeType: "audio/mp4" };
-          mimeType = "audio/mp4";
-        } else if (MediaRecorder.isTypeSupported("audio/aac")) {
-          options = { mimeType: "audio/aac" };
-          mimeType = "audio/aac";
         }
 
         const mediaRecorder = new MediaRecorder(stream, options);
@@ -398,9 +350,7 @@ export function ComplaintForm({
               const base64Audio = reader.result as string;
               const res = await fetch("/api/transcribe", {
                 method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   audio: base64Audio,
                   mimeType: mimeType.split(";")[0],
@@ -486,9 +436,8 @@ export function ComplaintForm({
     const currentTokenState = getTokenState();
     const isEmergency = isEmergencyComplaint(text) || userPriority === "Emergency";
 
-    // If 0 tokens remaining and it is not an emergency, block it immediately
     if (currentTokenState.tokensRemaining <= 0 && !isEmergency) {
-      setTokenAlert(isHi ? "दैनिक शिकायत सीमा पूरी हो गई है। कृपया कल पुनः प्रयास करें या आपातकालीन शिकायत दर्ज करें।" : "Daily complaint limit reached. Please try again tomorrow or report an emergency for priority bypass.");
+      setTokenAlert(isHi ? "दैनिक शिकायत सीमा पूरी हो गई है। कृपया कल पुनः प्रयास करें या आपातकालीन शिकायत दर्ज करें।" : "Daily grievance quota reached. Please try again tomorrow or flag as emergency for bypass.");
       return;
     }
 
@@ -496,27 +445,25 @@ export function ComplaintForm({
     setProcessingStep(0);
     setTokenAlert(null);
 
-    // Call real Gemini proxy route and start visual steps
     const enhancedText = userPriority === "Auto" ? text : `${text}\n[User Selected Priority: ${userPriority}]`;
     const apiResultPromise = classifyComplaintAI(enhancedText, photo);
 
     const steps = [
-      () => setProcessingStep(1), // Understanding text
-      () => setProcessingStep(2), // Detecting category
-      () => setProcessingStep(3), // Assessing priority
-      () => setProcessingStep(4), // Routing department
-      () => setProcessingStep(5), // Generating summary
+      () => setProcessingStep(1),
+      () => setProcessingStep(2),
+      () => setProcessingStep(3),
+      () => setProcessingStep(4),
+      () => setProcessingStep(5),
     ];
 
     for (let i = 0; i < steps.length; i++) {
-      await new Promise((r) => setTimeout(r, 450));
+      await new Promise((r) => setTimeout(r, 400));
       steps[i]();
     }
 
     try {
       const result = await apiResultPromise;
 
-      // Force priority based on explicit user selection, otherwise let AI handle it
       if (userPriority === "Emergency") {
         result.priority = "high";
       } else if (userPriority === "Important") {
@@ -525,7 +472,6 @@ export function ComplaintForm({
         result.priority = "low";
       }
 
-      // Deduct token now that we have classified and confirmed
       const tokenResult = consumeToken(enhancedText, result.category);
       
       if (!tokenResult.allowed) {
@@ -534,7 +480,6 @@ export function ComplaintForm({
         return;
       }
 
-      // Add to dynamic localStorage Database Store
       const newComplaint = await addComplaint({
         title: text.split(/[.।\n]/)[0].slice(0, 60) || "Civic Issue",
         titleHi: isHi ? "नागरिक समस्या दर्ज" : "Civic Issue Reported",
@@ -549,7 +494,7 @@ export function ComplaintForm({
         longitude: location?.lng || 80.9462,
         area: location?.area || "Gomti Nagar, Lucknow",
         citizenId: session?.id || null,
-        citizenName: name || session?.name || "Demo Citizen",
+        citizenName: name || session?.name || "Citizen",
         citizenPhone: phone || session?.mobile || "+91 99999 88888",
         imageUrl: photo || undefined,
         aiSummary: result.summary,
@@ -566,7 +511,6 @@ export function ComplaintForm({
       setIsEmergencyBypass(tokenResult.isEmergencyBypass);
       setStep("result");
 
-      // Notify parent Citizen dashboard
       if (onComplaintCreated) {
         onComplaintCreated(newComplaint);
       }
@@ -587,24 +531,24 @@ export function ComplaintForm({
 
   const processingSteps = isHi
     ? [
-        { label: "शिकायत पाठ का विश्लेषण..." },
-        { label: "शिकायत श्रेणी की पहचान..." },
-        { label: "प्राथमिकता एवं तात्कालिकता का आकलन..." },
-        { label: "संबद्ध विभाग को अग्रेषण..." },
-        { label: "अधिकारी सारांश का सृजन..." },
+        { label: "शिकायत पाठ का सिंटैक्स विश्लेषण..." },
+        { label: "नगर निगम श्रेणी एवं कार्यक्षेत्र पहचान..." },
+        { label: "प्राथमिकता एवं समय सीमा (SLA) गणना..." },
+        { label: "संबद्ध क्षेत्रीय अधिकारी को अग्रेषण..." },
+        { label: "डिजिटल पावती एवं डॉकेट सृजन..." },
       ]
     : [
-        { label: "Understanding complaint text..." },
-        { label: "Detecting complaint category..." },
-        { label: "Assessing priority & urgency..." },
-        { label: "Routing to department..." },
-        { label: "Generating officer summary..." },
+        { label: "Syntactic complaint parsing..." },
+        { label: "Municipal category & jurisdiction mapping..." },
+        { label: "SLA calculation & urgency grading..." },
+        { label: "Nodal officer dispatch routing..." },
+        { label: "Docket generation & SMS acknowledgment..." },
       ];
 
   const getPriorityLabel = (p: string) => {
-    if (p === "high") return isHi ? "उच्च (HIGH)" : "HIGH";
-    if (p === "medium") return isHi ? "मध्यम (MEDIUM)" : "MEDIUM";
-    return isHi ? "निम्न (LOW)" : "LOW";
+    if (p === "high") return isHi ? "उच्च (High)" : "High";
+    if (p === "medium") return isHi ? "मध्यम (Medium)" : "Medium";
+    return isHi ? "सामान्य (Standard)" : "Standard";
   };
 
   return (
@@ -614,635 +558,434 @@ export function ComplaintForm({
         {step === "input" && (
           <motion.div
             key="input"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+            exit={{ opacity: 0, y: -12 }}
             className="space-y-6 text-left"
           >
-            {/* Complaint text */}
-            <div className="relative rounded-2xl overflow-hidden">
-              {/* Gradient top accent line */}
-              <div className="absolute top-0 left-0 right-0 h-[2px] bg-linear-to-r from-transparent via-indigo-500/60 to-transparent" />
-              
-              <div className="bg-linear-to-b from-[#0c1120]/80 to-[#080d18]/60 backdrop-blur-sm border border-[#1e293b]/40 rounded-2xl p-6 sm:p-7 space-y-5 shadow-[0_8px_40px_rgba(0,0,0,0.3)]">
-                {/* Header Row */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex flex-col gap-1.5">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-xl bg-linear-to-br from-indigo-600 via-violet-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-600/20 shrink-0">
-                        <FileText className="w-4.5 h-4.5 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="font-extrabold text-base sm:text-lg text-white leading-tight">{dict.describeTitle}</h3>
-                        <span className="text-[9px] font-black text-indigo-400/70 uppercase tracking-[0.15em]">{isHi ? "(अंग्रेजी भी समर्थित)" : "(HINDI SUPPORTED)"}</span>
-                      </div>
-                    </div>
-                    <p className="text-[13px] text-gray-400/90 font-medium pl-0.5">{dict.subtitleText}</p>
-                  </div>
-
-                  {/* Redesigned Premium Language Toggle */}
-                  {onLanguageChange && (
-                    <div className="flex items-center gap-1 bg-[#090d16] border border-[#1f2937]/65 p-0.5 rounded-xl shadow-inner w-fit h-8.5 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => onLanguageChange("en")}
-                        className={`px-3 h-7 text-[10px] font-black rounded-lg transition-all duration-350 cursor-pointer ${
-                          language === "en"
-                            ? "bg-linear-to-r from-blue-600 to-violet-600 text-white shadow-[0_0_12px_rgba(124,58,237,0.35)]"
-                            : "text-gray-400 hover:text-white"
-                        }`}
-                      >
-                        EN
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onLanguageChange("hi")}
-                        className={`px-3 h-7 text-[10px] font-black rounded-lg transition-all duration-350 cursor-pointer ${
-                          language === "hi"
-                            ? "bg-linear-to-r from-blue-600 to-violet-600 text-white shadow-[0_0_12px_rgba(124,58,237,0.35)]"
-                            : "text-gray-400 hover:text-white"
-                        }`}
-                      >
-                        हिन्दी
-                      </button>
-                    </div>
-                  )}
+            {/* Complaint Form Box */}
+            <div className="bg-white dark:bg-[#12151c] border border-slate-200 dark:border-white/10 rounded-xl p-6 sm:p-7 space-y-5 shadow-xs transition-colors">
+              {/* Header Row */}
+              <div className="flex items-start justify-between gap-4 border-b border-slate-200 dark:border-white/6 pb-5">
+                <div>
+                  <h3 className="font-semibold text-base sm:text-lg text-slate-900 dark:text-white tracking-tight">
+                    {dict.describeTitle}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                    {dict.subtitleText}
+                  </p>
                 </div>
 
-                {/* Token Tracker - Pill Style */}
-                <div className="flex items-center justify-between px-4 py-2.5 bg-[#070b14]/70 border border-[#1e293b]/50 rounded-xl">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                      <Coins className="w-3.5 h-3.5 text-amber-400" />
-                    </div>
-                    <span className="text-[11px] font-bold text-gray-400">
-                      {isHi ? "शेष शिकायतें:" : "Complaints Remaining:"}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-sm font-black tabular-nums ${tokenState.tokensRemaining <= 1 ? "text-red-400" : "text-amber-400"}`}>
-                      {tokenState.tokensRemaining}/{tokenState.maxTokens}
-                    </span>
-                    <div className="w-20 h-2 bg-[#0c1020] rounded-full overflow-hidden border border-amber-500/10">
-                      <motion.div 
-                        className={`h-full rounded-full ${tokenState.tokensRemaining <= 1 ? "bg-linear-to-r from-red-500 to-red-400" : "bg-linear-to-r from-amber-600 to-amber-400"}`}
-                        initial={false}
-                        animate={{ width: `${(tokenState.tokensRemaining / tokenState.maxTokens) * 100}%` }}
-                        transition={{ duration: 0.5, ease: "easeOut" }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Textarea with enhanced focus state */}
-                <div className="relative group">
-                  <Textarea
-                    value={text}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
-                    onChange={(e) => setText(e.target.value)}
-                    placeholder={dict.placeholderText}
-                    className="min-h-[150px] text-sm resize-none border border-[#1e293b]/60 focus:border-indigo-500/50 rounded-xl px-4 py-3.5 bg-[#060a12]/80 text-gray-100 w-full transition-all duration-500 placeholder:text-gray-600/80 focus:shadow-[0_0_0_3px_rgba(99,102,241,0.08),0_0_30px_rgba(99,102,241,0.08)] outline-none leading-relaxed"
-                  />
-                  {/* Character count */}
-                  {text.length > 0 && (
-                    <span className="absolute bottom-3 right-3 text-[10px] font-bold text-gray-600 tabular-nums">
-                      {text.length}
-                    </span>
-                  )}
-                </div>
-
-                {/* Hidden file input */}
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  className="hidden"
-                  onChange={handlePhotoChange}
-                  accept="image/*"
-                />
-
-                {/* Photo preview block with Holographic neon scanner */}
-                {photo && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className={`flex items-center gap-3.5 p-3 bg-linear-to-r from-indigo-500/4 to-violet-500/4 border rounded-xl w-full relative overflow-hidden transition-all duration-300 ${
-                      isScanningImage ? "border-indigo-500/40 shadow-[0_0_20px_rgba(99,102,241,0.12)]" : "border-[#1e293b]/50"
-                    }`}
-                  >
-                    <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-[#1e293b] bg-black/20 shrink-0">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={photo} alt="Preview" className="w-full h-full object-cover" />
-                      {isScanningImage && <div className="holo-scanline" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-gray-200 truncate">{photoName}</p>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <span className={`w-1.5 h-1.5 rounded-full ${isScanningImage ? "bg-indigo-400 animate-ping" : "bg-emerald-400 animate-pulse"}`} />
-                        <p className={`text-[10px] font-bold uppercase tracking-wider ${isScanningImage ? "text-indigo-400" : "text-emerald-400"}`}>
-                          {isScanningImage 
-                            ? `AI SCAN: ${scanProgress}%` 
-                            : (isHi ? "✓ AI स्कैन पूर्ण" : "✓ AI Scan Complete")}
-                        </p>
-                      </div>
-                    </div>
+                {onLanguageChange && (
+                  <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#181c24] border border-slate-200 dark:border-white/10 p-0.5 rounded-lg text-xs shrink-0">
                     <button
                       type="button"
-                      onClick={removePhoto}
-                      className="p-2 rounded-lg hover:bg-red-500/10 text-gray-500 hover:text-red-400 transition-all cursor-pointer active:scale-90"
-                      aria-label="Remove photo"
+                      onClick={() => onLanguageChange("en")}
+                      className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                        language === "en"
+                          ? "bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-xs"
+                          : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      }`}
                     >
-                      <X className="w-4 h-4" />
+                      EN
                     </button>
-                  </motion.div>
+                    <button
+                      type="button"
+                      onClick={() => onLanguageChange("hi")}
+                      className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                        language === "hi"
+                          ? "bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-xs"
+                          : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      }`}
+                    >
+                      हिन्दी
+                    </button>
+                  </div>
                 )}
+              </div>
 
-                {/* Feature Action Buttons - Premium Pill Cards */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  {/* Voice Input */}
+              {/* Token Allowance Bar */}
+              <div className="flex items-center justify-between px-3.5 py-2.5 bg-slate-50 dark:bg-[#181c24] border border-slate-200 dark:border-white/6 rounded-lg text-xs">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                  <Coins className="w-3.5 h-3.5 text-slate-500 dark:text-slate-300" />
+                  <span>{isHi ? "दैनिक शिकायत कोटा:" : "Daily grievance quota:"}</span>
+                </div>
+                <div className="flex items-center gap-2 font-mono">
+                  <span className={tokenState.tokensRemaining <= 1 ? "text-amber-500 dark:text-amber-400 font-semibold" : "text-slate-700 dark:text-slate-200 font-semibold"}>
+                    {tokenState.tokensRemaining} / {tokenState.maxTokens}
+                  </span>
+                </div>
+              </div>
+
+              {/* Textarea */}
+              <div className="relative">
+                <Textarea
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder={dict.placeholderText}
+                  className="min-h-[140px] text-sm resize-none border border-slate-200 dark:border-white/10 rounded-lg p-3.5 bg-slate-50/50 dark:bg-[#0c0e14] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-blue-500/50 outline-none leading-relaxed"
+                />
+                {text.length > 0 && (
+                  <span className="absolute bottom-3 right-3 text-[11px] font-mono text-slate-400 dark:text-slate-500">
+                    {text.length} chars
+                  </span>
+                )}
+              </div>
+
+              {/* Hidden file input */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                onChange={handlePhotoChange}
+                accept="image/*"
+              />
+
+              {/* Photo preview block */}
+              {photo && (
+                <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-[#181c24] border border-slate-200 dark:border-white/10 rounded-lg">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={photo} alt="Attached Evidence" className="w-12 h-12 rounded object-cover border border-slate-200 dark:border-white/10" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">{photoName}</p>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">{dict.photoAttached}</span>
+                  </div>
                   <button
                     type="button"
-                    onClick={toggleRecording}
-                    disabled={isTranscribing}
-                    className={`relative group flex items-center gap-2.5 px-4 py-3 rounded-xl border transition-all duration-300 cursor-pointer active:scale-[0.97] overflow-hidden ${
-                      isRecording
-                        ? "border-red-500/40 bg-red-500/10 shadow-[0_0_20px_rgba(239,68,68,0.1)]"
-                        : isTranscribing
-                        ? "border-indigo-500/30 bg-indigo-500/5"
-                        : "border-[#1e293b]/50 bg-[#0a0f1a]/60 hover:border-indigo-500/30 hover:bg-[#0c1122]/80 hover:shadow-[0_4px_20px_rgba(99,102,241,0.06)]"
-                    }`}
+                    onClick={removePhoto}
+                    className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                    aria-label="Remove photo"
                   >
-                    {isRecording ? (
-                      <>
-                        <div className="w-7 h-7 rounded-lg bg-red-500/15 flex items-center justify-center shrink-0">
-                          <MicOff className="w-3.5 h-3.5 text-red-400 animate-pulse" />
-                        </div>
-                        <span className="text-[10px] font-black uppercase tracking-wider text-red-300 truncate">{isHi ? "रोकें..." : "Stop..."}</span>
-                      </>
-                    ) : isTranscribing ? (
-                      <>
-                        <Loader2 className="w-4 h-4 text-indigo-400 animate-spin shrink-0" />
-                        <span className="text-[10px] font-black uppercase tracking-wider text-indigo-300 truncate">{isHi ? "AI विश्लेषण..." : "AI..."}</span>
-                      </>
-                    ) : (
-                      <>
-                        <div className="w-7 h-7 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0 group-hover:bg-indigo-500/15 transition-colors">
-                          <Mic className="w-3.5 h-3.5 text-indigo-400" />
-                        </div>
-                        <span className="text-[10px] font-black uppercase tracking-wider text-gray-300 group-hover:text-white truncate">{isHi ? "बोलें" : "Speak"}</span>
-                      </>
-                    )}
-                  </button>
-
-
-                  {/* Photo Upload */}
-                  <button
-                    type="button"
-                    onClick={handlePhotoUploadClick}
-                    className={`group flex items-center gap-2.5 px-4 py-3 rounded-xl border transition-all duration-300 cursor-pointer active:scale-[0.97] ${
-                      photo
-                        ? "border-emerald-500/30 bg-emerald-500/6"
-                        : "border-[#1e293b]/50 bg-[#0a0f1a]/60 hover:border-violet-500/30 hover:bg-[#0c1122]/80 hover:shadow-[0_4px_20px_rgba(139,92,246,0.06)]"
-                    }`}
-                  >
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
-                      photo ? "bg-emerald-500/15" : "bg-violet-500/10 group-hover:bg-violet-500/15"
-                    }`}>
-                      <Upload className={`w-3.5 h-3.5 ${photo ? "text-emerald-400" : "text-violet-400"}`} />
-                    </div>
-                    <span className={`text-[10px] font-black uppercase tracking-wider truncate ${
-                      photo ? "text-emerald-300" : "text-gray-300 group-hover:text-white"
-                    }`}>{photo ? (isHi ? "संलग्न ✓" : "Attached ✓") : (isHi ? "फोटो" : "Photo")}</span>
-                  </button>
-
-                  {/* Location Detection */}
-                  <button
-                    type="button"
-                    onClick={detectLocation}
-                    className={`group flex items-center gap-2.5 px-4 py-3 rounded-xl border transition-all duration-300 cursor-pointer active:scale-[0.97] ${
-                      location
-                        ? "border-emerald-500/30 bg-emerald-500/6 col-span-2 sm:col-span-1"
-                        : "border-[#1e293b]/50 bg-[#0a0f1a]/60 hover:border-cyan-500/30 hover:bg-[#0c1122]/80 hover:shadow-[0_4px_20px_rgba(6,182,212,0.06)] col-span-2 sm:col-span-1"
-                    }`}
-                  >
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
-                      location ? "bg-emerald-500/15" : "bg-cyan-500/10 group-hover:bg-cyan-500/15"
-                    }`}>
-                      <MapPin className={`w-3.5 h-3.5 ${location ? "text-emerald-400" : "text-cyan-400"}`} />
-                    </div>
-                    <span className={`text-[10px] font-black uppercase tracking-wider truncate ${
-                      location ? "text-emerald-300" : "text-gray-300 group-hover:text-white"
-                    }`}>{location ? (location.area.length > 18 ? location.area.slice(0, 18) + "…" : location.area) : (isHi ? "स्थान" : "Location")}</span>
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
-
-               {location && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="flex items-center gap-3 p-3.5 bg-emerald-500/4 border border-emerald-500/15 rounded-xl relative overflow-hidden"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 radar-glow" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[9px] text-gray-500 uppercase font-black tracking-wider block">{dict.pinnedArea}</span>
-                    <span className="text-xs font-bold text-gray-200">{location.area}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <Badge variant="outline" className="font-mono text-[8px] border-emerald-500/20 text-emerald-400/80 bg-emerald-500/5 font-bold px-1.5 py-0">
-                      {location.lat.toFixed(3)}
-                    </Badge>
-                    <Badge variant="outline" className="font-mono text-[8px] border-emerald-500/20 text-emerald-400/80 bg-emerald-500/5 font-bold px-1.5 py-0">
-                      {location.lng.toFixed(3)}
-                    </Badge>
-                  </div>
-                </motion.div>
               )}
+
+              {/* Input Action Buttons */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                {/* Voice Input */}
+                <button
+                  type="button"
+                  onClick={toggleRecording}
+                  disabled={isTranscribing}
+                  className={`flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
+                    isRecording
+                      ? "border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-300"
+                      : isTranscribing
+                      ? "border-slate-300 dark:border-white/15 bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300"
+                      : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#181c24] hover:bg-slate-100 dark:hover:bg-[#1e232e] text-slate-700 dark:text-slate-200"
+                  }`}
+                >
+                  {isRecording ? (
+                    <>
+                      <MicOff className="w-3.5 h-3.5 text-red-500 dark:text-red-400" />
+                      <span>{isHi ? "रिकॉर्डिंग रोकें" : "Stop recording"}</span>
+                    </>
+                  ) : isTranscribing ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-500 dark:text-slate-300" />
+                      <span>{isHi ? "रूपांतरण..." : "Transcribing..."}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Mic className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                      <span>{dict.voiceInput}</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Photo Upload */}
+                <button
+                  type="button"
+                  onClick={handlePhotoUploadClick}
+                  className={`flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
+                    photo
+                      ? "border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-300"
+                      : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#181c24] hover:bg-slate-100 dark:hover:bg-[#1e232e] text-slate-700 dark:text-slate-200"
+                  }`}
+                >
+                  <Upload className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                  <span>{photo ? (isHi ? "साक्ष्य संलग्न" : "Evidence added") : dict.uploadPhoto}</span>
+                </button>
+
+                {/* Location Detection */}
+                <button
+                  type="button"
+                  onClick={detectLocation}
+                  className={`flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
+                    location
+                      ? "border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-300"
+                      : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#181c24] hover:bg-slate-100 dark:hover:bg-[#1e232e] text-slate-700 dark:text-slate-200"
+                  }`}
+                >
+                  <MapPin className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                  <span className="truncate">
+                    {location ? location.area.split(",")[0] : dict.detectLocation}
+                  </span>
+                </button>
               </div>
+
+              {location && (
+                <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-[#181c24] border border-slate-200 dark:border-white/8 rounded-lg text-xs">
+                  <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                    <MapPin className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 shrink-0" />
+                    <span className="font-medium">{location.area}</span>
+                  </div>
+                  <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400 shrink-0">
+                    {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
+                  </span>
+                </div>
+              )}
             </div>
 
-            {/* Priority Selector - Color-coded Cards */}
-            <div className="relative rounded-2xl overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-[2px] bg-linear-to-r from-transparent via-amber-500/40 to-transparent" />
-              <div className="bg-linear-to-b from-[#0c1120]/80 to-[#080d18]/60 backdrop-blur-sm border border-[#1e293b]/40 rounded-2xl p-6 sm:p-7 space-y-4 shadow-[0_8px_40px_rgba(0,0,0,0.3)]">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-linear-to-br from-amber-600 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-600/15 shrink-0">
-                    <AlertTriangle className="w-4 h-4 text-white" />
-                  </div>
-                  <h3 className="font-extrabold text-sm uppercase tracking-wider text-white">{dict.selectPriority}</h3>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                  {[
-                    { id: "Auto", label: dict.priorityAuto, icon: "✨", color: "indigo", desc: isHi ? "AI तय करेगा" : "AI decides" },
-                    { id: "Normal", label: dict.priorityNormal, icon: "○", color: "gray", desc: isHi ? "सामान्य" : "Standard" },
-                    { id: "Important", label: dict.priorityImportant, icon: "🟠", color: "amber", desc: isHi ? "तत्काल" : "Urgent" },
-                    { id: "Emergency", label: dict.priorityEmergency, icon: "🔴", color: "red", desc: isHi ? "आपातकालीन" : "Critical" }
-                  ].map((p) => {
-                    const isSelected = userPriority === p.id;
-                    const colorMap: Record<string, string> = {
-                      indigo: isSelected ? "border-indigo-500/50 bg-indigo-500/10 shadow-[0_0_20px_rgba(99,102,241,0.1)]" : "border-[#1e293b]/50 bg-[#0a0f1a]/60 hover:border-indigo-500/25",
-                      gray: isSelected ? "border-slate-400/50 bg-slate-500/10 shadow-[0_0_20px_rgba(148,163,184,0.08)]" : "border-[#1e293b]/50 bg-[#0a0f1a]/60 hover:border-slate-500/25",
-                      amber: isSelected ? "border-amber-500/50 bg-amber-500/10 shadow-[0_0_20px_rgba(245,158,11,0.1)]" : "border-[#1e293b]/50 bg-[#0a0f1a]/60 hover:border-amber-500/25",
-                      red: isSelected ? "border-red-500/50 bg-red-500/10 shadow-[0_0_20px_rgba(239,68,68,0.1)]" : "border-[#1e293b]/50 bg-[#0a0f1a]/60 hover:border-red-500/25",
-                    };
-                    return (
+            {/* Priority Selector */}
+            <div className="bg-white dark:bg-[#12151c] border border-slate-200 dark:border-white/10 rounded-xl p-5 space-y-3 shadow-xs">
+              <div className="text-xs font-semibold text-slate-800 dark:text-slate-300 tracking-tight">
+                {dict.selectPriority}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[
+                  { id: "Auto", label: dict.priorityAuto },
+                  { id: "Normal", label: dict.priorityNormal },
+                  { id: "Important", label: dict.priorityImportant },
+                  { id: "Emergency", label: dict.priorityEmergency }
+                ].map((p) => {
+                  const isSelected = userPriority === p.id;
+                  return (
                     <button
                       key={p.id}
                       type="button"
-                      onClick={() => setUserPriority(p.id as "Auto" | "Normal" | "Important" | "Emergency")}
-                      className={`relative flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl border transition-all duration-300 cursor-pointer active:scale-[0.97] ${colorMap[p.color]}`}
+                      onClick={() => setUserPriority(p.id as any)}
+                      className={`px-3 py-2.5 rounded-lg border text-xs font-medium text-center transition-colors cursor-pointer ${
+                        isSelected
+                          ? "border-blue-500/50 bg-blue-50 dark:bg-blue-600/10 text-blue-700 dark:text-white font-semibold"
+                          : "border-slate-200 dark:border-white/8 bg-slate-50 dark:bg-[#181c24] hover:bg-slate-100 dark:hover:bg-[#1e232e] text-slate-600 dark:text-slate-300"
+                      }`}
                     >
-                      <span className="text-base leading-none">{p.icon}</span>
-                      <span className={`text-[10px] font-black uppercase tracking-wider ${isSelected ? "text-white" : "text-gray-400"}`}>{p.label}</span>
-                      {isSelected && (
-                        <motion.div 
-                          layoutId="priorityIndicator"
-                          className="absolute -bottom-px left-1/4 right-1/4 h-[2px] bg-linear-to-r from-transparent via-white/60 to-transparent rounded-full"
-                          transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                        />
-                      )}
+                      {p.label}
                     </button>
                   );
                 })}
               </div>
             </div>
-          </div>
 
-            {/* Personal details */}
+            {/* Citizen Details (if guest) */}
             {!session && (
-              <div className="bg-[#090d16]/30 border border-[#1f2937]/50 rounded-2xl p-6 sm:p-7 space-y-4">
-                <h3 className="font-extrabold text-sm uppercase tracking-wider text-white flex items-center gap-2">
-                  <User className="w-5 h-5 text-[#7c3aed]" />
+              <div className="bg-white dark:bg-[#12151c] border border-slate-200 dark:border-white/10 rounded-xl p-5 space-y-3 shadow-xs">
+                <div className="text-xs font-semibold text-slate-800 dark:text-slate-300 tracking-tight">
                   {dict.yourDetails}
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="relative group text-left">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors z-10" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                     <Input
                       placeholder={dict.namePlaceholder}
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="pl-10 border border-[#1f2937]/80 focus:border-[#7c3aed]/60 focus:ring-1 focus:ring-[#7c3aed]/40 rounded-xl bg-[#070b13] text-gray-200 h-11 transition-all duration-300 focus:scale-[1.005]"
+                      className="pl-9 h-10 border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0c0e14] text-slate-900 dark:text-slate-200 text-xs rounded-lg"
                     />
                   </div>
-                  <div className="relative group text-left">
-                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors z-10" />
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                     <Input
                       placeholder={dict.phonePlaceholder}
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="pl-10 border border-[#1f2937]/80 focus:border-[#7c3aed]/60 focus:ring-1 focus:ring-[#7c3aed]/40 rounded-xl bg-[#070b13] text-gray-200 h-11 transition-all duration-300 focus:scale-[1.005]"
+                      className="pl-9 h-10 border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0c0e14] text-slate-900 dark:text-slate-200 text-xs rounded-lg"
                     />
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Token alerts and bypass indicators */}
-            {tokenState.tokensRemaining <= 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`p-4 rounded-xl border flex items-start gap-3 text-left ${
-                  isEmergencyComplaint(text)
-                    ? "bg-amber-500/10 border-amber-500/30 text-amber-200"
-                    : "bg-red-500/10 border-red-500/30 text-red-200"
-                }`}
-              >
-                {isEmergencyComplaint(text) ? (
-                  <>
-                    <Zap className="w-5 h-5 text-amber-400 animate-bounce shrink-0" />
-                    <div>
-                      <p className="text-xs font-bold text-amber-300">
-                        {isHi ? "आपातकालीन शिकायत का पता चला" : "Emergency Complaint Detected"}
-                      </p>
-                      <p className="text-[11px] text-amber-400/90 font-medium leading-relaxed">
-                        {isHi 
-                          ? "प्राथमिकता पहुँच प्रदान की गई — आप इस शिकायत को जमा कर सकते हैं।" 
-                          : "Priority access granted — you can submit this complaint despite the limit."}
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 animate-pulse" />
-                    <div>
-                      <p className="text-xs font-bold text-red-300">
-                        {isHi ? "दैनिक शिकायत सीमा पूरी हो गई है" : "Daily Complaint Limit Reached"}
-                      </p>
-                      <p className="text-[11px] text-red-400/90 font-medium leading-relaxed">
-                        {isHi 
-                          ? "कृपया कल पुनः प्रयास करें या आपातकालीन शिकायत (जैसे: आग, पानी रिसाव, बिजली का खतरा) दर्ज करें।" 
-                          : "Please try again tomorrow or report an emergency (e.g. fire, water leak, electric danger) for bypass."}
-                      </p>
-                    </div>
-                  </>
-                )}
-              </motion.div>
-            )}
-
+            {/* Alerts */}
             {tokenAlert && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="p-3 bg-red-500/10 border border-red-500/20 text-red-300 rounded-xl text-xs font-bold text-center"
-              >
+              <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-300 rounded-lg text-xs font-medium">
                 {tokenAlert}
-              </motion.div>
+              </div>
             )}
 
-            {/* Submit */}
-            <div className="flex flex-col items-center gap-2 pt-2">
+            {/* Submit Action */}
+            <div className="space-y-2 pt-1">
               <Button
                 type="button"
                 onClick={handleSubmit}
                 disabled={!text.trim() || (tokenState.tokensRemaining <= 0 && !isEmergencyComplaint(text))}
-                className="w-full h-12 rounded-xl bg-linear-to-r from-[#4f46e5] via-[#7c3aed] to-[#db2777] hover:bg-right text-white shadow-xl shadow-[#7c3aed]/25 hover:shadow-[#7c3aed]/45 hover:scale-[1.01] active:scale-[0.99] transition-all duration-500 text-base font-extrabold group cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-full h-11 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold uppercase tracking-wider transition-colors disabled:opacity-50"
               >
-                <div className="flex items-center justify-center gap-2 uppercase tracking-wider text-xs font-black">
-                  <span>{dict.submitBtn}</span>
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </div>
+                <span>{dict.submitBtn}</span>
+                <ChevronRight className="w-4 h-4 ml-1.5" />
               </Button>
-              <span className="text-[11px] text-gray-500 font-medium">{dict.submitSubText}</span>
+              <p className="text-[11px] text-slate-500 text-center">
+                {dict.submitSubText}
+              </p>
             </div>
           </motion.div>
         )}
 
-        {/* Step 2: AI Processing Animation */}
+        {/* Step 2: Processing Docket */}
         {step === "processing" && (
           <motion.div
             key="processing"
-            initial={{ opacity: 0, scale: 0.96 }}
+            initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.96 }}
-            className="glass-card rounded-2xl p-8 sm:p-10 text-center space-y-6 scanning-laser-container neon-glow-ai"
+            exit={{ opacity: 0, scale: 0.98 }}
+            className="bg-white dark:bg-[#12151c] border border-slate-200 dark:border-white/10 rounded-xl p-8 text-center space-y-6 shadow-sm"
           >
-            <motion.div
-              className="w-20 h-20 mx-auto rounded-2xl bg-linear-to-br from-ai-purple/20 via-primary/10 to-gov-blue/20 border border-ai-purple/30 flex items-center justify-center shadow-lg"
-              animate={{ 
-                rotate: 360,
-                boxShadow: ["0 0 0 0px rgba(124, 58, 237, 0.2)", "0 0 0 12px rgba(124, 58, 237, 0)", "0 0 0 0px rgba(124, 58, 237, 0.2)"]
-              }}
-              transition={{ 
-                rotate: { duration: 6, repeat: Infinity, ease: "linear" },
-                boxShadow: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-              }}
-            >
-              <Brain className="w-10 h-10 text-ai-purple animate-pulse" />
-            </motion.div>
-
-            <div className="space-y-1">
-              <h3 className="text-2xl font-bold tracking-tight bg-linear-to-r from-gov-blue to-ai-purple bg-clip-text text-transparent">{dict.analyzingTitle}</h3>
-              <p className="text-sm text-muted-foreground/80">{dict.analyzingDesc}</p>
+            <div className="w-12 h-12 mx-auto rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+              <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
             </div>
 
-            <div className="max-w-md mx-auto space-y-3 pt-3">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white tracking-tight">
+                {dict.analyzingTitle}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                {dict.analyzingDesc}
+              </p>
+            </div>
+
+            <div className="max-w-md mx-auto space-y-2.5 text-left pt-2">
               {processingSteps.map((s, i) => (
-                <motion.div
+                <div
                   key={i}
-                  className={`flex items-center gap-3 text-sm transition-all duration-300 font-medium ${
+                  className={`flex items-center gap-3 text-xs ${
                     processingStep > i
-                      ? "text-trust-green"
+                      ? "text-slate-800 dark:text-slate-200"
                       : processingStep === i
-                      ? "text-ai-purple scale-[1.02]"
-                      : "text-muted-foreground/35"
+                      ? "text-blue-600 dark:text-blue-400 font-medium"
+                      : "text-slate-400 dark:text-slate-600"
                   }`}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.08 }}
                 >
                   {processingStep > i ? (
-                    <div className="w-5 h-5 rounded-full bg-trust-green/10 flex items-center justify-center text-trust-green shrink-0">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                    </div>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" />
                   ) : processingStep === i ? (
-                    <div className="w-5 h-5 flex items-center justify-center shrink-0">
-                      <Loader2 className="w-4 h-4 text-ai-purple animate-spin" />
-                    </div>
+                    <Loader2 className="w-4 h-4 text-blue-500 animate-spin shrink-0" />
                   ) : (
-                    <div className="w-5 h-5 rounded-full border border-current/30 shrink-0 flex items-center justify-center" />
+                    <div className="w-4 h-4 rounded-full border border-slate-300 dark:border-slate-700 shrink-0" />
                   )}
                   <span>{s.label}</span>
-                </motion.div>
+                </div>
               ))}
             </div>
 
-            {/* Glowing Gradient Custom Progress Bar */}
-            <div className="max-w-md mx-auto h-2 bg-muted/50 rounded-full overflow-hidden p-0.5 border border-border/20">
-              <motion.div 
-                className="h-full bg-linear-to-r from-gov-blue via-ai-purple to-trust-green rounded-full shadow-[0_0_8px_rgba(124,58,237,0.4)]"
-                initial={{ width: 0 }}
-                animate={{ width: `${(processingStep / 5) * 100}%` }}
-                transition={{ duration: 0.4 }}
+            <div className="max-w-md mx-auto h-1.5 bg-slate-100 dark:bg-[#181c24] rounded-full overflow-hidden border border-slate-200 dark:border-white/6">
+              <div 
+                className="h-full bg-blue-500 transition-all duration-300 rounded-full"
+                style={{ width: `${(processingStep / 5) * 100}%` }}
               />
             </div>
           </motion.div>
         )}
 
-        {/* Step 3: Classification Result */}
+        {/* Step 3: Municipal Case Docket */}
         {step === "result" && classification && (
           <motion.div
             key="result"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-5 animate-fade-in"
+            className="space-y-5"
           >
-            {/* Success banner */}
-            <motion.div
-              className="glass-premium rounded-2xl p-6 border-l-4 border-l-trust-green neon-glow-success bg-trust-green/5"
-              initial={{ scale: 0.96 }}
-              animate={{ scale: 1 }}
-            >
-              <div className="flex items-center gap-4">
-                <motion.div 
-                  className="w-12 h-12 rounded-xl bg-trust-green/10 flex items-center justify-center shrink-0"
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 1.5, repeat: 2 }}
-                >
-                  <CheckCircle2 className="w-6 h-6 text-trust-green" />
-                </motion.div>
+            {/* Header Docket Slip */}
+            <div className="bg-white dark:bg-[#12151c] border border-slate-200 dark:border-white/10 rounded-xl p-6 space-y-5 text-left shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/6 pb-4">
                 <div>
-                  <h3 className="font-bold text-lg text-foreground/90">{dict.successTitle}</h3>
-                  <p className="text-sm text-muted-foreground/80">
-                    {isHi ? "आईडी:" : "ID:"} <span className="font-mono font-bold text-foreground">{createdComplaintId}</span> • {dict.trackRealtime}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Emergency bypass success banner */}
-            {isEmergencyBypass && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="glass-premium rounded-2xl p-5 border-l-4 border-l-amber-500 neon-glow-warning bg-amber-500/5"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
-                    <Zap className="w-5 h-5 text-amber-500 animate-pulse" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-amber-400">
-                      {isHi ? "आपातकालीन शिकायत स्वीकृत" : "Emergency Complaint Accepted"}
-                    </h4>
-                    <p className="text-xs text-amber-300/90 font-medium">
-                      {isHi ? "आपातकालीन शिकायत का पता चला — प्राथमिकता पहुँच प्रदान की गई।" : "Emergency complaint detected — priority access granted."}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Photo Attachment receipt */}
-            {photo && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="glass-card rounded-2xl p-4 flex items-center gap-4 border border-border/20 bg-muted/10 relative overflow-hidden"
-              >
-                <div className="absolute -left-6 -bottom-6 w-16 h-16 bg-trust-green/5 rounded-full filter blur-lg pointer-events-none" />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={photo} alt="Submitted photo" className="w-16 h-16 rounded-xl object-cover border border-border/30 shadow-sm" />
-                <div>
-                  <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{dict.photoAttachment}</h4>
-                  <p className="text-sm font-semibold text-foreground/80 truncate max-w-[220px]">{photoName}</p>
-                  <span className="text-[10px] inline-flex items-center gap-1 font-bold text-trust-green bg-trust-green/10 px-2.5 py-0.5 rounded-full mt-1.5 border border-trust-green/20">
-                    <Sparkles className="w-3 h-3 text-trust-green animate-pulse" />
-                    {dict.scannedAI}
-                  </span>
-                </div>
-              </motion.div>
-            )}
-
-            {/* AI Classification Details */}
-            <div className="glass-card premium-glow-border rounded-2xl p-6 space-y-5">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-ai-purple animate-pulse" />
-                <h3 className="font-bold text-base text-foreground/90">{dict.aiClassification}</h3>
-                <Badge variant="outline" className="ml-auto text-xs border-ai-purple/35 text-ai-purple bg-ai-purple/5 font-semibold">
-                  {Math.round(classification.confidence * 100)}% {dict.confidence}
-                </Badge>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-muted/30 rounded-xl p-4 border border-border/20 transition-all hover:bg-muted/40">
-                  <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">{dict.category}</div>
-                  <div className="font-bold text-sm text-foreground/90">{isHi ? classification.categoryHi : classification.category}</div>
-                </div>
-
-                <div className="bg-muted/30 rounded-xl p-4 border border-border/20 transition-all hover:bg-muted/40">
-                  <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">{dict.priority}</div>
                   <div className="flex items-center gap-2">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold priority-${classification.priority}`}>
-                      {classification.priority === "high" && <AlertTriangle className="w-3.5 h-3.5" />}
-                      {classification.priority === "medium" && <Clock className="w-3.5 h-3.5" />}
-                      {classification.priority === "low" && <CheckCircle2 className="w-3.5 h-3.5" />}
-                      {getPriorityLabel(classification.priority)}
+                    <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span className="text-xs font-mono font-medium uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                      Official Docket Created
                     </span>
                   </div>
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-white mt-1">
+                    {dict.successTitle}
+                  </h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">Docket ID:</span>
+                  <span className="text-xs font-mono font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-500/20">
+                    {createdComplaintId}
+                  </span>
+                </div>
+              </div>
+
+              {/* Departmental Routing Details Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div className="bg-slate-50 dark:bg-[#181c24] p-3 rounded-lg border border-slate-200 dark:border-white/6">
+                  <span className="text-slate-500 dark:text-slate-400 block mb-1">{dict.category}</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200">
+                    {isHi ? classification.categoryHi : classification.category}
+                  </span>
                 </div>
 
-                <div className="bg-muted/30 rounded-xl p-4 border border-border/20 transition-all hover:bg-muted/40">
-                  <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">{dict.department}</div>
-                  <div className="font-bold text-sm text-foreground/90 flex items-center gap-1.5">
-                    <Building2 className="w-4 h-4 text-gov-blue" />
+                <div className="bg-slate-50 dark:bg-[#181c24] p-3 rounded-lg border border-slate-200 dark:border-white/6">
+                  <span className="text-slate-500 dark:text-slate-400 block mb-1">{dict.department}</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5 text-blue-500" />
                     {isHi ? classification.departmentHi : classification.department}
-                  </div>
+                  </span>
                 </div>
 
-                <div className="bg-muted/30 rounded-xl p-4 border border-border/20 transition-all hover:bg-muted/40">
-                  <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">{dict.estResolution}</div>
-                  <div className="font-bold text-sm text-foreground/90">{classification.predictedResolutionDays} {dict.days}</div>
-                  <div className="text-[11px] text-muted-foreground/80 font-medium">{isHi ? "सामान्य प्रसंस्करण समय सीमा" : classification.urgency}</div>
+                <div className="bg-slate-50 dark:bg-[#181c24] p-3 rounded-lg border border-slate-200 dark:border-white/6">
+                  <span className="text-slate-500 dark:text-slate-400 block mb-1">{dict.priority}</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200">
+                    {getPriorityLabel(classification.priority)}
+                  </span>
                 </div>
 
-                <div className="bg-muted/30 rounded-xl p-4 border border-border/20 transition-all hover:bg-muted/40 sm:col-span-2">
-                  <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">{isHi ? "वार्ड (Ward)" : "Ward"}</div>
-                  <div className="font-bold text-sm text-foreground/90 flex items-center gap-1.5">
-                    <MapPin className="w-4 h-4 text-trust-green" />
-                    {classification.wardHi ? (isHi ? classification.wardHi : classification.ward) : (location?.area || (isHi ? "जीपीएस द्वारा स्वतः प्राप्त" : "Auto-detected from GPS"))}
-                  </div>
+                <div className="bg-slate-50 dark:bg-[#181c24] p-3 rounded-lg border border-slate-200 dark:border-white/6">
+                  <span className="text-slate-500 dark:text-slate-400 block mb-1">{dict.estResolution}</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200">
+                    {classification.predictedResolutionDays} {dict.days}
+                  </span>
+                </div>
+
+                <div className="bg-slate-50 dark:bg-[#181c24] p-3 rounded-lg border border-slate-200 dark:border-white/6 sm:col-span-2">
+                  <span className="text-slate-500 dark:text-slate-400 block mb-1">{isHi ? "वार्ड / क्षेत्रीय कार्यक्षेत्र" : "Jurisdiction Ward / Area"}</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                    {classification.wardHi ? (isHi ? classification.wardHi : classification.ward) : (location?.area || "Gomti Nagar, Lucknow")}
+                  </span>
                 </div>
               </div>
-            </div>
 
-            {/* AI Summary */}
-            <div className="glass-card rounded-2xl p-6 bg-ai-purple/3 border border-ai-purple/10">
-              <div className="flex items-center gap-2 mb-3">
-                <Brain className="w-5 h-5 text-ai-purple" />
-                <h3 className="font-bold text-base text-foreground/90">{dict.aiOfficerSummary}</h3>
+              {/* AI Briefing for Field Officer */}
+              <div className="bg-slate-50 dark:bg-[#181c24] p-3.5 rounded-lg border border-slate-200 dark:border-white/6 space-y-1.5">
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block">
+                  {dict.aiOfficerSummary}
+                </span>
+                <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                  {isHi ? classification.summaryHi : classification.summary}
+                </p>
               </div>
-              <div className="bg-background/40 rounded-xl p-4 border border-ai-purple/15 text-sm leading-relaxed text-foreground/90 font-medium shadow-inner">
-                {isHi ? classification.summaryHi : classification.summary}
-              </div>
-            </div>
 
-            {/* Citizen notification */}
-            <div className="glass-card rounded-2xl p-5 border-l-4 border-l-gov-blue bg-gov-blue/5">
-              <div className="flex items-center gap-2 text-sm text-gov-blue font-bold">
-                <Send className="w-4 h-4" />
-                <span>{dict.notificationSent}</span>
+              {/* Citizen SMS notification notice */}
+              <div className="flex items-start gap-2.5 p-3 bg-blue-50 dark:bg-blue-500/5 border border-blue-200 dark:border-blue-500/15 rounded-lg text-xs text-slate-700 dark:text-slate-300">
+                <Send className="w-3.5 h-3.5 text-blue-500 shrink-0 mt-0.5" />
+                <p className="leading-relaxed">
+                  {isHi 
+                    ? `पावती एसएमएस प्रेषित: शिकायत संख्या ${createdComplaintId} संबंधित विभाग (${classification.departmentHi}) को अग्रेषित की जा चुकी है।` 
+                    : `Notification sent: Grievance ${createdComplaintId} dispatched to ${classification.department}. Official SLA tracking initiated.`}
+                </p>
               </div>
-              <p className="text-sm mt-2 text-muted-foreground leading-relaxed font-semibold">
-                &ldquo;{isHi ? `आपकी शिकायत सफलतापूर्वक संबंधित विभाग (${classification.departmentHi}) को भेज दी गई है। शिकायत आईडी: ${createdComplaintId}` : `Your complaint has been successfully forwarded to ${classification.department}. Complaint ID: ${createdComplaintId}`}&rdquo;
-              </p>
-            </div>
 
-            {/* Action buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <Button type="button" onClick={reset} variant="outline" className="flex-1 rounded-xl h-11 font-bold text-sm">
-                {dict.fileAnother}
-              </Button>
-              <Button 
-                type="button" 
-                onClick={() => onTrack?.(createdComplaintId)}
-                className="flex-1 rounded-xl h-11 font-bold text-sm bg-linear-to-r from-gov-blue to-gov-blue-light text-white shadow-lg shadow-gov-blue/20"
-              >
-                {dict.trackThis}
-              </Button>
+              {/* Actions */}
+              <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
+                <Button 
+                  type="button" 
+                  onClick={reset} 
+                  variant="outline" 
+                  className="flex-1 rounded-lg h-10 text-xs font-medium border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer text-slate-800 dark:text-slate-200"
+                >
+                  {dict.fileAnother}
+                </Button>
+                <Button 
+                  type="button" 
+                  onClick={() => onTrack?.(createdComplaintId)}
+                  className="flex-1 rounded-lg h-10 text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white cursor-pointer"
+                >
+                  {dict.trackThis}
+                </Button>
+              </div>
             </div>
           </motion.div>
         )}

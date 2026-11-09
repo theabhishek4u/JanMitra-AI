@@ -52,6 +52,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/shared/Navbar";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import {
   getComplaints,
   getStats,
@@ -530,10 +531,10 @@ export default function OfficerDashboard() {
 
   return (
     <>
-    <div className="min-h-screen flex bg-[#060b14]">
-      <aside className="w-[260px] bg-[#0a1120] border-r border-border/10 hidden lg:flex flex-col fixed inset-y-0 left-0 z-50 shadow-2xl">
-        <div className="h-16 flex items-center px-6 border-b border-border/10 shrink-0">
-          <span className="text-xl font-black text-white flex items-center gap-2 tracking-tight">
+    <div className="min-h-screen flex bg-slate-50 dark:bg-[#060b14] text-slate-900 dark:text-slate-100 transition-colors">
+      <aside className="w-[260px] bg-white dark:bg-[#0a1120] border-r border-slate-200 dark:border-border/10 hidden lg:flex flex-col fixed inset-y-0 left-0 z-50 shadow-sm">
+        <div className="h-16 flex items-center px-6 border-b border-slate-200 dark:border-border/10 shrink-0">
+          <span className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2 tracking-tight">
             <div className="w-8 h-8 bg-linear-to-br from-primary to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
               <ShieldCheck className="w-5 h-5 text-white" />
             </div>
@@ -542,7 +543,7 @@ export default function OfficerDashboard() {
         </div>
         
         <div className="flex-1 py-6 flex flex-col gap-2 px-3 overflow-y-auto custom-scrollbar">
-          <p className="text-[10px] font-black tracking-wider text-muted-foreground uppercase px-3 pb-2">
+          <p className="text-[10px] font-black tracking-wider text-slate-500 dark:text-muted-foreground uppercase px-3 pb-2">
             Console Modules
           </p>
           {[
@@ -557,14 +558,14 @@ export default function OfficerDashboard() {
               className={`flex items-center justify-between w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all cursor-pointer group relative overflow-hidden ${
                 activeSidebarTab === item.id
                   ? "bg-primary text-white shadow-md shadow-primary/20"
-                  : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                  : "text-slate-600 dark:text-muted-foreground hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-foreground"
               }`}
             >
               {activeSidebarTab === item.id && (
                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-md" />
               )}
               <div className="flex items-center gap-3">
-                <item.icon className={`w-4.5 h-4.5 ${activeSidebarTab === item.id ? "text-white" : "text-muted-foreground group-hover:text-foreground"}`} />
+                <item.icon className={`w-4.5 h-4.5 ${activeSidebarTab === item.id ? "text-white" : "text-slate-500 dark:text-muted-foreground group-hover:text-slate-900 dark:group-hover:text-foreground"}`} />
                 {item.label}
               </div>
               {item.alert && (
@@ -575,14 +576,14 @@ export default function OfficerDashboard() {
         </div>
         
         {/* User profile at bottom of sidebar */}
-        <div className="p-4 border-t border-border/10 shrink-0 bg-white/2">
+        <div className="p-4 border-t border-slate-200 dark:border-border/10 shrink-0 bg-slate-50 dark:bg-white/2">
           <div className="flex items-center gap-3 px-2">
             <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30 shrink-0">
               <User className="w-4 h-4 text-primary" />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="text-xs font-bold text-white truncate">Shri Rajesh Kumar</span>
-              <span className="text-[9px] text-muted-foreground uppercase tracking-wider truncate">Commissioner</span>
+              <span className="text-xs font-bold text-slate-900 dark:text-white truncate">Shri Rajesh Kumar</span>
+              <span className="text-[9px] text-slate-500 dark:text-muted-foreground uppercase tracking-wider truncate">Commissioner</span>
             </div>
           </div>
         </div>
@@ -594,9 +595,9 @@ export default function OfficerDashboard() {
       <div className="flex-1 lg:pl-[260px] flex flex-col min-h-screen relative w-full">
         
         {/* TOP HEADER */}
-        <header className="h-16 border-b border-border/10 bg-[#060b14]/90 backdrop-blur-md sticky top-0 z-40 flex items-center justify-between px-6 lg:px-8 shrink-0">
+        <header className="h-16 border-b border-slate-200 dark:border-border/10 bg-white/90 dark:bg-[#060b14]/90 backdrop-blur-md sticky top-0 z-40 flex items-center justify-between px-6 lg:px-8 shrink-0">
           <div className="flex items-center gap-3">
-             <h1 className="text-lg font-black tracking-tight text-foreground flex items-center gap-2">
+             <h1 className="text-lg font-black tracking-tight text-slate-900 dark:text-foreground flex items-center gap-2">
                {activeSidebarTab === "dashboard" && "Dashboard Overview"}
                {activeSidebarTab === "portal" && "Grievance Portal"}
                {activeSidebarTab === "map" && "Live Telemetry Map"}
@@ -605,6 +606,7 @@ export default function OfficerDashboard() {
           </div>
           
            <div className="flex items-center gap-3 relative">
+             <ThemeToggle />
              {/* Officer Notification Bell Dropdown */}
              <div className="relative">
                <button
@@ -740,45 +742,31 @@ export default function OfficerDashboard() {
                       transition={{ delay: i * 0.08 }}
                     >
                       <Card 
-                        className={`glass-premium border premium-glow-border relative overflow-hidden transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] cursor-pointer group ${stat.glowClass} ${
-                          isActive ? "ring-1" : ""
+                        className={`bg-[#12151c] border rounded-xl relative overflow-hidden transition-colors cursor-pointer ${
+                          isActive ? "border-blue-500 bg-blue-500/5" : "border-white/10 hover:border-white/20"
                         }`}
                         onClick={() => handleStatsCardClick(stat.title)}
-                        style={{
-                          background: `radial-gradient(circle at 100% 100%, ${stat.color}0c 0%, transparent 60%)`,
-                          borderColor: isActive ? stat.color : "rgba(255, 255, 255, 0.08)"
-                        }}
                       >
-                        <div
-                          className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full filter blur-xl opacity-15 pointer-events-none group-hover:scale-125 transition-transform duration-500"
-                          style={{ backgroundColor: stat.color }}
-                        />
-                        <CardContent className="p-5 relative z-10">
+                        <CardContent className="p-5">
                           <div className="flex items-center justify-between mb-3">
-                            <div
-                              className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors group-hover:bg-opacity-20 shadow-sm"
-                              style={{
-                                background: `${stat.color}15`,
-                                border: `1px solid ${stat.color}25`,
-                              }}
-                            >
-                              <stat.icon className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" style={{ color: stat.color }} />
+                            <div className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                              <stat.icon className="w-4 h-4 text-slate-300" />
                             </div>
                             <span
-                              className={`text-xs font-black flex items-center gap-0.5 ${
-                                stat.up ? "text-trust-green" : "text-danger-red"
+                              className={`text-xs font-mono font-medium flex items-center gap-0.5 ${
+                                stat.up ? "text-emerald-400" : "text-amber-400"
                               }`}
                             >
                               {stat.up ? (
-                                <ArrowUpRight className="w-3.5 h-3.5 stroke-[3px]" />
+                                <ArrowUpRight className="w-3.5 h-3.5" />
                               ) : (
-                                <ArrowDownRight className="w-3.5 h-3.5 stroke-[3px]" />
+                                <ArrowDownRight className="w-3.5 h-3.5" />
                               )}
                               {stat.change}
                             </span>
                           </div>
-                          <div className="text-3xl font-black tracking-tight text-foreground drop-shadow-sm">{stat.value.toLocaleString()}</div>
-                          <div className="text-xs font-bold tracking-wide uppercase text-muted-foreground mt-2 transition-colors">{stat.title}</div>
+                          <div className="text-2xl font-mono font-semibold text-white">{stat.value.toLocaleString()}</div>
+                          <div className="text-xs text-slate-400 mt-1">{stat.title}</div>
                         </CardContent>
                       </Card>
                     </motion.div>
@@ -823,21 +811,11 @@ export default function OfficerDashboard() {
                 return (
                   <motion.div
                     key={cat.name}
-                    className={`glass-premium border rounded-2xl p-4 flex flex-col justify-between cursor-pointer transition-all duration-300 relative group overflow-hidden ${
+                    className={`bg-[#12151c] border rounded-xl p-4 flex flex-col justify-between cursor-pointer transition-colors ${
                       isSelected
-                        ? "scale-[1.03] shadow-xl ring-1"
-                        : `border-border/10 ${cat.glowClass} hover:scale-[1.02] active:scale-[0.98] bg-muted/10`
+                        ? "border-blue-500 bg-blue-500/5"
+                        : "border-white/10 hover:border-white/20"
                     }`}
-                    style={
-                      isSelected
-                        ? {
-                            borderColor: `${cat.color}75`,
-                            background: `radial-gradient(circle at 100% 100%, ${cat.color}15 0%, transparent 80%)`,
-                            boxShadow: `0 8px 30px ${cat.color}20`,
-                            color: cat.color,
-                          }
-                        : {}
-                    }
                     onClick={() => {
                       if (isSelected) {
                         setSelectedCategory("all");
@@ -847,41 +825,31 @@ export default function OfficerDashboard() {
                       }
                     }}
                   >
-                    {/* Glowing Accent Spot */}
-                    <div
-                      className="absolute -right-4 -bottom-4 w-12 h-12 rounded-full filter blur-lg opacity-15 pointer-events-none group-hover:scale-125 transition-transform duration-500 animate-pulse"
-                      style={{ backgroundColor: cat.color }}
-                    />
-
-                    <div className="flex items-start justify-between mb-2 relative z-10">
-                      <div
-                        className={`w-8.5 h-8.5 rounded-xl flex items-center justify-center border transition-all duration-300 group-hover:rotate-12 ${cat.bg} group-hover:scale-105`}
-                        style={{ borderColor: `${cat.color}25` }}
-                      >
-                        <cat.icon className="w-4.5 h-4.5" style={{ color: cat.color }} />
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                        <cat.icon className="w-4 h-4 text-slate-300" />
                       </div>
                       
                       <div className="text-right">
-                        <span className="text-lg font-black text-foreground leading-none block group-hover:scale-110 transition-transform">
+                        <span className="text-base font-mono font-semibold text-white leading-none block">
                           {active}
                         </span>
-                        <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider block mt-0.5">
+                        <span className="text-[10px] text-slate-400 block mt-0.5">
                           Active
                         </span>
                       </div>
                     </div>
 
-                    <div className="mt-3.5 relative z-10">
-                      <h3 className="text-xs font-black text-foreground/90 group-hover:text-primary transition-colors leading-tight">
+                    <div className="mt-3">
+                      <h3 className="text-xs font-semibold text-slate-200 leading-tight">
                         {cat.label}
                       </h3>
-                      <span className="text-[9px] text-muted-foreground font-semibold flex items-center gap-1.5 mt-1">
-                        Total: <strong className="text-foreground/75 font-extrabold">{total}</strong>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">
+                        Total: {total}
                       </span>
                     </div>
 
-                    {/* Progress Bar relative to maxActive */}
-                    <div className="mt-3.5 w-full bg-slate-950/60 border border-white/5 h-2 rounded-full overflow-hidden relative z-10">
+                    <div className="mt-3 w-full bg-[#181c24] border border-white/5 h-1.5 rounded-full overflow-hidden">
                       <motion.div
                         className="h-full rounded-full"
                         style={{
